@@ -1,7 +1,7 @@
 #include "dsp/band.h"
 #include "dsp/band_design.h"
 #include "dsp/band_response.h"
-#include "dsp/svf_section.h"
+#include "dsp/section_filter.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -22,8 +22,8 @@ namespace {
 constexpr double sampleRate = 48000.0;
 constexpr int blockSize = 256;
 
-BandParameters band(FilterShape shape, double frequency, double gainDb, double q) {
-  return {.shape = shape, .frequencyHz = frequency, .gainDb = gainDb, .q = q};
+BandParameters band(FilterShape shape, double frequency, double gainDb, double q, int slope = 12) {
+  return {.shape = shape, .frequencyHz = frequency, .gainDb = gainDb, .q = q, .slopeDbPerOctave = slope};
 }
 
 std::vector<float> sine(double frequency, int numSamples, float amplitude = 0.5f) {
@@ -70,7 +70,7 @@ double maxSecondDifference(const std::vector<float> &signal, std::size_t from, s
 TEST_CASE("Band: with steady parameters it sounds exactly like the design", "[dsp][band]") {
   const auto parameters =
       GENERATE(band(FilterShape::bell, 1000.0, 9.0, 1.5), band(FilterShape::lowShelf, 300.0, -8.0, 0.707),
-               band(FilterShape::highCut, 4000.0, 0.0, 0.707));
+               band(FilterShape::highCut, 4000.0, 0.0, 0.707), band(FilterShape::lowCut, 600.0, 0.0, 0.707, 48));
   const auto frequency = GENERATE(150.0, 1000.0, 7000.0);
 
   Band filter;
@@ -132,6 +132,9 @@ TEST_CASE("Band: abrupt changes do not click", "[dsp][band]") {
       // Crossfade: a shape change and switching on/off.
       Change{"shape change", band(FilterShape::lowShelf, 1000.0, 12.0, 1.0), true,
              band(FilterShape::bell, 1000.0, -12.0, 1.0), true},
+      // Crossfade: a slope change alters the number of sections.
+      Change{"slope change", band(FilterShape::lowCut, 300.0, 0.0, 0.707, 12), true,
+             band(FilterShape::lowCut, 300.0, 0.0, 0.707, 48), true},
       Change{"switch on", band(FilterShape::notch, 1000.0, 0.0, 2.0), false, band(FilterShape::notch, 1000.0, 0.0, 2.0),
              true},
       Change{"switch off", band(FilterShape::highCut, 300.0, 0.0, 0.707), true,
@@ -158,7 +161,7 @@ TEST_CASE("Band: abrupt changes do not click", "[dsp][band]") {
 
 TEST_CASE("Band: the click test does catch an unsmoothed change", "[dsp][band]") {
   // Sanity check of the measurement: switching coefficients abruptly must fail it.
-  eqit::dsp::SvfSection section;
+  eqit::dsp::SectionFilter section;
   section.setSection(eqit::dsp::design(band(FilterShape::bell, 1000.0, -18.0, 4.0), sampleRate).sections[0]);
 
   auto output = sine(1000.0, 24000);

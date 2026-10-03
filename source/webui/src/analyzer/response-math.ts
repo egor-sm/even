@@ -1,10 +1,12 @@
 /**
  * One filter section as designed in C++ (dsp::Section). Its transfer function, with s normalized so
  * that s = j at the section's cutoff:
- *   H(s) = (lowpassMix + bandpassMix * s / q + highpassMix * s^2) / (s^2 + s / q + 1)
+ *   order 2: H(s) = (lowpassMix + bandpassMix * s / q + highpassMix * s^2) / (s^2 + s / q + 1)
+ *   order 1: H(s) = (lowpassMix + highpassMix * s) / (s + 1)
  * evaluated at s = j * tan(pi * f / sampleRate) / g (the bilinear-warped frequency).
  */
 export type Section = {
+  order: 1 | 2;
   g: number;
   q: number;
   lowpassMix: number;
@@ -16,10 +18,17 @@ export type Section = {
 const minMagnitudeSquared = 1e-30;
 
 /** |H|^2 of one section at the given warped frequency tan(pi * f / sampleRate). */
-const sectionMagnitudeSquared = ({ g, q, lowpassMix, bandpassMix, highpassMix }: Section, warped: number): number => {
+const sectionMagnitudeSquared = (
+  { order, g, q, lowpassMix, bandpassMix, highpassMix }: Section,
+  warped: number,
+): number => {
+  const w = warped / g;
+
+  // With s = j w: numerator = lowpassMix + j highpassMix w, denominator = 1 + j w.
+  if (order === 1) return (lowpassMix ** 2 + (highpassMix * w) ** 2) / (1 + w * w);
+
   // With s = j w: numerator = (lowpassMix - highpassMix w^2) + j (bandpassMix w / q),
   //               denominator = (1 - w^2) + j (w / q).
-  const w = warped / g;
   const numeratorReal = lowpassMix - highpassMix * w * w;
   const numeratorImaginary = (bandpassMix * w) / q;
   const denominatorReal = 1 - w * w;

@@ -15,6 +15,11 @@ double magnitudeDb(const BandDesign &design, double frequencyHz, double sampleRa
     const auto &section = design.sections[i];
     const std::complex<double> s{0.0, warped / section.g};
 
+    if (section.order == 1) {
+      magnitude *= std::abs((section.lowpassMix + section.highpassMix * s) / (s + 1.0));
+      continue;
+    }
+
     const auto numerator = section.lowpassMix + section.bandpassMix * s / section.q + section.highpassMix * s * s;
     const auto denominator = s * s + s / section.q + 1.0;
     magnitude *= std::abs(numerator / denominator);

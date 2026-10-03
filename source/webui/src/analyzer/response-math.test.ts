@@ -8,22 +8,30 @@ const warped = (hz: number) => Math.tan((Math.PI * hz) / sampleRate);
 
 const bell = (hz: number, gainDb: number, q: number): Section => {
   const gain = 10 ** (gainDb / 20);
-  return { g: warped(hz), q: q * Math.sqrt(gain), lowpassMix: 1, bandpassMix: gain, highpassMix: 1 };
+  return { order: 2, g: warped(hz), q: q * Math.sqrt(gain), lowpassMix: 1, bandpassMix: gain, highpassMix: 1 };
 };
 
 const lowShelf = (hz: number, gainDb: number, q: number): Section => {
   const gain = 10 ** (gainDb / 20);
-  return { g: warped(hz) / gain ** 0.25, q, lowpassMix: gain, bandpassMix: Math.sqrt(gain), highpassMix: 1 };
+  return { order: 2, g: warped(hz) / gain ** 0.25, q, lowpassMix: gain, bandpassMix: Math.sqrt(gain), highpassMix: 1 };
 };
 
 const lowCut = (hz: number, q: number): Section => ({
+  order: 2,
   g: warped(hz),
   q,
   lowpassMix: 0,
   bandpassMix: 0,
   highpassMix: 1,
 });
-const notch = (hz: number, q: number): Section => ({ g: warped(hz), q, lowpassMix: 1, bandpassMix: 0, highpassMix: 1 });
+const notch = (hz: number, q: number): Section => ({
+  order: 2,
+  g: warped(hz),
+  q,
+  lowpassMix: 1,
+  bandpassMix: 0,
+  highpassMix: 1,
+});
 
 describe('magnitudeDb', () => {
   it('gives the exact bell gain at its center, also close to Nyquist', () => {
@@ -39,6 +47,12 @@ describe('magnitudeDb', () => {
 
   it('gives -3 dB at the cutoff of a q = 0.707 cut', () => {
     expect(magnitudeDb([lowCut(80, Math.SQRT1_2)], 80, sampleRate)).toBeCloseTo(-3.0103, 3);
+  });
+
+  it('gives -3 dB at the cutoff and 6 dB/oct far below it for a one-pole cut', () => {
+    const onePole: Section = { order: 1, g: warped(2000), q: 1, lowpassMix: 0, bandpassMix: 0, highpassMix: 1 };
+    expect(magnitudeDb([onePole], 2000, sampleRate)).toBeCloseTo(-3.0103, 3);
+    expect(magnitudeDb([onePole], 40, sampleRate) - magnitudeDb([onePole], 20, sampleRate)).toBeCloseTo(6.02, 2);
   });
 
   it('adds sections in series in dB', () => {

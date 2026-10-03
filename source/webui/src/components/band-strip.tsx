@@ -21,8 +21,10 @@ export const BandStrip = ({ band }: BandStripProps) => {
   const frequency = useSliderParameter(id('Frequency'), 'logarithmic');
   const gain = useSliderParameter(id('Gain'));
   const q = useSliderParameter(id('Q'), 'logarithmic');
+  const slope = useChoiceParameter(id('Slope'));
 
   const shapeName = shape.choices[shape.index] ?? '';
+  const isCut = shapeName === 'Low Cut' || shapeName === 'High Cut';
 
   return (
     <div className="band-strip">
@@ -48,6 +50,16 @@ export const BandStrip = ({ band }: BandStripProps) => {
         disabled={!shapesWithGain.has(shapeName)}
       />
       <ParameterSlider label="Q" parameter={q} format={(value) => value.toFixed(2)} />
+      <label className="control" aria-disabled={!isCut}>
+        Slope
+        <select value={slope.index} disabled={!isCut} onChange={(event) => slope.setIndex(Number(event.target.value))}>
+          {slope.choices.map((choice, index) => (
+            <option key={choice} value={index}>
+              {choice}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 };

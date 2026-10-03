@@ -41,6 +41,7 @@ private:
     juce::WebSliderRelay frequency;
     juce::WebSliderRelay gain;
     juce::WebSliderRelay q;
+    juce::WebComboBoxRelay slope;
   };
 
   // Keeps a band's parameters and its relays in sync in both directions.
@@ -52,6 +53,7 @@ private:
     juce::WebSliderParameterAttachment frequency;
     juce::WebSliderParameterAttachment gain;
     juce::WebSliderParameterAttachment q;
+    juce::WebComboBoxParameterAttachment slope;
   };
 
   using BandRelayArray = std::array<std::unique_ptr<BandRelays>, parameters::numBands>;

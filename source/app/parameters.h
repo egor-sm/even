@@ -15,11 +15,15 @@ inline constexpr auto mute = "mute";
 inline constexpr int numBands = 1;
 
 // Per-band parameter IDs: "band1Frequency" etc., bands numbered from 1.
-enum class BandField : std::uint8_t { enabled, shape, frequency, gain, q };
+enum class BandField : std::uint8_t { enabled, shape, frequency, gain, q, slope };
 [[nodiscard]] juce::String bandId(int band, BandField field);
 
 // Choice order of the shape parameter; matches dsp::FilterShape.
 inline constexpr std::array shapeNames{"Bell", "Low Shelf", "High Shelf", "Low Cut", "High Cut", "Notch", "Band Pass"};
+
+// Choice order of the slope parameter (cuts only); matches dsp::cutSlopesDbPerOctave.
+inline constexpr std::array slopeNames{"6 dB/oct", "12 dB/oct", "18 dB/oct", "24 dB/oct", "36 dB/oct", "48 dB/oct"};
+inline constexpr int defaultSlopeIndex = 1; // 12 dB/oct
 
 // Ranges. Frequency and q use a true logarithmic mapping (each octave/ratio gets the same slider
 // travel); the web UI mirrors it in source/webui/src/juce/parameter-scales.ts.
@@ -45,6 +49,7 @@ private:
   std::atomic<float> &frequencyValue;
   std::atomic<float> &gainValue;
   std::atomic<float> &qValue;
+  std::atomic<float> &slopeValue;
 };
 
 } // namespace eqit::parameters

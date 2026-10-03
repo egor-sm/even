@@ -1,12 +1,14 @@
 #include "dsp/band_design.h"
 #include "dsp/band_response.h"
-#include "dsp/svf_section.h"
+#include "dsp/section_filter.h"
 #include "support/frequency_response.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <numbers>
@@ -20,8 +22,8 @@ namespace {
 
 constexpr double sampleRate = 48000.0;
 
-BandParameters band(FilterShape shape, double frequency, double gainDb, double q) {
-  return {.shape = shape, .frequencyHz = frequency, .gainDb = gainDb, .q = q};
+BandParameters band(FilterShape shape, double frequency, double gainDb, double q, int slope = 12) {
+  return {.shape = shape, .frequencyHz = frequency, .gainDb = gainDb, .q = q, .slopeDbPerOctave = slope};
 }
 
 // Analytic response of the design (what the UI will draw).
@@ -29,11 +31,20 @@ double designDb(const BandParameters &parameters, double frequency) {
   return eqit::dsp::magnitudeDb(eqit::dsp::design(parameters, sampleRate), frequency, sampleRate);
 }
 
-// Response measured by running a sine through the actual filter.
+// Response measured by running a sine through the actual filter sections in series.
 double measuredDb(const BandParameters &parameters, double frequency) {
-  eqit::dsp::SvfSection section;
-  section.setSection(eqit::dsp::design(parameters, sampleRate).sections[0]);
-  return eqit::test::measureGainDb([&](float x) { return section.process(x); }, frequency, sampleRate, 1.0);
+  const auto designed = eqit::dsp::design(parameters, sampleRate);
+  std::array<eqit::dsp::SectionFilter, eqit::dsp::BandDesign::maxSections> sections{};
+  for (std::size_t i = 0; i < designed.count; ++i)
+    sections[i].setSection(designed.sections[i]);
+
+  return eqit::test::measureGainDb(
+      [&](float x) {
+        for (std::size_t i = 0; i < designed.count; ++i)
+          x = sections[i].process(x);
+        return x;
+      },
+      frequency, sampleRate, 1.0);
 }
 
 std::vector<double> logFrequencies(double from, double to, int count) {
@@ -163,4 +174,65 @@ TEST_CASE("Shapes without gain ignore the gain parameter", "[dsp][band]") {
   for (const auto frequency : logFrequencies(20.0, 20000.0, 30))
     CHECK_THAT(designDb(band(shape, 1000.0, 12.0, 1.0), frequency),
                WithinAbs(designDb(band(shape, 1000.0, 0.0, 1.0), frequency), 1e-12));
+}
+
+TEST_CASE("Cuts: every slope is -3 dB at the cutoff with q = 0.707 (Butterworth)", "[dsp][band][cut]") {
+  const auto shape = GENERATE(FilterShape::lowCut, FilterShape::highCut);
+  const auto slope = GENERATE(6, 12, 18, 24, 36, 48);
+  const auto cutoff = GENERATE(100.0, 2000.0, 12000.0);
+  const auto parameters = band(shape, cutoff, 0.0, std::numbers::sqrt2 / 2.0, slope);
+
+  CHECK_THAT(designDb(parameters, cutoff), WithinAbs(-3.0103, 1e-6));
+  CHECK_THAT(measuredDb(parameters, cutoff), WithinAbs(-3.0103, 0.05));
+}
+
+TEST_CASE("Cuts: the slope far from the cutoff matches the setting", "[dsp][band][cut]") {
+  const auto slope = GENERATE(6, 12, 18, 24, 36, 48);
+  const auto q = std::numbers::sqrt2 / 2.0;
+
+  // "6 dB/oct" is rounded: doubling the frequency gives 20 * log10(2) = 6.02 dB per order.
+  const auto order = slope / 6;
+  const auto expected = order * 20.0 * std::log10(2.0);
+
+  // Six octaves into the stop band and one more octave: low orders approach their asymptote slowly.
+  const auto lowCut = band(FilterShape::lowCut, 8000.0, 0.0, q, slope);
+  CHECK_THAT(designDb(lowCut, 250.0) - designDb(lowCut, 125.0), WithinAbs(expected, 0.01));
+
+  const auto highCut = band(FilterShape::highCut, 50.0, 0.0, q, slope);
+  CHECK_THAT(designDb(highCut, 400.0) - designDb(highCut, 800.0), WithinAbs(expected, 0.3));
+}
+
+TEST_CASE("Cuts: Butterworth pass band is flat, larger q adds a resonant peak", "[dsp][band][cut]") {
+  const auto slope = GENERATE(12, 18, 24, 36, 48);
+
+  auto flatMax = -1e9;
+  auto resonantMax = -1e9;
+  for (const auto frequency : logFrequencies(20.0, 20000.0, 400)) {
+    flatMax =
+        std::max(flatMax, designDb(band(FilterShape::lowCut, 200.0, 0.0, std::numbers::sqrt2 / 2.0, slope), frequency));
+    resonantMax = std::max(resonantMax, designDb(band(FilterShape::lowCut, 200.0, 0.0, 2.0, slope), frequency));
+  }
+
+  CHECK(flatMax <= 1e-9);
+  CHECK(resonantMax > 3.0);
+}
+
+TEST_CASE("Cuts: 6 dB/oct has no resonance, q is ignored", "[dsp][band][cut]") {
+  for (const auto frequency : logFrequencies(20.0, 20000.0, 30))
+    CHECK_THAT(designDb(band(FilterShape::lowCut, 300.0, 0.0, 8.0, 6), frequency),
+               WithinAbs(designDb(band(FilterShape::lowCut, 300.0, 0.0, 0.707, 6), frequency), 1e-12));
+}
+
+TEST_CASE("Cuts: the cascade sounds exactly like the drawn response", "[dsp][band][cut]") {
+  const auto slope = GENERATE(6, 18, 48);
+  const auto parameters = band(FilterShape::highCut, 1500.0, 0.0, 1.2, slope);
+  const auto frequency = GENERATE(300.0, 1500.0, 2400.0);
+
+  CHECK_THAT(measuredDb(parameters, frequency), WithinAbs(designDb(parameters, frequency), 0.05));
+}
+
+TEST_CASE("sanitize: snaps the slope to a supported one", "[dsp][band][cut]") {
+  CHECK(eqit::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 30), sampleRate).slopeDbPerOctave == 24);
+  CHECK(eqit::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 100), sampleRate).slopeDbPerOctave == 48);
+  CHECK(eqit::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 0), sampleRate).slopeDbPerOctave == 6);
 }

@@ -9,8 +9,12 @@ namespace eqit::dsp {
 void OnePole::setCutoff(double cutoffHz, double sampleRate) noexcept {
   assert(cutoffHz > 0.0 && cutoffHz < sampleRate / 2.0);
 
-  const auto g = std::tan(std::numbers::pi * cutoffHz / sampleRate);
-  gain = static_cast<float>(g / (1.0 + g));
+  setCoefficient(std::tan(std::numbers::pi * cutoffHz / sampleRate));
+}
+
+void OnePole::setCoefficient(double prewarped) noexcept {
+  assert(prewarped > 0.0);
+  gain = static_cast<float>(prewarped / (1.0 + prewarped));
 }
 
 } // namespace eqit::dsp

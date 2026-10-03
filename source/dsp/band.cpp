@@ -23,9 +23,11 @@ void Band::prepare(double newSampleRate) noexcept {
 
   for (auto &voice : voices) {
     voice.shape = target.shape;
+    voice.slopeDbPerOctave = target.slopeDbPerOctave;
     voice.enabled = targetEnabled;
-    for (auto &section : voice.sections)
-      section.reset();
+    for (auto &cascade : voice.sections)
+      for (auto &section : cascade)
+        section.reset();
     updateCoefficients(voice, 0);
   }
 }
@@ -83,34 +85,46 @@ void Band::process(float *const *channels, int numChannels, int numSamples) noex
 void Band::startCrossfadeIfNeeded() noexcept {
   const auto &active = voices[static_cast<std::size_t>(activeVoice)];
 
-  if (crossfadeRemaining > 0 || (active.shape == target.shape && active.enabled == targetEnabled))
+  if (crossfadeRemaining > 0 || active.hasStructureOf(target, targetEnabled))
     return;
 
-  // The new state starts from the current filter memory when it was running, so shapes that share
-  // the same SVF settings (e.g. low cut -> notch) switch without any transient at all.
+  // The new structure starts from the current filter memory when it has the same layout of
+  // sections, so shapes that share SVF settings (e.g. low cut -> notch at 12 dB/oct) switch without
+  // any transient at all. A different layout (slope change) or a band switched on starts clean.
   auto &next = voices[static_cast<std::size_t>(1 - activeVoice)];
   next.sections = active.sections;
   next.shape = target.shape;
+  next.slopeDbPerOctave = target.slopeDbPerOctave;
   next.enabled = targetEnabled;
 
-  if (!active.enabled)
-    for (auto &section : next.sections)
-      section.reset();
+  const auto sameLayout = active.enabled && design(currentParameters(next), sampleRate).count == active.sectionCount;
+  if (!sameLayout)
+    for (auto &cascade : next.sections)
+      for (auto &section : cascade)
+        section.reset();
 
   activeVoice = 1 - activeVoice;
   crossfadeRemaining = crossfadeLength;
+}
+
+BandParameters Band::currentParameters(const Voice &voice) const noexcept {
+  return {.shape = voice.shape,
+          .frequencyHz = frequency.value(),
+          .gainDb = gain.value(),
+          .q = q.value(),
+          .slopeDbPerOctave = voice.slopeDbPerOctave};
 }
 
 void Band::updateCoefficients(Voice &voice, int rampSamples) noexcept {
   if (!voice.enabled)
     return;
 
-  const BandParameters current{
-      .shape = voice.shape, .frequencyHz = frequency.value(), .gainDb = gain.value(), .q = q.value()};
-  const auto section = design(current, sampleRate).sections[0];
+  const auto designed = design(currentParameters(voice), sampleRate);
+  voice.sectionCount = designed.count;
 
-  for (auto &channelSection : voice.sections)
-    channelSection.setSection(section, rampSamples);
+  for (auto &cascade : voice.sections)
+    for (std::size_t i = 0; i < designed.count; ++i)
+      cascade[i].setSection(designed.sections[i], rampSamples);
 }
 
 } // namespace eqit::dsp

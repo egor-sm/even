@@ -99,7 +99,8 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                   .withOptionsFrom(relays->shape)
                   .withOptionsFrom(relays->frequency)
                   .withOptionsFrom(relays->gain)
-                  .withOptionsFrom(relays->q);
+                  .withOptionsFrom(relays->q)
+                  .withOptionsFrom(relays->slope);
 
   return options;
 }
@@ -109,7 +110,8 @@ PluginEditor::BandRelays::BandRelays(int band)
       shape(parameters::bandId(band, parameters::BandField::shape)),
       frequency(parameters::bandId(band, parameters::BandField::frequency)),
       gain(parameters::bandId(band, parameters::BandField::gain)),
-      q(parameters::bandId(band, parameters::BandField::q)) {}
+      q(parameters::bandId(band, parameters::BandField::q)),
+      slope(parameters::bandId(band, parameters::BandField::slope)) {}
 
 PluginEditor::BandAttachments::BandAttachments(juce::AudioProcessorValueTreeState &state, int band, BandRelays &relays)
     : enabled(*state.getParameter(parameters::bandId(band, parameters::BandField::enabled)), relays.enabled, nullptr),
@@ -117,7 +119,8 @@ PluginEditor::BandAttachments::BandAttachments(juce::AudioProcessorValueTreeStat
       frequency(*state.getParameter(parameters::bandId(band, parameters::BandField::frequency)), relays.frequency,
                 nullptr),
       gain(*state.getParameter(parameters::bandId(band, parameters::BandField::gain)), relays.gain, nullptr),
-      q(*state.getParameter(parameters::bandId(band, parameters::BandField::q)), relays.q, nullptr) {}
+      q(*state.getParameter(parameters::bandId(band, parameters::BandField::q)), relays.q, nullptr),
+      slope(*state.getParameter(parameters::bandId(band, parameters::BandField::slope)), relays.slope, nullptr) {}
 
 PluginEditor::BandRelayArray PluginEditor::createBandRelays() {
   BandRelayArray relays;

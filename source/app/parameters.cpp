@@ -43,6 +43,8 @@ juce::String bandId(int band, BandField field) {
     return prefix + "Gain";
   case BandField::q:
     return prefix + "Q";
+  case BandField::slope:
+    return prefix + "Slope";
   }
 
   return prefix;
@@ -56,6 +58,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
   juce::StringArray shapes;
   for (const auto *name : shapeNames)
     shapes.add(name);
+
+  juce::StringArray slopes;
+  for (const auto *name : slopeNames)
+    slopes.add(name);
 
   for (int band = 1; band <= numBands; ++band) {
     const auto name = [band](const char *field) { return "Band " + juce::String{band} + " " + field; };
@@ -72,6 +78,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
         juce::AudioParameterFloatAttributes{}.withLabel("dB")));
     layout.add(
         std::make_unique<juce::AudioParameterFloat>(id(BandField::q), name("Q"), logarithmicRange(minQ, maxQ), 1.0f));
+    layout.add(
+        std::make_unique<juce::AudioParameterChoice>(id(BandField::slope), name("Slope"), slopes, defaultSlopeIndex));
   }
 
   return layout;
@@ -81,7 +89,8 @@ BandValues::BandValues(juce::AudioProcessorValueTreeState &state, int band)
     : enabledValue(rawValue(state, bandId(band, BandField::enabled))),
       shapeValue(rawValue(state, bandId(band, BandField::shape))),
       frequencyValue(rawValue(state, bandId(band, BandField::frequency))),
-      gainValue(rawValue(state, bandId(band, BandField::gain))), qValue(rawValue(state, bandId(band, BandField::q))) {}
+      gainValue(rawValue(state, bandId(band, BandField::gain))), qValue(rawValue(state, bandId(band, BandField::q))),
+      slopeValue(rawValue(state, bandId(band, BandField::slope))) {}
 
 bool BandValues::enabled() const noexcept {
   return enabledValue.load(std::memory_order_relaxed) >= 0.5f;
@@ -89,12 +98,15 @@ bool BandValues::enabled() const noexcept {
 
 dsp::BandParameters BandValues::parameters() const noexcept {
   const auto shapeIndex = static_cast<int>(shapeValue.load(std::memory_order_relaxed));
+  const auto slopeIndex = juce::jlimit(0, static_cast<int>(dsp::cutSlopesDbPerOctave.size()) - 1,
+                                       static_cast<int>(slopeValue.load(std::memory_order_relaxed)));
 
   return {
       .shape = static_cast<dsp::FilterShape>(juce::jlimit(0, static_cast<int>(shapeNames.size()) - 1, shapeIndex)),
       .frequencyHz = static_cast<double>(frequencyValue.load(std::memory_order_relaxed)),
       .gainDb = static_cast<double>(gainValue.load(std::memory_order_relaxed)),
       .q = static_cast<double>(qValue.load(std::memory_order_relaxed)),
+      .slopeDbPerOctave = dsp::cutSlopesDbPerOctave[static_cast<std::size_t>(slopeIndex)],
   };
 }
 

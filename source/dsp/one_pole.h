@@ -18,6 +18,9 @@ public:
   // Requires 0 < cutoffHz < sampleRate / 2.
   void setCutoff(double cutoffHz, double sampleRate) noexcept;
 
+  // Low-level form: `prewarped` is g = tan(pi * cutoff / sampleRate). Requires prewarped > 0.
+  void setCoefficient(double prewarped) noexcept;
+
   void reset() noexcept { state = 0.0f; }
 
   [[nodiscard]] Outputs process(float input) noexcept {

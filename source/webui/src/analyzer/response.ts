@@ -20,8 +20,8 @@ export type EqResponse = {
 
 const headerBytes = 16;
 const bandHeaderBytes = 40;
-const sectionBytes = 40;
-const supportedVersion = 2;
+const sectionBytes = 48;
+const supportedVersion = 3;
 
 /** Parses the packet produced by serializeResponse() (response_packet.h). */
 export const parseResponse = (buffer: ArrayBuffer): EqResponse | null => {
@@ -52,11 +52,12 @@ export const parseResponse = (buffer: ArrayBuffer): EqResponse | null => {
 
     for (let s = 0; s < sectionCount; s++, offset += sectionBytes)
       band.sections.push({
-        g: view.getFloat64(offset, true),
-        q: view.getFloat64(offset + 8, true),
-        lowpassMix: view.getFloat64(offset + 16, true),
-        bandpassMix: view.getFloat64(offset + 24, true),
-        highpassMix: view.getFloat64(offset + 32, true),
+        order: view.getUint32(offset, true) === 1 ? 1 : 2,
+        g: view.getFloat64(offset + 8, true),
+        q: view.getFloat64(offset + 16, true),
+        lowpassMix: view.getFloat64(offset + 24, true),
+        bandpassMix: view.getFloat64(offset + 32, true),
+        highpassMix: view.getFloat64(offset + 40, true),
       });
 
     bands.push(band);

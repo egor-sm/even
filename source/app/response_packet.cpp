@@ -11,7 +11,7 @@ namespace eqit {
 
 namespace {
 
-constexpr std::uint32_t formatVersion = 2;
+constexpr std::uint32_t formatVersion = 3;
 
 bool sameBits(double a, double b) noexcept {
   return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b);
@@ -32,7 +32,7 @@ bool isSameResponse(const ResponseState &a, const ResponseState &b) noexcept {
            const auto &p = x.parameters;
            const auto &q = y.parameters;
            return x.enabled == y.enabled && p.shape == q.shape && sameBits(p.frequencyHz, q.frequencyHz) &&
-                  sameBits(p.gainDb, q.gainDb) && sameBits(p.q, q.q);
+                  sameBits(p.gainDb, q.gainDb) && sameBits(p.q, q.q) && p.slopeDbPerOctave == q.slopeDbPerOctave;
          });
 }
 
@@ -66,6 +66,8 @@ std::vector<std::byte> serializeResponse(const ResponseState &state) {
 
     for (std::size_t s = 0; s < design.count; ++s) {
       const auto &section = design.sections[s];
+      appendBytes(bytes, static_cast<std::uint32_t>(section.order));
+      appendBytes(bytes, std::uint32_t{0});
       appendBytes(bytes, section.g);
       appendBytes(bytes, section.q);
       appendBytes(bytes, section.lowpassMix);

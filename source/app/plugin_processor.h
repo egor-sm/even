@@ -1,6 +1,11 @@
 #pragma once
 
+#include "analyzer/spectrum_analyzer.h"
+#include "test_signal.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
+
+#include <atomic>
 
 namespace eqit {
 
@@ -36,12 +41,20 @@ public:
   void setStateInformation(const void *data, int sizeInBytes) override;
 
   [[nodiscard]] juce::AudioProcessorValueTreeState &getState() { return state; }
+  [[nodiscard]] SpectrumAnalyzer &getAnalyzer() { return analyzer; }
+
+  // Replaces the input with a test signal (debug aid for the analyzer).
+  void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
 
 private:
   [[nodiscard]] static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
   juce::AudioProcessorValueTreeState state;
   std::atomic<float> &muteValue;
+
+  SpectrumAnalyzer analyzer;
+  TestSignal testSignal;
+  std::atomic<bool> testSignalEnabled{false};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

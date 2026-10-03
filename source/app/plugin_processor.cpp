@@ -17,7 +17,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
   return layout;
 }
 
-void PluginProcessor::prepareToPlay(double /*sampleRate*/, int /*samplesPerBlock*/) {}
+void PluginProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
+  analyzer.prepare(sampleRate);
+  testSignal.prepare(sampleRate);
+}
 
 void PluginProcessor::releaseResources() {}
 
@@ -32,6 +35,12 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 
   for (auto channel = getTotalNumInputChannels(); channel < getTotalNumOutputChannels(); ++channel)
     buffer.clear(channel, 0, buffer.getNumSamples());
+
+  if (testSignalEnabled.load(std::memory_order_relaxed))
+    testSignal.render(buffer);
+
+  // The analyzer shows the input spectrum, before any processing.
+  analyzer.pushMonoSum(buffer);
 
   if (muteValue.load(std::memory_order_relaxed) >= 0.5f)
     buffer.clear();

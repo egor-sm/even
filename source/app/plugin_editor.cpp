@@ -29,8 +29,16 @@ PluginEditor::PluginEditor(PluginProcessor &processorToUse)
   webView.goToURL(getDevServerUrl().value_or(juce::WebBrowserComponent::getResourceProviderRoot()));
 
   setResizable(true, true);
-  setResizeLimits(360, 240, 1600, 1200);
-  setSize(480, 320);
+  setResizeLimits(480, 320, 2400, 1600);
+  setSize(960, 540);
+
+  setAnalyzerActive(true);
+}
+
+PluginEditor::~PluginEditor() {
+  // Stop the analyzer first so no new updates are triggered while tearing down.
+  pluginProcessor.getAnalyzer().stop();
+  cancelPendingUpdate();
 }
 
 void PluginEditor::resized() {
@@ -60,7 +68,44 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
             info->setProperty("wrapper", juce::AudioProcessor::getWrapperTypeDescription(pluginProcessor.wrapperType));
             complete(juce::var{info.release()});
           })
-      .withResourceProvider([](const juce::String &url) { return findWebUiResource(url); }, allowedOrigin);
+      .withNativeFunction("setTestSignal",
+                          [this](const juce::Array<juce::var> &args, const auto &complete) {
+                            pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
+                            complete({});
+                          })
+      .withNativeFunction("setAnalyzerActive",
+                          [this](const juce::Array<juce::var> &args, const auto &complete) {
+                            setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
+                            complete({});
+                          })
+      .withResourceProvider([this](const juce::String &url) { return getResource(url); }, allowedOrigin);
+}
+
+std::optional<juce::WebBrowserComponent::Resource> PluginEditor::getResource(const juce::String &url) const {
+  // WebView2 passes the query string along; WKWebView does not.
+  return findWebUiResource(url.upToFirstOccurrenceOf("?", false, false));
+}
+
+void PluginEditor::setAnalyzerActive(bool active) {
+  auto &analyzer = pluginProcessor.getAnalyzer();
+
+  if (active) {
+    analyzer.start([this] { triggerAsyncUpdate(); });
+  } else {
+    analyzer.stop();
+    cancelPendingUpdate();
+  }
+}
+
+void PluginEditor::handleAsyncUpdate() {
+  if (!webView.isShowing())
+    return;
+
+  // One evaluateJavascript per frame: a single IPC round trip and no JSON encoding of the payload.
+  // Base64 needs no escaping inside a JS string literal.
+  const auto bytes = pluginProcessor.getAnalyzer().serializeLatestFrame();
+  webView.evaluateJavascript("window.eqitOnAnalyzerFrame?.(" + juce::String{juce::Time::currentTimeMillis()} + ",'" +
+                             juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
 }
 
 } // namespace eqit

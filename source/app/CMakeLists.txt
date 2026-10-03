@@ -11,11 +11,17 @@ juce_add_plugin(
   NEEDS_MIDI_OUTPUT FALSE
   COPY_PLUGIN_AFTER_BUILD FALSE
   NEEDS_WEB_BROWSER TRUE
-  NEEDS_WEBVIEW2 TRUE)
+  NEEDS_WEBVIEW2 TRUE
+  MICROPHONE_PERMISSION_ENABLED TRUE
+  MICROPHONE_PERMISSION_TEXT "Equalize It analyses the audio input in the standalone app.")
 
 target_sources(
   equalize_it
-  PRIVATE plugin_processor.cpp plugin_editor.cpp web_resources.cpp)
+  PRIVATE plugin_processor.cpp
+          plugin_editor.cpp
+          web_resources.cpp
+          test_signal.cpp
+          analyzer/spectrum_analyzer.cpp)
 
 target_compile_features(equalize_it PRIVATE cxx_std_23)
 
@@ -33,6 +39,7 @@ target_link_libraries(
   equalize_it
   PRIVATE eqit_webui_assets
           juce::juce_audio_utils
+          juce::juce_dsp
           juce::juce_gui_extra
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags
          juce::juce_recommended_warning_flags)

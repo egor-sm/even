@@ -1,5 +1,10 @@
 ---
-# bugprone-macro-parentheses is off: it fires on JucePlugin_* macros that JUCE passes on the command line.
+# Disabled checks that conflict with JUCE or DSP code:
+# - bugprone-macro-parentheses: fires on JucePlugin_* macros passed on the command line
+# - cppcoreguidelines-avoid-do-while: fires inside jassert
+# - cppcoreguidelines-pro-bounds-avoid-unchecked-container-access: .at() has no place in audio loops
+# - misc-multiple-inheritance: Component + Timer/Listener mixins are the JUCE idiom
+# - readability-math-missing-parentheses: too noisy for DSP formulas
 Checks: >
   -*,
   bugprone-*,
@@ -10,6 +15,8 @@ Checks: >
   concurrency-*,
   cppcoreguidelines-*,
   -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-vararg,
@@ -17,6 +24,7 @@ Checks: >
   -cppcoreguidelines-special-member-functions,
   misc-*,
   -misc-override-with-different-visibility,
+  -misc-multiple-inheritance,
   -misc-include-cleaner,
   -misc-non-private-member-variables-in-classes,
   -misc-use-anonymous-namespace,
@@ -27,6 +35,7 @@ Checks: >
   -portability-avoid-pragma-once,
   readability-*,
   -readability-magic-numbers,
+  -readability-math-missing-parentheses,
   -readability-identifier-length,
   -readability-braces-around-statements,
   -readability-implicit-bool-conversion,

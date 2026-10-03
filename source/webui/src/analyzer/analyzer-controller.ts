@@ -1,5 +1,6 @@
 import { decodeBase64Frame } from './frame';
-import { decodeBase64Response } from './response';
+import { PadInteraction } from './pad-interaction';
+import { decodeBase64Response, type EqResponse } from './response';
 import { Spectrum } from './spectrum';
 import { SpectrumView, type RendererKind } from './spectrum-view';
 import { AnalyzerStats } from './stats';
@@ -24,12 +25,22 @@ export class AnalyzerController {
 
   private readonly spectrum = new Spectrum();
   private readonly view: SpectrumView;
+  private readonly pad: PadInteraction;
+  private response: EqResponse | null = null;
+  private selectedBand = 1;
   private animationFrame: number | null = null;
   private lastRenderAt = 0;
 
-  constructor(container: HTMLElement, renderer: RendererKind) {
+  constructor(container: HTMLElement, renderer: RendererKind, onSelectBand: (band: number) => void) {
     this.view = new SpectrumView(container, this.requestRender);
     this.view.setRenderer(renderer);
+    this.pad = new PadInteraction(container, {
+      getScale: () => this.view.currentScale,
+      getResponse: () => this.response,
+      getSelectedBand: () => this.selectedBand,
+      selectBand: onSelectBand,
+      previewNode: (preview) => this.view.setNodePreview(preview),
+    });
     window.eqitOnAnalyzerFrame = this.onFrame;
     window.eqitOnResponse = this.onResponse;
   }
@@ -38,10 +49,16 @@ export class AnalyzerController {
     this.view.setRenderer(kind);
   }
 
+  setSelectedBand(band: number): void {
+    this.selectedBand = band;
+    this.view.setSelectedBand(band);
+  }
+
   dispose(): void {
     if (window.eqitOnAnalyzerFrame === this.onFrame) delete window.eqitOnAnalyzerFrame;
     if (window.eqitOnResponse === this.onResponse) delete window.eqitOnResponse;
     if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
+    this.pad.dispose();
     this.view.dispose();
   }
 
@@ -57,7 +74,10 @@ export class AnalyzerController {
 
   private readonly onResponse = (responseBase64: string): void => {
     const response = decodeBase64Response(responseBase64);
-    if (response !== null) this.view.setResponse(response);
+    if (response === null) return;
+
+    this.response = response;
+    this.view.setResponse(response);
   };
 
   private readonly requestRender = (): void => {

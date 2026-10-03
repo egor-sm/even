@@ -17,7 +17,7 @@ export const App = () => {
         <BandSelector selected={selectedBand} onSelect={setSelectedBand} />
         <BandStrip band={selectedBand} />
       </div>
-      <Analyzer renderer={renderer} />
+      <Analyzer renderer={renderer} selectedBand={selectedBand} onSelectBand={setSelectedBand} />
     </main>
   );
 };

@@ -122,7 +122,8 @@ select {
 }
 
 .value {
-  min-width: 3ch;
+  min-width: 7ch;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   color: #b8bdc9;
 }

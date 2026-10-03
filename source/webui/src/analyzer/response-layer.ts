@@ -1,4 +1,5 @@
 import { bandColor } from '../band-colors';
+import type { NodePreview } from './pad-interaction';
 import type { EqResponse } from './response';
 import { magnitudeDb } from './response-math';
 import type { SpectrumScale } from './scale';
@@ -26,6 +27,8 @@ export class ResponseLayer {
   private readonly context: CanvasRenderingContext2D;
   private response: EqResponse | null = null;
   private scale: SpectrumScale | null = null;
+  private selectedBand = 0;
+  private preview: NodePreview | null = null;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const context = canvas.getContext('2d');
@@ -42,6 +45,17 @@ export class ResponseLayer {
 
   setResponse(response: EqResponse): void {
     this.response = response;
+    this.draw();
+  }
+
+  setSelectedBand(band: number): void {
+    this.selectedBand = band;
+    this.draw();
+  }
+
+  /** A node being dragged is drawn at the pointer right away; the curve follows with the next response. */
+  setPreview(preview: NodePreview | null): void {
+    this.preview = preview;
     this.draw();
   }
 
@@ -90,8 +104,17 @@ export class ResponseLayer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const band of response.bands) {
-      const x = scale.x(band.frequencyHz);
-      const y = clampY(band.gainDb);
+      const preview = this.preview?.band === band.band ? this.preview.value : null;
+      const x = scale.x(preview?.frequencyHz ?? band.frequencyHz);
+      const y = clampY(preview?.gainDb ?? band.gainDb);
+
+      if (band.band === this.selectedBand) {
+        ctx.beginPath();
+        ctx.arc(x, y, 11 * pixelRatio, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#e6e8ee';
+        ctx.lineWidth = 1.5 * pixelRatio;
+        ctx.stroke();
+      }
 
       ctx.beginPath();
       ctx.arc(x, y, 8 * pixelRatio, 0, 2 * Math.PI);

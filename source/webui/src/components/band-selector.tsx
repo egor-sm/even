@@ -1,8 +1,6 @@
 import { bandColor } from '../band-colors';
+import { numBands } from '../juce/bands';
 import { useToggleParameter } from '../juce/use-toggle-parameter';
-
-// Must match parameters::numBands on the C++ side.
-const numBands = 12;
 
 type BandTabProps = {
   band: number;

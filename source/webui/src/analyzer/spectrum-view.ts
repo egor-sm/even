@@ -2,6 +2,7 @@ import { Canvas2DCurveRenderer } from './curve-canvas2d';
 import type { CurveRenderer } from './curve-renderer';
 import { WebGLCurveRenderer } from './curve-webgl';
 import { GridLayer } from './grid-layer';
+import type { NodePreview } from './pad-interaction';
 import type { EqResponse } from './response';
 import { ResponseLayer } from './response-layer';
 import { defaultRange, SpectrumScale } from './scale';
@@ -52,6 +53,18 @@ export class SpectrumView {
 
   setResponse(response: EqResponse): void {
     this.response.setResponse(response);
+  }
+
+  setSelectedBand(band: number): void {
+    this.response.setSelectedBand(band);
+  }
+
+  setNodePreview(preview: NodePreview | null): void {
+    this.response.setPreview(preview);
+  }
+
+  get currentScale(): SpectrumScale {
+    return this.scale;
   }
 
   setRenderer(kind: RendererKind): void {

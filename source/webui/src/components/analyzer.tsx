@@ -6,18 +6,23 @@ import { native } from '../juce/native';
 
 type AnalyzerProps = {
   renderer: RendererKind;
+  selectedBand: number;
+  onSelectBand: (band: number) => void;
 };
 
-export const Analyzer = ({ renderer }: AnalyzerProps) => {
+export const Analyzer = ({ renderer, selectedBand, onSelectBand }: AnalyzerProps) => {
   const containerRef = useRef<HTMLElement>(null);
   const controllerRef = useRef<AnalyzerController | null>(null);
   const [statsText, setStatsText] = useState('');
+  const onSelectBandRef = useRef(onSelectBand);
+  onSelectBandRef.current = onSelectBand;
 
   useEffect(() => {
     const container = containerRef.current;
     if (container === null) throw new Error('Analyzer container is not mounted');
 
-    const controller = new AnalyzerController(container, renderer);
+    // The controller outlives renders; route selection through a ref to always call the latest callback.
+    const controller = new AnalyzerController(container, renderer, (band) => onSelectBandRef.current(band));
     controllerRef.current = controller;
 
     // Stop the analyzer entirely while the page is hidden (window hidden, minimised or occluded).
@@ -45,6 +50,10 @@ export const Analyzer = ({ renderer }: AnalyzerProps) => {
   useEffect(() => {
     controllerRef.current?.setRenderer(renderer);
   }, [renderer]);
+
+  useEffect(() => {
+    controllerRef.current?.setSelectedBand(selectedBand);
+  }, [selectedBand]);
 
   return (
     <section ref={containerRef} className="analyzer">

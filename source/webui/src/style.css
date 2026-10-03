@@ -75,6 +75,12 @@ select {
   color: #fff;
 }
 
+.value {
+  min-width: 3ch;
+  font-variant-numeric: tabular-nums;
+  color: #b8bdc9;
+}
+
 .info {
   margin-left: auto;
   color: #8a90a0;

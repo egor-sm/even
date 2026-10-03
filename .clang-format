@@ -15,8 +15,8 @@ IncludeCategories:
   # Project headers
   - Regex: '^"'
     Priority: 1
-  # JUCE and generated JUCE headers
-  - Regex: '^<(juce_|webui_assets\.h)'
+  # JUCE, generated JUCE headers and other third-party libraries
+  - Regex: '^<(juce_|webui_assets\.h|catch2/)'
     Priority: 2
   # Standard library
   - Regex: '^<'

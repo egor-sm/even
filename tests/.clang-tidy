@@ -1,0 +1,5 @@
+---
+# Catch2 assertion macros expand into branches, which inflates cognitive complexity in test cases.
+InheritParentConfig: true
+Checks: >
+  -readability-function-cognitive-complexity

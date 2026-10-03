@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { RendererKind } from '../analyzer/spectrum-view';
 import { native } from '../juce/native';
 import { usePluginInfo } from '../juce/use-plugin-info';
+import { useSliderParameter } from '../juce/use-slider-parameter';
 import { useToggleParameter } from '../juce/use-toggle-parameter';
 
 type ToolbarProps = {
@@ -12,6 +13,7 @@ type ToolbarProps = {
 
 export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
   const [muted, setMuted] = useToggleParameter('mute');
+  const demoQ = useSliderParameter('demoQ');
   const [testSignal, setTestSignal] = useState(false);
   const [demoFilter, setDemoFilter] = useState('off');
   const [analyzerSource, setAnalyzerSource] = useState('input');
@@ -40,9 +42,27 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
           }}
         >
           <option value="off">Off</option>
-          <option value="lowCut">Low Cut 1 kHz</option>
-          <option value="highCut">High Cut 1 kHz</option>
+          <option value="lowCut6">Low Cut 6 dB/oct</option>
+          <option value="highCut6">High Cut 6 dB/oct</option>
+          <option value="lowCut12">Low Cut 12 dB/oct</option>
+          <option value="highCut12">High Cut 12 dB/oct</option>
+          <option value="bandPass">Band Pass</option>
         </select>
+        @ 1 kHz
+      </label>
+      <label className="control">
+        Q
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.001}
+          value={demoQ.normalised}
+          onPointerDown={demoQ.beginGesture}
+          onPointerUp={demoQ.endGesture}
+          onChange={(event) => demoQ.setNormalised(Number(event.target.value))}
+        />
+        <span className="value">{demoQ.value.toFixed(2)}</span>
       </label>
       <label className="control">
         Analyzer

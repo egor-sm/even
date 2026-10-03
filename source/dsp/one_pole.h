@@ -4,8 +4,7 @@ namespace eqit::dsp {
 
 // First-order (6 dB/oct) filter built with the topology-preserving transform (TPT):
 // the analog RC lowpass dy/dt = wc * (x - y) with its integrator replaced by a trapezoidal one
-// and the zero-delay feedback solved per sample. See Zavalishin, "The Art of VA Filter Design",
-// sections 2.1-2.8 and 3.7-3.10.
+// and the zero-delay feedback solved per sample.
 //
 // One instance processes one channel and produces lowpass and highpass outputs at once.
 class OnePole {

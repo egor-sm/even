@@ -34,7 +34,7 @@ double measureGainDb(Process process, double frequency, double sampleRate, doubl
 }
 
 // Maps a digital frequency to the analog one it corresponds to under the bilinear transform
-// with prewarping at `cutoff` (Zavalishin, eq. 3.8): returns s / wc on the imaginary axis.
+// with prewarping at `cutoff` (w_a T / 2 = tan(w_d T / 2)): returns s / wc on the imaginary axis.
 inline std::complex<double> warpedNormalizedS(double frequency, double cutoff, double sampleRate) {
   const auto pi = std::numbers::pi;
   return {0.0, std::tan(pi * frequency / sampleRate) / std::tan(pi * cutoff / sampleRate)};

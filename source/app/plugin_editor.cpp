@@ -23,7 +23,8 @@ std::optional<juce::String> getDevServerUrl() {
 
 PluginEditor::PluginEditor(PluginProcessor &processorToUse)
     : AudioProcessorEditor(processorToUse), pluginProcessor(processorToUse), webView(createWebViewOptions()),
-      muteAttachment(*pluginProcessor.getState().getParameter(parameter_ids::mute), muteRelay, nullptr) {
+      muteAttachment(*pluginProcessor.getState().getParameter(parameter_ids::mute), muteRelay, nullptr),
+      demoQAttachment(*pluginProcessor.getState().getParameter(parameter_ids::demoQ), demoQRelay, nullptr) {
   addAndMakeVisible(webView);
 
   webView.goToURL(getDevServerUrl().value_or(juce::WebBrowserComponent::getResourceProviderRoot()));
@@ -58,6 +59,7 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
           Options::WinWebView2{}.withUserDataFolder(juce::File::getSpecialLocation(juce::File::tempDirectory)))
       .withNativeIntegrationEnabled()
       .withOptionsFrom(muteRelay)
+      .withOptionsFrom(demoQRelay)
       .withNativeFunction(
           "getPluginInfo",
           [this](const juce::Array<juce::var> &, const auto &complete) {
@@ -78,10 +80,16 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                             const auto mode = args.isEmpty() ? juce::String{} : args[0].toString();
                             using DemoFilter = PluginProcessor::DemoFilter;
 
-                            if (mode == "lowCut")
-                              pluginProcessor.setDemoFilter(DemoFilter::lowCut);
-                            else if (mode == "highCut")
-                              pluginProcessor.setDemoFilter(DemoFilter::highCut);
+                            if (mode == "lowCut6")
+                              pluginProcessor.setDemoFilter(DemoFilter::lowCut6);
+                            else if (mode == "highCut6")
+                              pluginProcessor.setDemoFilter(DemoFilter::highCut6);
+                            else if (mode == "lowCut12")
+                              pluginProcessor.setDemoFilter(DemoFilter::lowCut12);
+                            else if (mode == "highCut12")
+                              pluginProcessor.setDemoFilter(DemoFilter::highCut12);
+                            else if (mode == "bandPass")
+                              pluginProcessor.setDemoFilter(DemoFilter::bandPass);
                             else
                               pluginProcessor.setDemoFilter(DemoFilter::off);
 

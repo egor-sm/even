@@ -2,6 +2,7 @@
 
 #include "analyzer/spectrum_analyzer.h"
 #include "dsp/one_pole.h"
+#include "dsp/svf.h"
 #include "test_signal.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -14,6 +15,7 @@ namespace eqit {
 
 namespace parameter_ids {
 inline constexpr auto mute = "mute";
+inline constexpr auto demoQ = "demoQ";
 } // namespace parameter_ids
 
 class PluginProcessor final : public juce::AudioProcessor {
@@ -49,8 +51,8 @@ public:
   // Replaces the input with a test signal (debug aid for the analyzer).
   void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
 
-  // Temporary scaffolding for the DSP learning steps: a fixed 1 kHz one-pole filter.
-  enum class DemoFilter : std::uint8_t { off, lowCut, highCut };
+  // Temporary scaffolding for the DSP learning steps: a fixed 1 kHz filter of a chosen kind.
+  enum class DemoFilter : std::uint8_t { off, lowCut6, highCut6, lowCut12, highCut12, bandPass };
   void setDemoFilter(DemoFilter filter) { demoFilter.store(filter); }
 
   // Whether the analyzer shows the input (before processing) or the output.
@@ -58,16 +60,19 @@ public:
 
 private:
   [[nodiscard]] static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+  void processDemoFilter(juce::AudioBuffer<float> &buffer, DemoFilter filter) noexcept;
 
   juce::AudioProcessorValueTreeState state;
   std::atomic<float> &muteValue;
+  std::atomic<float> &demoQValue;
 
   SpectrumAnalyzer analyzer;
   TestSignal testSignal;
   std::atomic<bool> testSignalEnabled{false};
 
   static constexpr double demoCutoffHz = 1000.0;
-  std::array<dsp::OnePole, 2> demoFilters;
+  std::array<dsp::OnePole, 2> demoOnePoles;
+  std::array<dsp::Svf, 2> demoSvfs;
   std::atomic<DemoFilter> demoFilter{DemoFilter::off};
   std::atomic<bool> analyzeOutput{false};
 

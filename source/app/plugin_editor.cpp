@@ -3,35 +3,12 @@
 #include "build_config.h"
 #include "web_resources.h"
 
-#include <array>
 #include <optional>
 #include <string_view>
-#include <utility>
 
 namespace eqit {
 
 namespace {
-
-// Shape names shared with the web UI; anything else (e.g. "off") means no shape.
-std::optional<dsp::FilterShape> parseFilterShape(const juce::String &name) {
-  using enum dsp::FilterShape;
-
-  static const std::array<std::pair<const char *, dsp::FilterShape>, 7> shapes{{
-      {"bell", bell},
-      {"lowShelf", lowShelf},
-      {"highShelf", highShelf},
-      {"lowCut", lowCut},
-      {"highCut", highCut},
-      {"notch", notch},
-      {"bandPass", bandPass},
-  }};
-
-  for (const auto &[shapeName, shape] : shapes)
-    if (name == shapeName)
-      return shape;
-
-  return std::nullopt;
-}
 
 std::optional<juce::String> getDevServerUrl() {
   constexpr auto url = build_config::webUiDevServerUrl;
@@ -46,9 +23,8 @@ std::optional<juce::String> getDevServerUrl() {
 
 PluginEditor::PluginEditor(PluginProcessor &processorToUse)
     : AudioProcessorEditor(processorToUse), pluginProcessor(processorToUse), webView(createWebViewOptions()),
-      muteAttachment(*pluginProcessor.getState().getParameter(parameter_ids::mute), muteRelay, nullptr),
-      demoQAttachment(*pluginProcessor.getState().getParameter(parameter_ids::demoQ), demoQRelay, nullptr),
-      demoGainAttachment(*pluginProcessor.getState().getParameter(parameter_ids::demoGain), demoGainRelay, nullptr) {
+      muteAttachment(*pluginProcessor.getState().getParameter(parameters::mute), muteRelay, nullptr),
+      bandAttachments(createBandAttachments()) {
   addAndMakeVisible(webView);
 
   webView.goToURL(getDevServerUrl().value_or(juce::WebBrowserComponent::getResourceProviderRoot()));
@@ -77,46 +53,78 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
   const auto allowedOrigin =
       getDevServerUrl().transform([](const juce::String &url) { return juce::URL{url}.getOrigin(); });
 
-  return Options{}
-      .withBackend(Options::Backend::webview2)
-      .withWinWebView2Options(
-          Options::WinWebView2{}.withUserDataFolder(juce::File::getSpecialLocation(juce::File::tempDirectory)))
-      .withNativeIntegrationEnabled()
-      .withOptionsFrom(muteRelay)
-      .withOptionsFrom(demoQRelay)
-      .withOptionsFrom(demoGainRelay)
-      .withNativeFunction(
-          "getPluginInfo",
-          [this](const juce::Array<juce::var> &, const auto &complete) {
-            auto info = std::make_unique<juce::DynamicObject>();
-            info->setProperty("name", pluginProcessor.getName());
-            info->setProperty("version", JucePlugin_VersionString);
-            info->setProperty("juceVersion", juce::SystemStats::getJUCEVersion());
-            info->setProperty("wrapper", juce::AudioProcessor::getWrapperTypeDescription(pluginProcessor.wrapperType));
-            complete(juce::var{info.release()});
-          })
-      .withNativeFunction("setTestSignal",
-                          [this](const juce::Array<juce::var> &args, const auto &complete) {
-                            pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
-                            complete({});
-                          })
-      .withNativeFunction("setDemoShape",
-                          [this](const juce::Array<juce::var> &args, const auto &complete) {
-                            const auto name = args.isEmpty() ? juce::String{} : args[0].toString();
-                            pluginProcessor.setDemoShape(parseFilterShape(name));
-                            complete({});
-                          })
-      .withNativeFunction("setAnalyzerSource",
-                          [this](const juce::Array<juce::var> &args, const auto &complete) {
-                            pluginProcessor.setAnalyzeOutput(!args.isEmpty() && args[0].toString() == "output");
-                            complete({});
-                          })
-      .withNativeFunction("setAnalyzerActive",
-                          [this](const juce::Array<juce::var> &args, const auto &complete) {
-                            setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
-                            complete({});
-                          })
-      .withResourceProvider([this](const juce::String &url) { return getResource(url); }, allowedOrigin);
+  auto options =
+      Options{}
+          .withBackend(Options::Backend::webview2)
+          .withWinWebView2Options(
+              Options::WinWebView2{}.withUserDataFolder(juce::File::getSpecialLocation(juce::File::tempDirectory)))
+          .withNativeIntegrationEnabled()
+          .withOptionsFrom(muteRelay)
+          .withNativeFunction("getPluginInfo",
+                              [this](const juce::Array<juce::var> &, const auto &complete) {
+                                auto info = std::make_unique<juce::DynamicObject>();
+                                info->setProperty("name", pluginProcessor.getName());
+                                info->setProperty("version", JucePlugin_VersionString);
+                                info->setProperty("juceVersion", juce::SystemStats::getJUCEVersion());
+                                info->setProperty("wrapper", juce::AudioProcessor::getWrapperTypeDescription(
+                                                                 pluginProcessor.wrapperType));
+                                complete(juce::var{info.release()});
+                              })
+          .withNativeFunction("setTestSignal",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
+                                complete({});
+                              })
+          .withNativeFunction("setAnalyzerSource",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                pluginProcessor.setAnalyzeOutput(!args.isEmpty() && args[0].toString() == "output");
+                                complete({});
+                              })
+          .withNativeFunction("setAnalyzerActive",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
+                                complete({});
+                              })
+          .withResourceProvider([this](const juce::String &url) { return getResource(url); }, allowedOrigin);
+
+  for (const auto &relays : bandRelays)
+    options = options.withOptionsFrom(relays->enabled)
+                  .withOptionsFrom(relays->shape)
+                  .withOptionsFrom(relays->frequency)
+                  .withOptionsFrom(relays->gain)
+                  .withOptionsFrom(relays->q);
+
+  return options;
+}
+
+PluginEditor::BandRelays::BandRelays(int band)
+    : enabled(parameters::bandId(band, parameters::BandField::enabled)),
+      shape(parameters::bandId(band, parameters::BandField::shape)),
+      frequency(parameters::bandId(band, parameters::BandField::frequency)),
+      gain(parameters::bandId(band, parameters::BandField::gain)),
+      q(parameters::bandId(band, parameters::BandField::q)) {}
+
+PluginEditor::BandAttachments::BandAttachments(juce::AudioProcessorValueTreeState &state, int band, BandRelays &relays)
+    : enabled(*state.getParameter(parameters::bandId(band, parameters::BandField::enabled)), relays.enabled, nullptr),
+      shape(*state.getParameter(parameters::bandId(band, parameters::BandField::shape)), relays.shape, nullptr),
+      frequency(*state.getParameter(parameters::bandId(band, parameters::BandField::frequency)), relays.frequency,
+                nullptr),
+      gain(*state.getParameter(parameters::bandId(band, parameters::BandField::gain)), relays.gain, nullptr),
+      q(*state.getParameter(parameters::bandId(band, parameters::BandField::q)), relays.q, nullptr) {}
+
+PluginEditor::BandRelayArray PluginEditor::createBandRelays() {
+  BandRelayArray relays;
+  for (std::size_t i = 0; i < relays.size(); ++i)
+    relays[i] = std::make_unique<BandRelays>(static_cast<int>(i) + 1);
+  return relays;
+}
+
+PluginEditor::BandAttachmentArray PluginEditor::createBandAttachments() {
+  BandAttachmentArray attachments;
+  for (std::size_t i = 0; i < attachments.size(); ++i)
+    attachments[i] =
+        std::make_unique<BandAttachments>(pluginProcessor.getState(), static_cast<int>(i) + 1, *bandRelays[i]);
+  return attachments;
 }
 
 std::optional<juce::WebBrowserComponent::Resource> PluginEditor::getResource(const juce::String &url) const {

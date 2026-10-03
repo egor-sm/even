@@ -1,23 +1,16 @@
 #pragma once
 
 #include "analyzer/spectrum_analyzer.h"
-#include "dsp/filter_shape.h"
-#include "dsp/svf_section.h"
+#include "dsp/band.h"
+#include "parameters.h"
 #include "test_signal.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <array>
 #include <atomic>
-#include <optional>
 
 namespace eqit {
-
-namespace parameter_ids {
-inline constexpr auto mute = "mute";
-inline constexpr auto demoQ = "demoQ";
-inline constexpr auto demoGain = "demoGain";
-} // namespace parameter_ids
 
 class PluginProcessor final : public juce::AudioProcessor {
 public:
@@ -52,30 +45,19 @@ public:
   // Replaces the input with a test signal (debug aid for the analyzer).
   void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
 
-  // Temporary scaffolding for the DSP learning steps: a single band at a fixed 1 kHz.
-  // nullopt disables it.
-  void setDemoShape(std::optional<dsp::FilterShape> shape);
-
   // Whether the analyzer shows the input (before processing) or the output.
   void setAnalyzeOutput(bool output) { analyzeOutput.store(output); }
 
 private:
-  [[nodiscard]] static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-  void processDemoBand(juce::AudioBuffer<float> &buffer, dsp::FilterShape shape) noexcept;
-
   juce::AudioProcessorValueTreeState state;
   std::atomic<float> &muteValue;
-  std::atomic<float> &demoQValue;
-  std::atomic<float> &demoGainValue;
+  std::array<parameters::BandValues, parameters::numBands> bandValues;
+  std::array<dsp::Band, parameters::numBands> bands;
 
   SpectrumAnalyzer analyzer;
   TestSignal testSignal;
   std::atomic<bool> testSignalEnabled{false};
 
-  static constexpr double demoCutoffHz = 1000.0;
-  std::array<dsp::SvfSection, 2> demoSections;
-  std::atomic<bool> demoEnabled{false};
-  std::atomic<dsp::FilterShape> demoShape{dsp::FilterShape::bell};
   std::atomic<bool> analyzeOutput{false};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)

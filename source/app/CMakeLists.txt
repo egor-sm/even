@@ -19,6 +19,7 @@ target_sources(
   equalize_it
   PRIVATE plugin_processor.cpp
           plugin_editor.cpp
+          parameters.cpp
           web_resources.cpp
           test_signal.cpp
           analyzer/spectrum_analyzer.cpp)

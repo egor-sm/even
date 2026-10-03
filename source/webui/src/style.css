@@ -32,6 +32,19 @@ body,
   font-size: 13px;
 }
 
+.band-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #262a33;
+  font-size: 13px;
+}
+
+.control[aria-disabled='true'] {
+  opacity: 0.4;
+}
+
 .title {
   margin: 0;
   font-size: 15px;

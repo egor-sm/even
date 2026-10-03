@@ -5,6 +5,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <array>
+#include <memory>
 #include <optional>
 
 namespace eqit {
@@ -25,18 +27,44 @@ private:
 
   void setAnalyzerActive(bool active);
 
+  // Web relays of one band, named after the parameter IDs. Relays are neither copyable nor movable.
+  struct BandRelays {
+    explicit BandRelays(int band);
+
+    juce::WebToggleButtonRelay enabled;
+    juce::WebComboBoxRelay shape;
+    juce::WebSliderRelay frequency;
+    juce::WebSliderRelay gain;
+    juce::WebSliderRelay q;
+  };
+
+  // Keeps a band's parameters and its relays in sync in both directions.
+  struct BandAttachments {
+    BandAttachments(juce::AudioProcessorValueTreeState &state, int band, BandRelays &relays);
+
+    juce::WebToggleButtonParameterAttachment enabled;
+    juce::WebComboBoxParameterAttachment shape;
+    juce::WebSliderParameterAttachment frequency;
+    juce::WebSliderParameterAttachment gain;
+    juce::WebSliderParameterAttachment q;
+  };
+
+  using BandRelayArray = std::array<std::unique_ptr<BandRelays>, parameters::numBands>;
+  using BandAttachmentArray = std::array<std::unique_ptr<BandAttachments>, parameters::numBands>;
+
+  [[nodiscard]] static BandRelayArray createBandRelays();
+  [[nodiscard]] BandAttachmentArray createBandAttachments();
+
   PluginProcessor &pluginProcessor;
 
   // Relays must outlive the web view and be constructed before it.
-  juce::WebToggleButtonRelay muteRelay{parameter_ids::mute};
-  juce::WebSliderRelay demoQRelay{parameter_ids::demoQ};
-  juce::WebSliderRelay demoGainRelay{parameter_ids::demoGain};
+  juce::WebToggleButtonRelay muteRelay{parameters::mute};
+  BandRelayArray bandRelays = createBandRelays();
 
   juce::WebBrowserComponent webView;
 
   juce::WebToggleButtonParameterAttachment muteAttachment;
-  juce::WebSliderParameterAttachment demoQAttachment;
-  juce::WebSliderParameterAttachment demoGainAttachment;
+  BandAttachmentArray bandAttachments;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

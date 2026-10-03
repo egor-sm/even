@@ -1,8 +1,10 @@
 import * as Juce from '@juce-framework/webview';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
+import { logarithmicFromNormalised, type ParameterScale } from './parameter-scales';
+
 export type SliderParameter = {
-  /** Value in the parameter's own units (NormalisableRange::convertFrom0to1 on the C++ side). */
+  /** Value in the parameter's own units (Hz, dB, ...). */
   value: number;
   /** Value in [0, 1]; what a slider control should move linearly. */
   normalised: number;
@@ -12,8 +14,8 @@ export type SliderParameter = {
   endGesture: () => void;
 };
 
-/** Binds to a WebSliderRelay on the C++ side. */
-export const useSliderParameter = (name: string): SliderParameter => {
+/** Binds to a WebSliderRelay on the C++ side. `scale` must match the parameter's C++ range. */
+export const useSliderParameter = (name: string, scale: ParameterScale = 'linear'): SliderParameter => {
   const state = useMemo(() => Juce.getSliderState(name), [name]);
 
   const subscribe = useCallback(
@@ -29,7 +31,11 @@ export const useSliderParameter = (name: string): SliderParameter => {
   );
 
   const normalised = useSyncExternalStore(subscribe, () => state.getNormalisedValue());
-  const value = useSyncExternalStore(subscribe, () => state.getScaledValue());
+  const value = useSyncExternalStore(subscribe, () =>
+    scale === 'logarithmic'
+      ? logarithmicFromNormalised(state.getNormalisedValue(), state.properties.start, state.properties.end)
+      : state.getScaledValue(),
+  );
 
   return {
     value,

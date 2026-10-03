@@ -2,7 +2,7 @@
 # Disabled checks that conflict with JUCE or DSP code:
 # - bugprone-macro-parentheses: fires on JucePlugin_* macros passed on the command line
 # - cppcoreguidelines-avoid-do-while: fires inside jassert
-# - cppcoreguidelines-pro-bounds-avoid-unchecked-container-access: .at() has no place in audio loops
+# - cppcoreguidelines-pro-bounds-avoid-unchecked-container-access, -constant-array-index: no .at() in audio loops
 # - misc-multiple-inheritance: Component + Timer/Listener mixins are the JUCE idiom
 # - readability-math-missing-parentheses: too noisy for DSP formulas
 Checks: >
@@ -17,6 +17,7 @@ Checks: >
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-avoid-do-while,
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-vararg,

@@ -13,6 +13,8 @@ type ToolbarProps = {
 export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
   const [muted, setMuted] = useToggleParameter('mute');
   const [testSignal, setTestSignal] = useState(false);
+  const [demoFilter, setDemoFilter] = useState('off');
+  const [analyzerSource, setAnalyzerSource] = useState('input');
   const info = usePluginInfo();
 
   return (
@@ -26,6 +28,33 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
         >
           <option value="webgl">WebGL</option>
           <option value="canvas2d">Canvas 2D</option>
+        </select>
+      </label>
+      <label className="control">
+        Filter
+        <select
+          value={demoFilter}
+          onChange={(event) => {
+            setDemoFilter(event.target.value);
+            void native.setDemoFilter(event.target.value);
+          }}
+        >
+          <option value="off">Off</option>
+          <option value="lowCut">Low Cut 1 kHz</option>
+          <option value="highCut">High Cut 1 kHz</option>
+        </select>
+      </label>
+      <label className="control">
+        Analyzer
+        <select
+          value={analyzerSource}
+          onChange={(event) => {
+            setAnalyzerSource(event.target.value);
+            void native.setAnalyzerSource(event.target.value);
+          }}
+        >
+          <option value="input">Input</option>
+          <option value="output">Output</option>
         </select>
       </label>
       <label className="control">

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "analyzer/spectrum_analyzer.h"
+#include "dsp/one_pole.h"
 #include "test_signal.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <array>
 #include <atomic>
+#include <cstdint>
 
 namespace eqit {
 
@@ -46,6 +49,13 @@ public:
   // Replaces the input with a test signal (debug aid for the analyzer).
   void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
 
+  // Temporary scaffolding for the DSP learning steps: a fixed 1 kHz one-pole filter.
+  enum class DemoFilter : std::uint8_t { off, lowCut, highCut };
+  void setDemoFilter(DemoFilter filter) { demoFilter.store(filter); }
+
+  // Whether the analyzer shows the input (before processing) or the output.
+  void setAnalyzeOutput(bool output) { analyzeOutput.store(output); }
+
 private:
   [[nodiscard]] static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
@@ -55,6 +65,11 @@ private:
   SpectrumAnalyzer analyzer;
   TestSignal testSignal;
   std::atomic<bool> testSignalEnabled{false};
+
+  static constexpr double demoCutoffHz = 1000.0;
+  std::array<dsp::OnePole, 2> demoFilters;
+  std::atomic<DemoFilter> demoFilter{DemoFilter::off};
+  std::atomic<bool> analyzeOutput{false};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

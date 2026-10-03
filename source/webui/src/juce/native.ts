@@ -5,4 +5,7 @@ export const native = {
   getPluginInfo: Juce.getNativeFunction('getPluginInfo'),
   setTestSignal: Juce.getNativeFunction('setTestSignal'),
   setAnalyzerActive: Juce.getNativeFunction('setAnalyzerActive'),
+  // Temporary scaffolding for the DSP learning steps.
+  setDemoFilter: Juce.getNativeFunction('setDemoFilter'),
+  setAnalyzerSource: Juce.getNativeFunction('setAnalyzerSource'),
 };

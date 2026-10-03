@@ -2,6 +2,8 @@
 
 #include "plugin_editor.h"
 
+#include <algorithm>
+
 namespace eqit {
 
 PluginProcessor::PluginProcessor()
@@ -20,6 +22,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
 void PluginProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
   analyzer.prepare(sampleRate);
   testSignal.prepare(sampleRate);
+
+  for (auto &filter : demoFilters) {
+    filter.setCutoff(demoCutoffHz, sampleRate);
+    filter.reset();
+  }
 }
 
 void PluginProcessor::releaseResources() {}
@@ -39,8 +46,28 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
   if (testSignalEnabled.load(std::memory_order_relaxed))
     testSignal.render(buffer);
 
-  // The analyzer shows the input spectrum, before any processing.
-  analyzer.pushMonoSum(buffer);
+  const auto showOutput = analyzeOutput.load(std::memory_order_relaxed);
+
+  if (!showOutput)
+    analyzer.pushMonoSum(buffer);
+
+  if (const auto filter = demoFilter.load(std::memory_order_relaxed); filter != DemoFilter::off) {
+    const auto numChannels = std::min(buffer.getNumChannels(), static_cast<int>(demoFilters.size()));
+
+    for (int channel = 0; channel < numChannels; ++channel) {
+      auto &channelFilter = demoFilters[static_cast<std::size_t>(channel)];
+      auto *samples = buffer.getWritePointer(channel);
+
+      for (int i = 0; i < buffer.getNumSamples(); ++i) {
+        const auto [lowpass, highpass] = channelFilter.process(samples[i]);
+        // Low Cut removes the lows (highpass output), High Cut removes the highs (lowpass output).
+        samples[i] = filter == DemoFilter::lowCut ? highpass : lowpass;
+      }
+    }
+  }
+
+  if (showOutput)
+    analyzer.pushMonoSum(buffer);
 
   if (muteValue.load(std::memory_order_relaxed) >= 0.5f)
     buffer.clear();

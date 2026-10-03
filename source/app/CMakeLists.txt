@@ -38,6 +38,7 @@ target_include_directories(equalize_it PRIVATE "${CMAKE_BINARY_DIR}/generated")
 target_link_libraries(
   equalize_it
   PRIVATE eqit_webui_assets
+          eqit::dsp
           juce::juce_audio_utils
           juce::juce_dsp
           juce::juce_gui_extra

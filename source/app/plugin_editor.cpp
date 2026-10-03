@@ -73,6 +73,25 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                             pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
                             complete({});
                           })
+      .withNativeFunction("setDemoFilter",
+                          [this](const juce::Array<juce::var> &args, const auto &complete) {
+                            const auto mode = args.isEmpty() ? juce::String{} : args[0].toString();
+                            using DemoFilter = PluginProcessor::DemoFilter;
+
+                            if (mode == "lowCut")
+                              pluginProcessor.setDemoFilter(DemoFilter::lowCut);
+                            else if (mode == "highCut")
+                              pluginProcessor.setDemoFilter(DemoFilter::highCut);
+                            else
+                              pluginProcessor.setDemoFilter(DemoFilter::off);
+
+                            complete({});
+                          })
+      .withNativeFunction("setAnalyzerSource",
+                          [this](const juce::Array<juce::var> &args, const auto &complete) {
+                            pluginProcessor.setAnalyzeOutput(!args.isEmpty() && args[0].toString() == "output");
+                            complete({});
+                          })
       .withNativeFunction("setAnalyzerActive",
                           [this](const juce::Array<juce::var> &args, const auto &complete) {
                             setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));

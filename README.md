@@ -74,6 +74,15 @@ cmake --build --preset release
 The web UI is built and embedded into the plugin automatically.
 Artefacts end up in `build/release/source/app/equalize_it_artefacts/Release`.
 
+### Tests
+
+DSP code (`source/dsp`) is covered by [Catch2](https://github.com/catchorg/Catch2) tests in `tests/`:
+
+```sh
+cmake --build --preset debug --target eqit_tests
+ctest --preset debug
+```
+
 ### UI development with hot reload
 
 ```sh
@@ -91,8 +100,10 @@ Then launch the Standalone app; changes in `source/webui/src` are applied withou
 ```
 source/
   app/      JUCE app built as VST3 / Standalone (processor, editor hosting the web view, web UI resources)
+  dsp/      Plain C++ DSP building blocks (no JUCE), unit-tested
   webui/    Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview
-cmake/      CMake helpers (CPM.cmake)
+tests/      Catch2 unit tests
+cmake/      CMake helpers (CPM.cmake, compiler warnings)
 scripts/    Formatting and linting helpers
 ```
 

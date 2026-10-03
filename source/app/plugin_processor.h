@@ -3,6 +3,7 @@
 #include "analyzer/spectrum_analyzer.h"
 #include "dsp/band.h"
 #include "parameters.h"
+#include "response_packet.h"
 #include "test_signal.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -44,6 +45,9 @@ public:
 
   // Replaces the input with a test signal (debug aid for the analyzer).
   void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
+
+  // Current band settings (target values), e.g. for drawing the EQ response.
+  [[nodiscard]] ResponseState getResponseState() const;
 
   // Whether the analyzer shows the input (before processing) or the output.
   void setAnalyzeOutput(bool output) { analyzeOutput.store(output); }

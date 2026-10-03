@@ -34,12 +34,14 @@ PluginEditor::PluginEditor(PluginProcessor &processorToUse)
   setSize(960, 540);
 
   setAnalyzerActive(true);
+  startTimerHz(60);
 }
 
 PluginEditor::~PluginEditor() {
   // Stop the analyzer first so no new updates are triggered while tearing down.
   pluginProcessor.getAnalyzer().stop();
   cancelPendingUpdate();
+  stopTimer();
 }
 
 void PluginEditor::resized() {
@@ -78,6 +80,11 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
           .withNativeFunction("setAnalyzerSource",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {
                                 pluginProcessor.setAnalyzeOutput(!args.isEmpty() && args[0].toString() == "output");
+                                complete({});
+                              })
+          .withNativeFunction("requestResponse",
+                              [this](const juce::Array<juce::var> &, const auto &complete) {
+                                lastSentResponse.reset(); // the next timer tick resends it
                                 complete({});
                               })
           .withNativeFunction("setAnalyzerActive",
@@ -152,6 +159,19 @@ void PluginEditor::handleAsyncUpdate() {
   const auto bytes = pluginProcessor.getAnalyzer().serializeLatestFrame();
   webView.evaluateJavascript("window.eqitOnAnalyzerFrame?.(" + juce::String{juce::Time::currentTimeMillis()} + ",'" +
                              juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
+}
+
+void PluginEditor::timerCallback() {
+  if (!webView.isShowing())
+    return;
+
+  const auto state = pluginProcessor.getResponseState();
+  if (lastSentResponse && isSameResponse(state, *lastSentResponse))
+    return;
+
+  const auto bytes = serializeResponse(state);
+  webView.evaluateJavascript("window.eqitOnResponse?.('" + juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
+  lastSentResponse = state;
 }
 
 } // namespace eqit

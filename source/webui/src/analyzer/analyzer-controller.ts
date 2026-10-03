@@ -1,4 +1,5 @@
 import { decodeBase64Frame } from './frame';
+import { decodeBase64Response } from './response';
 import { Spectrum } from './spectrum';
 import { SpectrumView, type RendererKind } from './spectrum-view';
 import { AnalyzerStats } from './stats';
@@ -7,6 +8,8 @@ declare global {
   interface Window {
     /** Called by C++ (PluginEditor::handleAsyncUpdate) via evaluateJavascript for every analyzer frame. */
     eqitOnAnalyzerFrame?: (sentAtMs: number, frameBase64: string) => void;
+    /** Called by C++ (PluginEditor::timerCallback) whenever the EQ response changes. */
+    eqitOnResponse?: (responseBase64: string) => void;
   }
 }
 
@@ -28,6 +31,7 @@ export class AnalyzerController {
     this.view = new SpectrumView(container, this.requestRender);
     this.view.setRenderer(renderer);
     window.eqitOnAnalyzerFrame = this.onFrame;
+    window.eqitOnResponse = this.onResponse;
   }
 
   setRenderer(kind: RendererKind): void {
@@ -36,6 +40,7 @@ export class AnalyzerController {
 
   dispose(): void {
     if (window.eqitOnAnalyzerFrame === this.onFrame) delete window.eqitOnAnalyzerFrame;
+    if (window.eqitOnResponse === this.onResponse) delete window.eqitOnResponse;
     if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
     this.view.dispose();
   }
@@ -48,6 +53,11 @@ export class AnalyzerController {
     this.spectrum.setFrame(frame);
     this.stats.onFrame(receivedAt, Date.now() - sentAtMs, frameBase64.length, performance.now() - receivedAt);
     this.requestRender();
+  };
+
+  private readonly onResponse = (responseBase64: string): void => {
+    const response = decodeBase64Response(responseBase64);
+    if (response !== null) this.view.setResponse(response);
   };
 
   private readonly requestRender = (): void => {

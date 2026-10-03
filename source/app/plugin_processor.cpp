@@ -57,6 +57,15 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
     buffer.clear();
 }
 
+ResponseState PluginProcessor::getResponseState() const {
+  ResponseState result{.sampleRate = getSampleRate()};
+
+  for (std::size_t i = 0; i < bandValues.size(); ++i)
+    result.bands[i] = {.enabled = bandValues[i].enabled(), .parameters = bandValues[i].parameters()};
+
+  return result;
+}
+
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {
   return new PluginEditor(*this);
 }

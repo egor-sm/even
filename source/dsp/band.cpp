@@ -5,14 +5,6 @@
 
 namespace eqit::dsp {
 
-namespace {
-
-constexpr double minFrequencyHz = 10.0;
-constexpr double maxFrequencyRatio = 0.49; // of the sample rate, safely below Nyquist
-constexpr double minQ = 0.01;
-
-} // namespace
-
 void Band::prepare(double newSampleRate) noexcept {
   sampleRate = newSampleRate;
 
@@ -39,9 +31,7 @@ void Band::prepare(double newSampleRate) noexcept {
 }
 
 void Band::setTarget(const BandParameters &parameters, bool enabled) noexcept {
-  target = parameters;
-  target.frequencyHz = std::clamp(parameters.frequencyHz, minFrequencyHz, maxFrequencyRatio * sampleRate);
-  target.q = std::max(parameters.q, minQ);
+  target = sanitize(parameters, sampleRate);
   targetEnabled = enabled;
 
   frequency.setTarget(target.frequencyHz);

@@ -21,7 +21,12 @@ export const Analyzer = ({ renderer }: AnalyzerProps) => {
     controllerRef.current = controller;
 
     // Stop the analyzer entirely while the page is hidden (window hidden, minimised or occluded).
-    const syncActivity = () => void native.setAnalyzerActive(document.visibilityState === 'visible');
+    const syncActivity = () => {
+      const visible = document.visibilityState === 'visible';
+      void native.setAnalyzerActive(visible);
+      // The EQ response is only sent while the page is visible: ask for it again when it shows up.
+      if (visible) void native.requestResponse();
+    };
     document.addEventListener('visibilitychange', syncActivity);
     syncActivity();
 

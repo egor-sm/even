@@ -4,8 +4,9 @@
 
 namespace eqit::dsp {
 
-// Exact magnitude response of a designed band at `frequencyHz`, in dB. Evaluates each section's
-// transfer function at the bilinear-warped frequency; this is also what the UI draws.
+// Exact magnitude response of a designed band at `frequencyHz`, in dB (floored at -300 dB).
+// Evaluates each section's transfer function at the bilinear-warped frequency.
+// Requires 0 < frequencyHz < sampleRate / 2.
 [[nodiscard]] double magnitudeDb(const BandDesign &design, double frequencyHz, double sampleRate) noexcept;
 
 } // namespace eqit::dsp

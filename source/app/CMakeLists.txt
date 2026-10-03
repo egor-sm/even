@@ -20,6 +20,7 @@ target_sources(
   PRIVATE plugin_processor.cpp
           plugin_editor.cpp
           parameters.cpp
+          response_packet.cpp
           web_resources.cpp
           test_signal.cpp
           analyzer/spectrum_analyzer.cpp)

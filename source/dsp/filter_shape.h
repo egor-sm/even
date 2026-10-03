@@ -26,4 +26,8 @@ struct BandParameters {
   double q = 0.707;
 };
 
+// Clamps the frequency safely below Nyquist (and above a few Hz) and q above zero, so that any
+// user or host value can be designed and processed.
+[[nodiscard]] BandParameters sanitize(BandParameters parameters, double sampleRate) noexcept;
+
 } // namespace eqit::dsp

@@ -1,5 +1,6 @@
 #include "dsp/band_design.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <numbers>
@@ -47,6 +48,16 @@ Section designSection(const BandParameters &parameters, double sampleRate) noexc
 }
 
 } // namespace
+
+BandParameters sanitize(BandParameters parameters, double sampleRate) noexcept {
+  constexpr double minFrequencyHz = 10.0;
+  constexpr double maxFrequencyRatio = 0.49; // of the sample rate
+  constexpr double minQ = 0.01;
+
+  parameters.frequencyHz = std::clamp(parameters.frequencyHz, minFrequencyHz, maxFrequencyRatio * sampleRate);
+  parameters.q = std::max(parameters.q, minQ);
+  return parameters;
+}
 
 BandDesign design(const BandParameters &parameters, double sampleRate) noexcept {
   assert(parameters.frequencyHz > 0.0 && parameters.frequencyHz < sampleRate / 2.0);

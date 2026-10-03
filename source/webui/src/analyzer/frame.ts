@@ -35,11 +35,12 @@ export const parseBinaryFrame = (buffer: ArrayBuffer): AnalyzerFrame | null => {
   };
 };
 
-/** Decodes a frame that C++ passed as base64 via evaluateJavascript. */
-export const decodeBase64Frame = (base64: string): AnalyzerFrame | null => {
+/** Decodes binary data that C++ passed as base64 via evaluateJavascript. */
+export const decodeBase64 = (base64: string): ArrayBuffer => {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
-  return parseBinaryFrame(bytes.buffer);
+  return bytes.buffer;
 };
+
+export const decodeBase64Frame = (base64: string): AnalyzerFrame | null => parseBinaryFrame(decodeBase64(base64));

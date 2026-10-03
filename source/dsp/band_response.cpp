@@ -1,5 +1,6 @@
 #include "dsp/band_response.h"
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <numbers>
@@ -19,7 +20,8 @@ double magnitudeDb(const BandDesign &design, double frequencyHz, double sampleRa
     magnitude *= std::abs(numerator / denominator);
   }
 
-  return 20.0 * std::log10(magnitude);
+  // A notch reaches exactly zero at its center; floor it instead of returning -infinity.
+  return 20.0 * std::log10(std::max(magnitude, 1e-15));
 }
 
 } // namespace eqit::dsp

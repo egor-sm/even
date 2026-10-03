@@ -2,6 +2,8 @@ import { Canvas2DCurveRenderer } from './curve-canvas2d';
 import type { CurveRenderer } from './curve-renderer';
 import { WebGLCurveRenderer } from './curve-webgl';
 import { GridLayer } from './grid-layer';
+import type { EqResponse } from './response';
+import { ResponseLayer } from './response-layer';
 import { defaultRange, SpectrumScale } from './scale';
 
 export type RendererKind = 'canvas2d' | 'webgl';
@@ -12,10 +14,14 @@ const createCurveCanvas = (): HTMLCanvasElement => {
   return canvas;
 };
 
-/** Stacks the static grid layer and a swappable curve layer inside a container element. */
+/**
+ * Stacks the layers inside a container element, bottom to top: static grid, analyzer curve
+ * (swappable renderer) and the EQ response overlay.
+ */
 export class SpectrumView {
   private readonly grid: GridLayer;
   private curve: CurveRenderer;
+  private readonly response: ResponseLayer;
   private scale = new SpectrumScale(defaultRange, 0, 0);
   private readonly resizeObserver = new ResizeObserver(() => this.resize());
 
@@ -29,6 +35,9 @@ export class SpectrumView {
     this.curve = new Canvas2DCurveRenderer(createCurveCanvas());
     this.container.append(this.curve.canvas);
 
+    this.response = new ResponseLayer(createCurveCanvas());
+    this.container.append(this.response.canvas);
+
     this.resizeObserver.observe(container);
     this.resize();
   }
@@ -38,6 +47,11 @@ export class SpectrumView {
     this.curve.dispose();
     this.curve.canvas.remove();
     this.grid.canvas.remove();
+    this.response.canvas.remove();
+  }
+
+  setResponse(response: EqResponse): void {
+    this.response.setResponse(response);
   }
 
   setRenderer(kind: RendererKind): void {
@@ -47,7 +61,7 @@ export class SpectrumView {
     // A canvas cannot switch context types, so each renderer gets a fresh one.
     const canvas = createCurveCanvas();
     this.curve = kind === 'webgl' ? new WebGLCurveRenderer(canvas) : new Canvas2DCurveRenderer(canvas);
-    this.container.append(canvas);
+    this.response.canvas.before(canvas); // keep the EQ overlay on top
     this.curve.resize(this.scale);
     this.onResize();
   }
@@ -66,6 +80,7 @@ export class SpectrumView {
 
     this.grid.draw(this.scale);
     this.curve.resize(this.scale);
+    this.response.resize(this.scale);
     this.onResize();
   }
 }

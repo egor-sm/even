@@ -11,7 +11,7 @@
 
 namespace eqit {
 
-class PluginEditor final : public juce::AudioProcessorEditor, private juce::AsyncUpdater {
+class PluginEditor final : public juce::AudioProcessorEditor, private juce::AsyncUpdater, private juce::Timer {
 public:
   explicit PluginEditor(PluginProcessor &processor);
   ~PluginEditor() override;
@@ -26,6 +26,11 @@ private:
   void handleAsyncUpdate() override;
 
   void setAnalyzerActive(bool active);
+
+  // Polls the band parameters on the message thread and sends the EQ response curves to the page
+  // when they change. Polling keeps the audio thread out of it: parameter listeners would be called
+  // there during host automation.
+  void timerCallback() override;
 
   // Web relays of one band, named after the parameter IDs. Relays are neither copyable nor movable.
   struct BandRelays {
@@ -65,6 +70,8 @@ private:
 
   juce::WebToggleButtonParameterAttachment muteAttachment;
   BandAttachmentArray bandAttachments;
+
+  std::optional<ResponseState> lastSentResponse;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

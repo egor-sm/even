@@ -1,6 +1,8 @@
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+  plugins: [react()],
   // Assets are served by the app's ResourceProvider, so keep URLs relative.
   base: './',
   server: {
@@ -16,6 +18,7 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: ['dist/**'],
+    plugins: ['typescript', 'unicorn', 'oxc', 'react', 'jsx-a11y'],
     categories: {
       correctness: 'error',
       suspicious: 'error',
@@ -24,6 +27,8 @@ export default defineConfig({
     jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
     rules: {
       'vite-plus/prefer-vite-plus-imports': 'error',
+      // Not needed with the automatic JSX runtime (React 17+).
+      'react/react-in-jsx-scope': 'off',
     },
     options: {
       typeAware: true,

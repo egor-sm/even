@@ -6,24 +6,7 @@
     <title>Equalize It</title>
   </head>
   <body>
-    <main class="app">
-      <header class="toolbar">
-        <h1 class="title">Equalize It</h1>
-        <label class="control">
-          Renderer
-          <select id="renderer">
-            <option value="webgl">WebGL</option>
-            <option value="canvas2d">Canvas 2D</option>
-          </select>
-        </label>
-        <label class="control"><input id="test-signal" type="checkbox" /> Test signal</label>
-        <button id="mute" class="mute" type="button" aria-pressed="false">Mute</button>
-        <span id="info" class="info">Connecting to plugin…</span>
-      </header>
-      <section id="analyzer" class="analyzer">
-        <pre id="stats" class="stats"></pre>
-      </section>
-    </main>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

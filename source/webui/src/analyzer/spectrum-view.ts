@@ -17,6 +17,7 @@ export class SpectrumView {
   private readonly grid: GridLayer;
   private curve: CurveRenderer;
   private scale = new SpectrumScale(defaultRange, 0, 0);
+  private readonly resizeObserver = new ResizeObserver(() => this.resize());
 
   constructor(
     private readonly container: HTMLElement,
@@ -28,8 +29,15 @@ export class SpectrumView {
     this.curve = new Canvas2DCurveRenderer(createCurveCanvas());
     this.container.append(this.curve.canvas);
 
-    new ResizeObserver(() => this.resize()).observe(container);
+    this.resizeObserver.observe(container);
     this.resize();
+  }
+
+  dispose(): void {
+    this.resizeObserver.disconnect();
+    this.curve.dispose();
+    this.curve.canvas.remove();
+    this.grid.canvas.remove();
   }
 
   setRenderer(kind: RendererKind): void {

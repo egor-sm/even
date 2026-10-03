@@ -22,6 +22,10 @@ public:
   // height q at the cutoff. Requires 0 < cutoffHz < sampleRate / 2 and q > 0.
   void setParameters(double cutoffHz, double q, double sampleRate) noexcept;
 
+  // Low-level form: `prewarped` is the integrator gain g = tan(pi * cutoff / sampleRate).
+  // Requires prewarped > 0 and q > 0.
+  void setCoefficients(double prewarped, double q) noexcept;
+
   void reset() noexcept { state1 = state2 = 0.0f; }
 
   // 2R = 1 / q: scales the bandpass output to unity gain at the cutoff.

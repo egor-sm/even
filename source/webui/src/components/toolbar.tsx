@@ -5,6 +5,7 @@ import { native } from '../juce/native';
 import { usePluginInfo } from '../juce/use-plugin-info';
 import { useSliderParameter } from '../juce/use-slider-parameter';
 import { useToggleParameter } from '../juce/use-toggle-parameter';
+import { ParameterSlider } from './parameter-slider';
 
 type ToolbarProps = {
   renderer: RendererKind;
@@ -14,8 +15,9 @@ type ToolbarProps = {
 export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
   const [muted, setMuted] = useToggleParameter('mute');
   const demoQ = useSliderParameter('demoQ');
+  const demoGain = useSliderParameter('demoGain');
   const [testSignal, setTestSignal] = useState(false);
-  const [demoFilter, setDemoFilter] = useState('off');
+  const [demoShape, setDemoShape] = useState('off');
   const [analyzerSource, setAnalyzerSource] = useState('input');
   const info = usePluginInfo();
 
@@ -33,37 +35,27 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
         </select>
       </label>
       <label className="control">
-        Filter
+        Band
         <select
-          value={demoFilter}
+          value={demoShape}
           onChange={(event) => {
-            setDemoFilter(event.target.value);
-            void native.setDemoFilter(event.target.value);
+            setDemoShape(event.target.value);
+            void native.setDemoShape(event.target.value);
           }}
         >
           <option value="off">Off</option>
-          <option value="lowCut6">Low Cut 6 dB/oct</option>
-          <option value="highCut6">High Cut 6 dB/oct</option>
-          <option value="lowCut12">Low Cut 12 dB/oct</option>
-          <option value="highCut12">High Cut 12 dB/oct</option>
+          <option value="bell">Bell</option>
+          <option value="lowShelf">Low Shelf</option>
+          <option value="highShelf">High Shelf</option>
+          <option value="lowCut">Low Cut</option>
+          <option value="highCut">High Cut</option>
+          <option value="notch">Notch</option>
           <option value="bandPass">Band Pass</option>
         </select>
         @ 1 kHz
       </label>
-      <label className="control">
-        Q
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.001}
-          value={demoQ.normalised}
-          onPointerDown={demoQ.beginGesture}
-          onPointerUp={demoQ.endGesture}
-          onChange={(event) => demoQ.setNormalised(Number(event.target.value))}
-        />
-        <span className="value">{demoQ.value.toFixed(2)}</span>
-      </label>
+      <ParameterSlider label="Gain" parameter={demoGain} format={(value) => `${value.toFixed(1)} dB`} />
+      <ParameterSlider label="Q" parameter={demoQ} format={(value) => value.toFixed(2)} />
       <label className="control">
         Analyzer
         <select

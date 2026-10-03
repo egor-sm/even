@@ -8,7 +8,7 @@ CPMAddPackage(
 list(APPEND CMAKE_MODULE_PATH "${Catch2_SOURCE_DIR}/extras")
 include(Catch)
 
-add_executable(eqit_tests dsp/one_pole_test.cpp dsp/svf_test.cpp)
+add_executable(eqit_tests dsp/one_pole_test.cpp dsp/svf_test.cpp dsp/band_design_test.cpp)
 
 target_include_directories(eqit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(eqit_tests PRIVATE eqit::dsp Catch2::Catch2WithMain eqit_warnings)

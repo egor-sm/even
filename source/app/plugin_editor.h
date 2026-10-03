@@ -30,11 +30,13 @@ private:
   // Relays must outlive the web view and be constructed before it.
   juce::WebToggleButtonRelay muteRelay{parameter_ids::mute};
   juce::WebSliderRelay demoQRelay{parameter_ids::demoQ};
+  juce::WebSliderRelay demoGainRelay{parameter_ids::demoGain};
 
   juce::WebBrowserComponent webView;
 
   juce::WebToggleButtonParameterAttachment muteAttachment;
   juce::WebSliderParameterAttachment demoQAttachment;
+  juce::WebSliderParameterAttachment demoGainAttachment;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

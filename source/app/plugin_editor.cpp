@@ -3,12 +3,35 @@
 #include "build_config.h"
 #include "web_resources.h"
 
+#include <array>
 #include <optional>
 #include <string_view>
+#include <utility>
 
 namespace eqit {
 
 namespace {
+
+// Shape names shared with the web UI; anything else (e.g. "off") means no shape.
+std::optional<dsp::FilterShape> parseFilterShape(const juce::String &name) {
+  using enum dsp::FilterShape;
+
+  static const std::array<std::pair<const char *, dsp::FilterShape>, 7> shapes{{
+      {"bell", bell},
+      {"lowShelf", lowShelf},
+      {"highShelf", highShelf},
+      {"lowCut", lowCut},
+      {"highCut", highCut},
+      {"notch", notch},
+      {"bandPass", bandPass},
+  }};
+
+  for (const auto &[shapeName, shape] : shapes)
+    if (name == shapeName)
+      return shape;
+
+  return std::nullopt;
+}
 
 std::optional<juce::String> getDevServerUrl() {
   constexpr auto url = build_config::webUiDevServerUrl;
@@ -24,7 +47,8 @@ std::optional<juce::String> getDevServerUrl() {
 PluginEditor::PluginEditor(PluginProcessor &processorToUse)
     : AudioProcessorEditor(processorToUse), pluginProcessor(processorToUse), webView(createWebViewOptions()),
       muteAttachment(*pluginProcessor.getState().getParameter(parameter_ids::mute), muteRelay, nullptr),
-      demoQAttachment(*pluginProcessor.getState().getParameter(parameter_ids::demoQ), demoQRelay, nullptr) {
+      demoQAttachment(*pluginProcessor.getState().getParameter(parameter_ids::demoQ), demoQRelay, nullptr),
+      demoGainAttachment(*pluginProcessor.getState().getParameter(parameter_ids::demoGain), demoGainRelay, nullptr) {
   addAndMakeVisible(webView);
 
   webView.goToURL(getDevServerUrl().value_or(juce::WebBrowserComponent::getResourceProviderRoot()));
@@ -60,6 +84,7 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
       .withNativeIntegrationEnabled()
       .withOptionsFrom(muteRelay)
       .withOptionsFrom(demoQRelay)
+      .withOptionsFrom(demoGainRelay)
       .withNativeFunction(
           "getPluginInfo",
           [this](const juce::Array<juce::var> &, const auto &complete) {
@@ -75,24 +100,10 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                             pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
                             complete({});
                           })
-      .withNativeFunction("setDemoFilter",
+      .withNativeFunction("setDemoShape",
                           [this](const juce::Array<juce::var> &args, const auto &complete) {
-                            const auto mode = args.isEmpty() ? juce::String{} : args[0].toString();
-                            using DemoFilter = PluginProcessor::DemoFilter;
-
-                            if (mode == "lowCut6")
-                              pluginProcessor.setDemoFilter(DemoFilter::lowCut6);
-                            else if (mode == "highCut6")
-                              pluginProcessor.setDemoFilter(DemoFilter::highCut6);
-                            else if (mode == "lowCut12")
-                              pluginProcessor.setDemoFilter(DemoFilter::lowCut12);
-                            else if (mode == "highCut12")
-                              pluginProcessor.setDemoFilter(DemoFilter::highCut12);
-                            else if (mode == "bandPass")
-                              pluginProcessor.setDemoFilter(DemoFilter::bandPass);
-                            else
-                              pluginProcessor.setDemoFilter(DemoFilter::off);
-
+                            const auto name = args.isEmpty() ? juce::String{} : args[0].toString();
+                            pluginProcessor.setDemoShape(parseFilterShape(name));
                             complete({});
                           })
       .withNativeFunction("setAnalyzerSource",

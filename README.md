@@ -19,14 +19,8 @@
       <li><a href="#built-with">Built With</a></li>
     </ul>
   </li>
-  <li>
-    <a href="#getting-started">Getting Started</a>
-    <ul>
-      <li><a href="#prerequisites">Prerequisites</a></li>
-      <li><a href="#installation">Installation</a></li>
-    </ul>
-  </li>
-  <li><a href="#usage">Usage</a></li>
+  <li><a href="#how-to-build">How to build</a></li>
+  <li><a href="#code-style">Code style</a></li>
   <li><a href="#license">License</a></li>
 </ol>
 
@@ -47,54 +41,81 @@ The releases have an installer for Windows, but if you want to test the plugin f
 ### Built With
 
 - [JUCE](https://github.com/juce-framework/JUCE)
-- [CMake](https://cmake.org/)
-- [C++ spline library](https://github.com/ttk592/spline)
-- [Friz](https://github.com/bgporter/animator)
+- [CMake](https://cmake.org/) and [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake)
+- [Vite+](https://viteplus.dev/) (Vite, Oxlint, Oxfmt, Vitest) and [TypeScript](https://www.typescriptlang.org/)
 
 ## How to build
 
+> The `next` branch is a prototype of the new architecture: JUCE 9, C++23 and a web UI
+> (Vite + TypeScript) rendered by `juce::WebBrowserComponent`. Features of the original
+> plugin (see `main`) are being ported step by step.
+
 ### Prerequisites
 
-- [Install CMake](https://cmake.org/download/) version 3.21 or higher
-- (Optional) [Install Clang](https://releases.llvm.org/download.html) compiler for C++
-- (Optional) [Install Ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages) generator
+- [CMake](https://cmake.org/download/) 3.25 or higher
+- [Ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages)
+- A C++23 compiler (Xcode 16+, Visual Studio 2022, Clang 17+ or GCC 13+)
+- [Node.js](https://nodejs.org/) 24+ and [pnpm](https://pnpm.io/installation)
+- (Optional) [Vite+](https://viteplus.dev/guide/) global CLI (`vp`); without it use `pnpm exec vp ...` in `source/webui`
+- Windows only: the `Microsoft.Web.WebView2` NuGet package (see the
+  [JUCE docs](https://github.com/juce-framework/JUCE/blob/master/docs/CMake%20API.md))
+- Linux only: `libwebkit2gtk-4.1-dev` and the usual [JUCE dependencies](https://github.com/juce-framework/JUCE/blob/master/docs/Linux%20Dependencies.md)
 
-### Installation
-
-1. Clone the repo with submodules
-
-   ```sh
-   git clone https://github.com/SmEgDm/equalize_it.git --recursive
-   ```
-
-2. Set the formats you need in `CMakeLists.txt` (all formats can be found [here](https://github.com/juce-framework/JUCE/blob/master/docs/CMake%20API.md))
-   ```cmake
-   set(FORMATS [<format> ...])
-   ```
+Dependencies (JUCE) are downloaded by [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake)
+during configuration and cached in `.cache/CPM`.
 
 ### Build
 
-1. Configure the project
+```sh
+cmake --preset release
+cmake --build --preset release
+```
 
-   ```sh
-   cmake -B build G <generator>
-   ```
+The web UI is built and embedded into the plugin automatically.
+Artefacts end up in `build/release/source/app/equalize_it_artefacts/Release`.
 
-2. Run build
+### UI development with hot reload
 
-   ```sh
-   cmake --build build --config Release
-   ```
+```sh
+cd source/webui
+vp install
+vp dev                           # terminal 1: Vite dev server on http://localhost:5173
+cmake --preset dev               # terminal 2: Debug build that loads the UI from the dev server
+cmake --build --preset dev
+```
 
-## Usage
+Then launch the Standalone app; changes in `source/webui/src` are applied without rebuilding the plugin.
 
-### Add/Remove filters
+### Project layout
 
-The filter is _added_ by double-clicking on an empty area of ​​the spectrum analyzer. The filter can be _removed_ by pressing the right mouse button on the filter button (point on the spectrum analyzer).
+```
+source/
+  app/      JUCE app built as VST3 / Standalone (processor, editor hosting the web view, web UI resources)
+  webui/    Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview
+cmake/      CMake helpers (CPM.cmake)
+scripts/    Formatting and linting helpers
+```
 
-### Filter panel
+## Code style
 
-To _open_ the filter panel, click the filter button, and to _hide_ it, click on an empty area. The panel is _draggable_.
+C++ code is formatted with [clang-format](https://clang.llvm.org/docs/ClangFormat.html) and checked with
+[clang-tidy](https://clang.llvm.org/extra/clang-tidy/) (see `.clang-format` and `.clang-tidy`).
+The scripts run pinned tool versions through [uv](https://docs.astral.sh/uv/), so nothing has to be installed globally.
+
+```sh
+scripts/format.sh            # format in place
+scripts/format.sh --check    # verify only
+scripts/tidy.sh [preset]     # lint using build/<preset>/compile_commands.json (default: debug)
+```
+
+Web UI code (`source/webui`) is formatted, linted and type checked by [Vite+](https://viteplus.dev/guide/check)
+(Oxfmt, Oxlint with type-aware rules); configuration lives in `source/webui/vite.config.ts`.
+
+```sh
+cd source/webui
+vp check          # format check + lint + type check
+vp check --fix    # apply formatting and autofixes
+```
 
 ## License
 

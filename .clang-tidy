@@ -1,0 +1,54 @@
+---
+# bugprone-macro-parentheses is off: it fires on JucePlugin_* macros that JUCE passes on the command line.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-macro-parentheses,
+  clang-analyzer-*,
+  -clang-analyzer-optin.cplusplus.VirtualCall,
+  concurrency-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-special-member-functions,
+  misc-*,
+  -misc-override-with-different-visibility,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  portability-*,
+  -portability-avoid-pragma-once,
+  readability-*,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-braces-around-statements,
+  -readability-implicit-bool-conversion,
+  -readability-convert-member-functions-to-static,
+  -readability-uppercase-literal-suffix
+
+# Only report issues in our own headers, not in JUCE. Kept specific because JUCE's bundled
+# VST3 SDK also has "source" directories.
+HeaderFilterRegex: '/(source/(app|dsp)|tests)/'
+WarningsAsErrors: '*'
+
+CheckOptions:
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.FunctionCase: camelBack
+  readability-identifier-naming.MethodCase: camelBack
+  readability-identifier-naming.VariableCase: camelBack
+  readability-identifier-naming.ParameterCase: camelBack
+  readability-identifier-naming.MemberCase: camelBack
+  readability-identifier-naming.ConstexprVariableCase: camelBack
+  readability-identifier-naming.EnumConstantCase: camelBack
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  cppcoreguidelines-macro-usage.AllowedRegexp: '^(EQIT_|JUCE_|JucePlugin_)'

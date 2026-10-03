@@ -1,0 +1,21 @@
+{
+  "name": "equalize-it-webui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@juce-framework/webview": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.8.1",
+      "onFail": "download"
+    }
+  }
+}

@@ -1,37 +1,14 @@
-# Prerequisites
-*.d
+# Build output
+/build/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# CPM dependency cache
+/.cache/
 
-# Precompiled Headers
-*.gch
-*.pch
+# Web UI
+node_modules/
+/source/webui/dist/
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Build files
-/build
-
-TODO.txt
+# IDE and OS
+/.vscode/
+/.idea/
+.DS_Store

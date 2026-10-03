@@ -1,0 +1,24 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++20
+IndentWidth: 2
+ColumnLimit: 120
+PointerAlignment: Right
+ReferenceAlignment: Pointer
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: All
+BreakTemplateDeclarations: Yes
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  # Project headers
+  - Regex: '^"'
+    Priority: 1
+  # JUCE and generated JUCE headers
+  - Regex: '^<(juce_|webui_assets\.h)'
+    Priority: 2
+  # Standard library
+  - Regex: '^<'
+    Priority: 3
+InsertNewlineAtEOF: true

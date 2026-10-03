@@ -1,11 +1,7 @@
+import { bandColor } from '../band-colors';
 import type { EqResponse } from './response';
 import { magnitudeDb } from './response-math';
 import type { SpectrumScale } from './scale';
-
-// Distinct hues for up to 12 bands.
-const bandHues = [210, 30, 140, 280, 0, 180, 60, 320, 100, 240, 15, 160];
-
-const bandColor = (band: number, alpha = 1) => `hsla(${bandHues[(band - 1) % bandHues.length]}, 80%, 60%, ${alpha})`;
 
 /**
  * Frequencies to evaluate the response at: one per device pixel column, plus every band frequency

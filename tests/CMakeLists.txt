@@ -15,7 +15,8 @@ add_executable(
   dsp/band_design_test.cpp
   dsp/smoothed_value_test.cpp
   dsp/band_test.cpp
-  dsp/band_response_test.cpp)
+  dsp/band_response_test.cpp
+  dsp/equalizer_test.cpp)
 
 target_include_directories(eqit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(eqit_tests PRIVATE eqit::dsp Catch2::Catch2WithMain eqit_warnings)

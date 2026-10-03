@@ -56,6 +56,10 @@ void Band::process(float *const *channels, int numChannels, int numSamples) noex
     auto &active = voices[static_cast<std::size_t>(activeVoice)];
     auto &fading = voices[static_cast<std::size_t>(1 - activeVoice)];
 
+    // A switched-off band that is not fading costs nothing beyond the smoothing above.
+    if (!active.enabled && crossfadeRemaining == 0)
+      continue;
+
     updateCoefficients(active, count);
     if (crossfadeRemaining > 0)
       updateCoefficients(fading, count);

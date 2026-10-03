@@ -1,6 +1,7 @@
 #include "parameters.h"
 
 #include <cmath>
+#include <utility>
 
 namespace eqit::parameters {
 
@@ -70,7 +71,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
     layout.add(std::make_unique<juce::AudioParameterBool>(id(BandField::enabled), name("Enabled"), false));
     layout.add(std::make_unique<juce::AudioParameterChoice>(id(BandField::shape), name("Shape"), shapes, 0));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        id(BandField::frequency), name("Frequency"), logarithmicRange(minFrequencyHz, maxFrequencyHz), 1000.0f,
+        id(BandField::frequency), name("Frequency"), logarithmicRange(minFrequencyHz, maxFrequencyHz),
+        defaultFrequencyHz(band),
         juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
             [](float value, int) { return formatFrequency(value); })));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
@@ -83,6 +85,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
   }
 
   return layout;
+}
+
+float defaultFrequencyHz(int band) {
+  constexpr float lowest = 40.0f;
+  constexpr float highest = 12000.0f;
+  return lowest * std::pow(highest / lowest, static_cast<float>(band - 1) / static_cast<float>(numBands - 1));
+}
+
+std::array<BandValues, numBands> BandValues::all(juce::AudioProcessorValueTreeState &state) {
+  return [&]<std::size_t... Index>(std::index_sequence<Index...>) {
+    return std::array<BandValues, numBands>{BandValues{state, static_cast<int>(Index) + 1}...};
+  }(std::make_index_sequence<numBands>{});
 }
 
 BandValues::BandValues(juce::AudioProcessorValueTreeState &state, int band)

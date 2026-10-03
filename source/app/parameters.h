@@ -12,7 +12,7 @@ namespace eqit::parameters {
 
 inline constexpr auto mute = "mute";
 
-inline constexpr int numBands = 1;
+inline constexpr int numBands = 12;
 
 // Per-band parameter IDs: "band1Frequency" etc., bands numbered from 1.
 enum class BandField : std::uint8_t { enabled, shape, frequency, gain, q, slope };
@@ -35,10 +35,17 @@ inline constexpr float maxQ = 40.0f;
 
 [[nodiscard]] juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 
+// Default frequency of a band (1-based): spread log-evenly from 40 Hz to 12 kHz, so that a band
+// switched on lands somewhere useful.
+[[nodiscard]] float defaultFrequencyHz(int band);
+
 // Lock-free view of one band's parameters for the audio thread.
 class BandValues {
 public:
   BandValues(juce::AudioProcessorValueTreeState &state, int band);
+
+  // Views of all bands, in order.
+  [[nodiscard]] static std::array<BandValues, numBands> all(juce::AudioProcessorValueTreeState &state);
 
   [[nodiscard]] bool enabled() const noexcept;
   [[nodiscard]] dsp::BandParameters parameters() const noexcept;

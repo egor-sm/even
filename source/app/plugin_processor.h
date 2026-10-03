@@ -1,7 +1,7 @@
 #pragma once
 
 #include "analyzer/spectrum_analyzer.h"
-#include "dsp/band.h"
+#include "dsp/equalizer.h"
 #include "parameters.h"
 #include "response_packet.h"
 #include "test_signal.h"
@@ -53,10 +53,14 @@ public:
   void setAnalyzeOutput(bool output) { analyzeOutput.store(output); }
 
 private:
+  // Reads the band parameters (lock-free) and hands them to the equalizer as targets.
+  void updateBandTargets() noexcept;
+
   juce::AudioProcessorValueTreeState state;
   std::atomic<float> &muteValue;
   std::array<parameters::BandValues, parameters::numBands> bandValues;
-  std::array<dsp::Band, parameters::numBands> bands;
+  dsp::Equalizer equalizer;
+  static_assert(parameters::numBands <= dsp::Equalizer::maxBands);
 
   SpectrumAnalyzer analyzer;
   TestSignal testSignal;

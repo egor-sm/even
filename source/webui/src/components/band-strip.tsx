@@ -30,7 +30,7 @@ export const BandStrip = ({ band }: BandStripProps) => {
     <div className="band-strip">
       <label className="control">
         <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
-        Band {band}
+        On
       </label>
       <label className="control">
         Shape

@@ -11,16 +11,14 @@ PluginProcessor::PluginProcessor()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       state(*this, nullptr, "state", parameters::createLayout()),
-      muteValue(*state.getRawParameterValue(parameters::mute)), bandValues{parameters::BandValues{state, 1}} {}
+      muteValue(*state.getRawParameterValue(parameters::mute)), bandValues(parameters::BandValues::all(state)) {}
 
 void PluginProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
   analyzer.prepare(sampleRate);
   testSignal.prepare(sampleRate);
 
-  for (std::size_t i = 0; i < bands.size(); ++i) {
-    bands[i].setTarget(bandValues[i].parameters(), bandValues[i].enabled());
-    bands[i].prepare(sampleRate);
-  }
+  updateBandTargets();
+  equalizer.prepare(sampleRate);
 }
 
 void PluginProcessor::releaseResources() {}
@@ -45,16 +43,19 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
   if (!showOutput)
     analyzer.pushMonoSum(buffer);
 
-  for (std::size_t i = 0; i < bands.size(); ++i) {
-    bands[i].setTarget(bandValues[i].parameters(), bandValues[i].enabled());
-    bands[i].process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
-  }
+  updateBandTargets();
+  equalizer.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
 
   if (showOutput)
     analyzer.pushMonoSum(buffer);
 
   if (muteValue.load(std::memory_order_relaxed) >= 0.5f)
     buffer.clear();
+}
+
+void PluginProcessor::updateBandTargets() noexcept {
+  for (std::size_t i = 0; i < bandValues.size(); ++i)
+    equalizer.setBand(i, bandValues[i].parameters(), bandValues[i].enabled());
 }
 
 ResponseState PluginProcessor::getResponseState() const {

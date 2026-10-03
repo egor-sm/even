@@ -32,13 +32,46 @@ body,
   font-size: 13px;
 }
 
-.band-strip {
+.band-bar {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 6px 12px;
   border-bottom: 1px solid #262a33;
   font-size: 13px;
+}
+
+.band-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.band-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.band-tab {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: #23262e;
+  color: #8a90a0;
+  font:
+    600 11px system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.band-tab[data-enabled='true'] {
+  color: #15171c;
+}
+
+.band-tab[aria-pressed='true'] {
+  border-color: #e6e8ee;
 }
 
 .control[aria-disabled='true'] {

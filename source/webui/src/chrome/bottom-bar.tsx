@@ -48,20 +48,24 @@ export const BottomBar = () => {
   );
   const name = modes.find((entry) => entry.mode === mode)?.name ?? '';
 
+  // The menu is a sibling of the bar, not its child: the bar's stacking context sits below the graph,
+  // so inside it the menu (and its click-outside backdrop) would end up under the graph.
   return (
-    <footer className="bottom-bar">
-      <button
-        type="button"
-        className="eq-pill"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => uiStore.set({ analyzerMenu: !open })}
-      >
-        <span className="eq-pill__label">Analyzer</span>
-        <span>{name}</span>
-        <UiIcon name="chevronDown" size={12} />
-      </button>
+    <>
+      <footer className="bottom-bar">
+        <button
+          type="button"
+          className="eq-pill"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={() => uiStore.set({ analyzerMenu: !open })}
+        >
+          <span className="eq-pill__label">Analyzer</span>
+          <span>{name}</span>
+          <UiIcon name="chevronDown" size={12} />
+        </button>
+      </footer>
       {open && <AnalyzerMenu current={mode} />}
-    </footer>
+    </>
   );
 };

@@ -50,7 +50,7 @@ Section designSection(const BandParameters &parameters, double warped) noexcept 
 // an odd order adds a one-pole section. The user's q scales the most resonant section relative to
 // Butterworth (0.707), adding a peak at the knee above it and softening the knee below it.
 BandDesign designCut(const BandParameters &parameters, double warped) noexcept {
-  // Two sections per maxSections pair: order 8 (48 dB/oct) at most, whatever the caller passes.
+  // Two sections per maxSections pair: order 16 (96 dB/oct) at most, whatever the caller passes.
   const auto order = std::clamp(parameters.slopeDbPerOctave / 6, 1, static_cast<int>(2 * BandDesign::maxSections));
   assert(order * 6 == parameters.slopeDbPerOctave && "slope must be sanitized");
   const auto highpass = parameters.shape == FilterShape::lowCut;

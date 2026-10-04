@@ -27,7 +27,7 @@ enum class FilterShape : std::uint8_t {
 }
 
 // Supported cut slopes; a slope of N * 6 dB/oct is a Butterworth filter of order N.
-inline constexpr std::array cutSlopesDbPerOctave{6, 12, 18, 24, 36, 48};
+inline constexpr std::array cutSlopesDbPerOctave{6, 12, 18, 24, 36, 48, 72, 96};
 
 struct BandParameters {
   FilterShape shape = FilterShape::bell;

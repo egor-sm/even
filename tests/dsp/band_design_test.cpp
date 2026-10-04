@@ -199,7 +199,7 @@ TEST_CASE("Shapes without gain ignore the gain parameter", "[dsp][band]") {
 
 TEST_CASE("Cuts: every slope is -3 dB at the cutoff with q = 0.707 (Butterworth)", "[dsp][band][cut]") {
   const auto shape = GENERATE(FilterShape::lowCut, FilterShape::highCut);
-  const auto slope = GENERATE(6, 12, 18, 24, 36, 48);
+  const auto slope = GENERATE(6, 12, 18, 24, 36, 48, 72, 96);
   const auto cutoff = GENERATE(100.0, 2000.0, 12000.0);
   const auto parameters = band(shape, cutoff, 0.0, std::numbers::sqrt2 / 2.0, slope);
 
@@ -208,23 +208,28 @@ TEST_CASE("Cuts: every slope is -3 dB at the cutoff with q = 0.707 (Butterworth)
 }
 
 TEST_CASE("Cuts: the slope far from the cutoff matches the setting", "[dsp][band][cut]") {
-  const auto slope = GENERATE(6, 12, 18, 24, 36, 48);
+  const auto slope = GENERATE(6, 12, 18, 24, 36, 48, 72, 96);
   const auto q = std::numbers::sqrt2 / 2.0;
 
   // "6 dB/oct" is rounded: doubling the frequency gives 20 * log10(2) = 6.02 dB per order.
   const auto order = slope / 6;
   const auto expected = order * 20.0 * std::log10(2.0);
 
-  // Six octaves into the stop band and one more octave: low orders approach their asymptote slowly.
-  const auto lowCut = band(FilterShape::lowCut, 8000.0, 0.0, q, slope);
-  CHECK_THAT(designDb(lowCut, 250.0) - designDb(lowCut, 125.0), WithinAbs(expected, 0.01));
+  // Measure one octave deep in the stop band: low orders approach their asymptote slowly, so go far
+  // (up to five octaves), but keep steep slopes above the -300 dB floor of magnitudeDb().
+  const auto octaves = [&](int farthest) { return std::min(farthest, 250 / slope - 1); };
+
+  const auto lowCut = band(FilterShape::lowCut, 500.0, 0.0, q, slope);
+  const auto lowStart = 500.0 / std::exp2(octaves(5));
+  CHECK_THAT(designDb(lowCut, lowStart) - designDb(lowCut, lowStart / 2.0), WithinAbs(expected, 0.01));
 
   const auto highCut = band(FilterShape::highCut, 50.0, 0.0, q, slope);
-  CHECK_THAT(designDb(highCut, 400.0) - designDb(highCut, 800.0), WithinAbs(expected, 0.3));
+  const auto highStart = 50.0 * std::exp2(octaves(3));
+  CHECK_THAT(designDb(highCut, highStart) - designDb(highCut, highStart * 2.0), WithinAbs(expected, 0.3));
 }
 
 TEST_CASE("Cuts: Butterworth pass band is flat, larger q adds a resonant peak", "[dsp][band][cut]") {
-  const auto slope = GENERATE(12, 18, 24, 36, 48);
+  const auto slope = GENERATE(12, 18, 24, 36, 48, 72, 96);
 
   auto flatMax = -1e9;
   auto resonantMax = -1e9;
@@ -245,15 +250,46 @@ TEST_CASE("Cuts: 6 dB/oct has no resonance, q is ignored", "[dsp][band][cut]") {
 }
 
 TEST_CASE("Cuts: the cascade sounds exactly like the drawn response", "[dsp][band][cut]") {
-  const auto slope = GENERATE(6, 18, 48);
+  const auto slope = GENERATE(6, 18, 48, 96);
   const auto parameters = band(FilterShape::highCut, 1500.0, 0.0, 1.2, slope);
   const auto frequency = GENERATE(300.0, 1500.0, 2400.0);
 
   CHECK_THAT(measuredDb(parameters, frequency), WithinAbs(designDb(parameters, frequency), 0.05));
 }
 
+TEST_CASE("Cuts: the steepest slope at the highest q is stable", "[dsp][band][cut]") {
+  // 96 dB/oct with q = 30: the most resonant section gets q of about 430 and rings for a while,
+  // but its impulse response must decay and stay finite.
+  const auto shape = GENERATE(FilterShape::lowCut, FilterShape::highCut);
+  const auto cutoff = GENERATE(30.0, 1000.0, 18000.0);
+  const auto designed = even::dsp::design(band(shape, cutoff, 0.0, 30.0, 96), sampleRate);
+
+  std::array<even::dsp::SectionFilter, even::dsp::BandDesign::maxSections> sections{};
+  for (std::size_t i = 0; i < designed.count; ++i)
+    sections[i].setSection(designed.sections[i]);
+
+  const auto length = static_cast<std::size_t>(20.0 * sampleRate);
+  const auto tail = static_cast<std::size_t>(0.1 * sampleRate);
+  auto peak = 0.0;
+  auto tailPeak = 0.0;
+  for (std::size_t n = 0; n < length; ++n) {
+    auto x = n == 0 ? 1.0f : 0.0f;
+    for (std::size_t i = 0; i < designed.count; ++i)
+      x = sections[i].process(x);
+
+    REQUIRE(std::isfinite(x));
+    peak = std::max(peak, static_cast<double>(std::abs(x)));
+    if (n >= length - tail)
+      tailPeak = std::max(tailPeak, static_cast<double>(std::abs(x)));
+  }
+
+  CHECK(peak < 10.0);
+  CHECK(tailPeak < 1e-6);
+}
+
 TEST_CASE("sanitize: snaps the slope to a supported one", "[dsp][band][cut]") {
   CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 30), sampleRate).slopeDbPerOctave == 24);
-  CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 100), sampleRate).slopeDbPerOctave == 48);
+  CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 60), sampleRate).slopeDbPerOctave == 48);
+  CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 200), sampleRate).slopeDbPerOctave == 96);
   CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 0), sampleRate).slopeDbPerOctave == 6);
 }

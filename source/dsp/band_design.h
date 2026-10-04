@@ -22,8 +22,8 @@ struct Section {
 };
 
 struct BandDesign {
-  // 48 dB/oct cuts: four second-order sections.
-  static constexpr std::size_t maxSections = 4;
+  // 96 dB/oct cuts: eight second-order sections.
+  static constexpr std::size_t maxSections = 8;
 
   std::array<Section, maxSections> sections{};
   std::size_t count = 0;

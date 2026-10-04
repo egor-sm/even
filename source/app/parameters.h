@@ -23,7 +23,9 @@ inline constexpr std::array shapeNames{"Bell",     "Low Shelf", "High Shelf", "L
                                        "High Cut", "Notch",     "Band Pass",  "Tilt Shelf"};
 
 // Choice order of the slope parameter (cuts only); matches dsp::cutSlopesDbPerOctave.
-inline constexpr std::array slopeNames{"6 dB/oct", "12 dB/oct", "18 dB/oct", "24 dB/oct", "36 dB/oct", "48 dB/oct"};
+inline constexpr std::array slopeNames{"6 dB/oct",  "12 dB/oct", "18 dB/oct", "24 dB/oct",
+                                       "36 dB/oct", "48 dB/oct", "72 dB/oct", "96 dB/oct"};
+static_assert(slopeNames.size() == dsp::cutSlopesDbPerOctave.size());
 inline constexpr int defaultSlopeIndex = 1; // 12 dB/oct
 
 // Ranges. Frequency and q use a true logarithmic mapping (each octave/ratio gets the same slider

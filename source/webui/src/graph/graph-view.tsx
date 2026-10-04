@@ -1,20 +1,28 @@
 import { useEffect, useRef } from 'react';
 
-import { DbAxis } from '~/axes/db-axis';
-import { FrequencyAxis } from '~/axes/frequency-axis';
-import { uiStore } from '~/model/ui';
-import { DbLabels, FrequencyLabels, startAnimator } from '~/entities/viewport';
-import { backgroundDoubleClick, backgroundDown, pointerMove, pointerUp, toGraphPoint } from '~/graph/interactions';
-import { BandNodes } from '~/graph/overlay/band-nodes';
-import { Crosshair } from '~/graph/overlay/crosshair';
-import { Dock } from '~/graph/overlay/dock';
-import { QHandles } from '~/graph/overlay/q-handles';
-import { SoloTag } from '~/graph/overlay/solo-tag';
-import { TypeStrip } from '~/graph/overlay/type-strip';
-import { GraphScene } from '~/graph/scene';
+import { selectBand, selectionStore } from '~/entities/band';
+import { DbLabels, FrequencyLabels, startAnimator, toGraphPoint } from '~/entities/viewport';
+import { QHandles } from '~/features/adjust-band-q';
+import { TypeStrip } from '~/features/change-band-type';
+import { Crosshair, setCursor } from '~/features/cursor-readout';
+import { DbAxis } from '~/features/display-range';
+import { BandNodes, createBandAt } from '~/features/edit-band-node';
+import { FrequencyAxis } from '~/features/frequency-axis';
+import { SoloTag } from '~/features/solo-band';
+import { endGesture, gestureStore, moveGesture } from '~/shared/lib';
+
+import { Dock } from './overlay/dock';
+import { GraphScene } from './scene';
+
+/** Pointer down on the empty graph: the first click folds the type strip, the next one deselects. */
+const backgroundDown = () => {
+  const { typeMenu, selected } = selectionStore.get();
+  if (typeMenu === 'strip') selectionStore.set({ typeMenu: null });
+  else if (selected !== null || typeMenu !== null) selectBand(null);
+};
 
 /** The EQ graph: canvas layers (grid, analyzer, curves) with labels and band controls on top. */
-export const GraphView = () => {
+export const GraphView = ({ onAnalyzerDraw }: { onAnalyzerDraw?: (now: number) => void }) => {
   const graphRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef<HTMLDivElement>(null);
 
@@ -23,34 +31,35 @@ export const GraphView = () => {
     const themeRoot = layers?.closest<HTMLElement>('.eq');
     if (layers === null || themeRoot === null || themeRoot === undefined) throw new Error('Graph is not mounted');
 
-    const scene = new GraphScene(layers, themeRoot);
+    const scene = new GraphScene(layers, themeRoot, onAnalyzerDraw);
     const stopAnimator = startAnimator();
     return () => {
       stopAnimator();
       scene.dispose();
     };
-  }, []);
+  }, [onAnalyzerDraw]);
 
   const point = (event: { clientX: number; clientY: number }) => toGraphPoint(event, graphRef.current ?? document.body);
 
+  // Gestures capture the pointer on the element that starts them; its events bubble up to here.
   return (
     <div
       className="graph"
       ref={graphRef}
-      onPointerMove={(event) => pointerMove(point(event), event.shiftKey)}
-      onPointerUp={pointerUp}
-      onPointerCancel={pointerUp}
+      onPointerMove={(event) => moveGesture(point(event), { shiftKey: event.shiftKey })}
+      onPointerUp={endGesture}
+      onPointerCancel={endGesture}
     >
       <div
         className="graph-background"
         onPointerDown={(event) => {
           if (event.button === 0) backgroundDown();
         }}
-        onDoubleClick={(event) => backgroundDoubleClick(point(event))}
+        onDoubleClick={(event) => createBandAt(point(event))}
         onPointerMove={(event) => {
-          if (uiStore.get().drag === null) uiStore.set({ cursor: point(event) });
+          if (gestureStore.get().active === null) setCursor(point(event));
         }}
-        onPointerLeave={() => uiStore.set({ cursor: null })}
+        onPointerLeave={() => setCursor(null)}
       />
       <div className="graph-layers" ref={layersRef} />
       <SoloTag />

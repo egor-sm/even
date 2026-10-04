@@ -1,6 +1,9 @@
 import { publishAnalyzerFrame } from '~/entities/analyzer';
-import { receiveResponse, selectionStore } from '~/entities/band';
-import { uiStore } from '~/model/ui';
+import { receiveResponse } from '~/entities/band';
+import { syncAnalyzerMode } from '~/features/analyzer-mode';
+import { applySettings } from '~/features/settings';
+import { syncSoloWithBackend } from '~/features/solo-band';
+import { applyHistory, historyStore } from '~/features/undo-redo';
 import { decodeBase64Frame, decodeBase64Response, native } from '~/shared/api';
 
 declare global {
@@ -14,26 +17,6 @@ declare global {
   }
 }
 
-const historyState = (value: unknown): { canUndo: boolean; canRedo: boolean } | null => {
-  if (typeof value !== 'object' || value === null) return null;
-  const canUndo = Reflect.get(value, 'canUndo');
-  const canRedo = Reflect.get(value, 'canRedo');
-  return typeof canUndo === 'boolean' && typeof canRedo === 'boolean' ? { canUndo, canRedo } : null;
-};
-
-export const applyHistory = (value: unknown): void => {
-  const state = historyState(value);
-  if (state !== null) uiStore.set(state);
-};
-
-export const applySettings = (value: unknown): void => {
-  if (typeof value !== 'object' || value === null) return;
-  const theme = Reflect.get(value, 'theme');
-  const scale = Reflect.get(value, 'scale');
-  if (theme === 'dark' || theme === 'light') uiStore.set({ theme });
-  if (typeof scale === 'number') uiStore.set({ scale });
-};
-
 // The analyzer and the response stream only run while the page is visible.
 const syncVisibility = () => {
   const visible = document.visibilityState === 'visible';
@@ -41,42 +24,30 @@ const syncVisibility = () => {
   if (visible) void native.requestResponse();
 };
 
-/** Routes everything C++ sends into the stores; returns the disconnect function. */
+/** Routes everything C++ sends to where it belongs and hands C++ the page's state; returns the disconnect. */
 export const connectBackend = (): (() => void) => {
   window.evenOnResponse = (base64) => {
     const response = decodeBase64Response(base64);
-    if (response === null) return;
-    receiveResponse(response);
+    if (response !== null) receiveResponse(response);
   };
 
-  window.evenOnHistory = (canUndo, canRedo) => uiStore.set({ canUndo, canRedo });
+  window.evenOnHistory = (canUndo, canRedo) => historyStore.set({ canUndo, canRedo });
 
   window.evenOnAnalyzerFrame = (sentAtMs, base64) => {
     const frame = decodeBase64Frame(base64);
-    if (frame === null) return;
-    const info = { latencyMs: Date.now() - sentAtMs, bytes: base64.length };
-    publishAnalyzerFrame(frame, info);
+    if (frame !== null) publishAnalyzerFrame(frame, { latencyMs: Date.now() - sentAtMs, bytes: base64.length });
   };
 
-  // Solo lives in the UI state; C++ follows it.
-  let solo = selectionStore.get().solo;
-  const unsubscribeSolo = selectionStore.subscribe(() => {
-    const next = selectionStore.get().solo;
-    if (next === solo) return;
-    solo = next;
-    void native.setSolo(next ?? 0);
-  });
-
+  const stopSoloSync = syncSoloWithBackend();
   document.addEventListener('visibilitychange', syncVisibility);
   syncVisibility();
 
   void native.getSettings().then(applySettings);
   void native.getHistoryState().then(applyHistory);
-  // The analyzer mode lives in C++ without being saved: hand it the page's choice.
-  void native.setAnalyzerMode(uiStore.get().analyzerMode);
+  syncAnalyzerMode();
 
   return () => {
-    unsubscribeSolo();
+    stopSoloSync();
     document.removeEventListener('visibilitychange', syncVisibility);
     delete window.evenOnResponse;
     delete window.evenOnHistory;

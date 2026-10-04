@@ -1,6 +1,6 @@
 import { clipToPlot, dbLines, graph, type GridMorph, type Mapper } from '~/entities/viewport';
 import type { CanvasLayer } from '~/shared/lib';
-import type { GraphColors } from '~/graph/theme-colors';
+import type { GraphColors } from '~/shared/ui';
 
 /**
  * Grid lines, 1 device pixel wide: the frequency grid (morphing from the Hz grid to the note grid

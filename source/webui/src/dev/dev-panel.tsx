@@ -1,23 +1,22 @@
 import { useEffect, useState } from 'react';
 
+import { setScale, settingsStore, uiScales } from '~/features/settings';
 import { native, setMute } from '~/shared/api';
-import { commands } from '~/model/commands';
-import { uiStore } from '~/model/ui';
 import { useStore } from '~/shared/lib';
 
-const scales = [75, 100, 125, 150, 175, 200];
+import { analyzerStats } from './stats';
 
 /** Development aids, shown in dev builds or with Ctrl+Shift+D: test signal, mute, UI scale, analyzer stats. */
-export const DevPanel = ({ stats }: { stats: () => string }) => {
-  const scale = useStore(uiStore, (state) => state.scale);
+export const DevPanel = () => {
+  const scale = useStore(settingsStore, (state) => state.scale);
   const [testSignal, setTestSignal] = useState(false);
   const [muted, setMuted] = useState(false);
   const [statsText, setStatsText] = useState('');
 
   useEffect(() => {
-    const timer = setInterval(() => setStatsText(stats()), 500);
+    const timer = setInterval(() => setStatsText(analyzerStats.format(performance.now())), 500);
     return () => clearInterval(timer);
-  }, [stats]);
+  }, []);
 
   return (
     <div className="dev-panel">
@@ -45,8 +44,8 @@ export const DevPanel = ({ stats }: { stats: () => string }) => {
       </label>
       <label>
         Scale
-        <select value={scale} onChange={(event) => commands.setScale(Number(event.target.value))}>
-          {scales.map((value) => (
+        <select value={scale} onChange={(event) => setScale(Number(event.target.value))}>
+          {uiScales.map((value) => (
             <option key={value} value={value}>
               {value}%
             </option>

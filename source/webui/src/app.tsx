@@ -1,29 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { connectBackend } from '~/app/connect-backend';
 import { BottomBar } from '~/chrome/bottom-bar';
 import { TopBar } from '~/chrome/top-bar';
 import { DevPanel } from '~/dev/dev-panel';
 import { analyzerStats } from '~/dev/stats';
+import { settingsStore } from '~/features/settings';
 import { GraphView } from '~/graph/graph-view';
-import { uiStore } from '~/model/ui';
 import { shallowEqual, useStore } from '~/shared/lib';
 
-const formatStats = () => analyzerStats.format(performance.now());
+const onAnalyzerDraw = (now: number) => analyzerStats.onRender(now);
 
 export const App = () => {
-  const { theme, scale, devPanel } = useStore(
-    uiStore,
-    (state) => ({ theme: state.theme, scale: state.scale, devPanel: state.devPanel }),
-    shallowEqual,
-  );
+  const { theme, scale } = useStore(settingsStore, (state) => state, shallowEqual);
+  const [devPanel, setDevPanel] = useState(import.meta.env.DEV);
 
   useEffect(() => connectBackend(), []);
+  useEffect(() => analyzerStats.listen(), []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd')
-        uiStore.set(({ devPanel: shown }) => ({ devPanel: !shown }));
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd') setDevPanel((shown) => !shown);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -41,9 +38,9 @@ export const App = () => {
   return (
     <div className="eq" data-theme={theme} style={{ transform: `scale(${scale / 100})` }}>
       <TopBar />
-      <GraphView />
+      <GraphView onAnalyzerDraw={onAnalyzerDraw} />
       <BottomBar />
-      {devPanel && <DevPanel stats={formatStats} />}
+      {devPanel && <DevPanel />}
     </div>
   );
 };

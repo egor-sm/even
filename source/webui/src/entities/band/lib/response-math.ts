@@ -33,3 +33,17 @@ export const magnitudeDb = (sections: readonly Section[], frequencyHz: number, s
 
   return 10 * Math.log10(Math.max(magnitudeSquared, minMagnitudeSquared));
 };
+
+export const responseDb = (sections: readonly Section[], frequencies: readonly number[], sampleRate: number) =>
+  Float64Array.from(frequencies, (hz) => magnitudeDb(sections, hz, sampleRate));
+
+/**
+ * Frequencies to evaluate the curves at: the given ones plus every band frequency exactly, so a
+ * narrow bell peaks precisely at its node and a notch dips at its true centre.
+ */
+export const withBandFrequencies = (frequencies: readonly number[], bands: readonly { f: number }[]): number[] => {
+  const low = frequencies[0] ?? 0;
+  const high = frequencies.at(-1) ?? 0;
+  const extra = bands.map((band) => band.f).filter((hz) => hz > low && hz < high);
+  return [...frequencies, ...extra].toSorted((a, b) => a - b);
+};

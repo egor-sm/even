@@ -21,10 +21,15 @@ export {
   analyzerTopDb,
   clipToPlot,
   createMapper,
+  type Curve,
   graph,
   type Mapper,
   maxHz,
   minHz,
+  nodePoint,
+  plotFrequencies,
+  toCurve,
+  toGraphPoint,
 } from './lib/geometry';
 export { startAnimator } from './model/animator';
 export { defaultRange, viewportStore, type ViewportState } from './model/viewport';

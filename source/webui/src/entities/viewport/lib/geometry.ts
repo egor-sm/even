@@ -1,4 +1,4 @@
-import { midiToFrequency } from '~/shared/lib';
+import { clamp, midiToFrequency, type Point } from '~/shared/lib';
 
 /** The graph area at 100 % scale, in its own coordinates (the window's top bar is above it). */
 export const graph = {
@@ -59,4 +59,32 @@ export const clipToPlot = (context: CanvasRenderingContext2D): void => {
   context.beginPath();
   context.rect(graph.left, 0, graph.right - graph.left, graph.height);
   context.clip();
+};
+
+/** Pointer position in graph units: the window may be scaled, the graph is 1280 wide at any scale. */
+export const toGraphPoint = (event: { clientX: number; clientY: number }, graphElement: Element): Point => {
+  const rect = graphElement.getBoundingClientRect();
+  const unit = rect.width / graph.width || 1;
+  return { x: (event.clientX - rect.left) / unit, y: (event.clientY - rect.top) / unit };
+};
+
+/** Where a band's node sits for a frequency and gain (pass 0 for types without gain), kept in range. */
+export const nodePoint = (hz: number, db: number, range: number): Point => {
+  const mapper = createMapper(range);
+  return { x: mapper.x(hz), y: mapper.y(clamp(db, -range, range)) };
+};
+
+export type Curve = { xs: Float64Array; ys: Float64Array };
+
+/** Graph coordinates of a response; y is clamped just outside the graph (a notch goes to −∞). */
+export const toCurve = (mapper: Mapper, frequencies: readonly number[], db: Float64Array): Curve => ({
+  xs: Float64Array.from(frequencies, (hz) => mapper.x(hz)),
+  ys: Float64Array.from(db, (value) => Math.min(Math.max(mapper.y(value), -2), graph.height + 2)),
+});
+
+/** Frequencies across the plot, two per graph unit (for evaluating curves). */
+export const plotFrequencies = (mapper: Mapper): number[] => {
+  const frequencies: number[] = [];
+  for (let x = graph.left - 2; x <= graph.right + 2; x += 0.5) frequencies.push(mapper.frequencyAt(x));
+  return frequencies;
 };

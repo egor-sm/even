@@ -1,31 +1,7 @@
 import type { Band } from '~/entities/band';
+import { clipToPlot, type Curve, graph, type Mapper, toCurve } from '~/entities/viewport';
 import { type CanvasLayer, withAlpha } from '~/shared/lib';
-import { clipToPlot, graph, type Mapper, maxHz, minHz } from '~/entities/viewport';
-import { magnitudeDb } from '~/entities/band';
-import type { GraphColors } from '~/graph/theme-colors';
-import type { Section } from '~/shared/api';
-
-/**
- * Frequencies to evaluate curves at: two per graph unit across the plot, plus every band frequency
- * exactly, so a narrow bell peaks precisely at its node and a notch dips at its true centre.
- */
-export const sampleFrequencies = (mapper: Mapper, bands: readonly Band[]): number[] => {
-  const frequencies: number[] = [];
-  for (let x = graph.left - 2; x <= graph.right + 2; x += 0.5) frequencies.push(mapper.frequencyAt(x));
-  for (const band of bands) if (band.f > minHz && band.f < maxHz) frequencies.push(band.f);
-  return frequencies.toSorted((a, b) => a - b);
-};
-
-export const responseDb = (sections: readonly Section[], frequencies: readonly number[], sampleRate: number) =>
-  Float64Array.from(frequencies, (hz) => magnitudeDb(sections, hz, sampleRate));
-
-export type Curve = { xs: Float64Array; ys: Float64Array };
-
-/** Graph coordinates of a response; y is clamped just outside the graph (a notch goes to −∞). */
-export const toCurve = (mapper: Mapper, frequencies: readonly number[], db: Float64Array): Curve => ({
-  xs: Float64Array.from(frequencies, (hz) => mapper.x(hz)),
-  ys: Float64Array.from(db, (value) => Math.min(Math.max(mapper.y(value), -2), graph.height + 2)),
-});
+import type { GraphColors } from '~/shared/ui';
 
 const tracePath = (context: CanvasRenderingContext2D, { xs, ys }: Curve) => {
   context.beginPath();

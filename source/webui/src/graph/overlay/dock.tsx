@@ -1,24 +1,13 @@
-import { type ReactNode, useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { clsx } from 'clsx';
 
-import { UiIcon } from '~/shared/ui';
-import {
-  bandColorVar,
-  findBand,
-  formatSlope,
-  hasGain,
-  isCut,
-  selectionStore,
-  TypeIcon,
-  typeNames,
-  useDisplayBands,
-} from '~/entities/band';
-import { commands } from '~/model/commands';
-import { clamp, formatFrequency, formatGain, formatNote, formatQ, shallowEqual, useStore } from '~/shared/lib';
-import { type ScrubField, uiStore } from '~/model/ui';
-import { graph, viewportStore } from '~/entities/viewport';
-import { nodePosition, scrubDown, toGraphPoint } from '~/graph/interactions';
-import { TypePicker } from '~/graph/overlay/type-picker';
+import { bandColorVar, findBand, hasGain, selectionStore, useDisplayBands } from '~/entities/band';
+import { graph, nodePoint, viewportStore } from '~/entities/viewport';
+import { TypeButton, TypePicker } from '~/features/change-band-type';
+import { ScrubField } from '~/features/scrub-band-field';
+import { SoloButton } from '~/features/solo-band';
+import { BypassButton, DeleteButton } from '~/features/toggle-band';
+import { clamp, gestureStore, shallowEqual, useStore } from '~/shared/lib';
 
 const dockWidth = 540;
 const dockTop = 572;
@@ -33,26 +22,25 @@ const dockX = (nodeX: number) => clamp(nodeX - dockWidth / 2, edge, graph.width 
  */
 export const Dock = () => {
   const bands = useDisplayBands();
-  const selection = useStore(
+  const { selected, picker } = useStore(
     selectionStore,
-    (state) => ({ selected: state.selected, solo: state.solo, picker: state.typeMenu === 'picker' }),
+    (state) => ({ selected: state.selected, picker: state.typeMenu === 'picker' }),
     shallowEqual,
   );
-  const viewport = useStore(viewportStore, (state) => ({ range: state.view.range, axis: state.axis }), shallowEqual);
-  const local = useStore(uiStore, (state) => ({ drag: state.drag, hoverType: state.hoverType }), shallowEqual);
-  const ui = { ...selection, ...viewport, ...local };
-  const band = findBand(bands, ui.selected);
+  const range = useStore(viewportStore, (state) => state.view.range);
+  const scrubbing = useStore(gestureStore, (state) => state.active?.kind === 'scrub');
+  const band = findBand(bands, selected);
 
   // Position at the last commit: the dock glides from there when the selection moves to another band.
   const [committed, setCommitted] = useState<{ slot: number; x: number; gliding: boolean } | null>(null);
-  const node = band === undefined ? null : nodePosition(band, ui.range);
+  const node = band === undefined ? null : nodePoint(band.f, hasGain(band.type) ? band.g : 0, range);
 
   let x = 0;
   let gliding = false;
   if (band !== undefined && node !== null) {
     const target = dockX(node.x);
     x = target;
-    if (committed !== null && ui.drag?.kind === 'scrub') x = committed.x;
+    if (committed !== null && scrubbing) x = committed.x;
     else if (committed !== null && (committed.slot !== band.slot || committed.gliding)) {
       x = committed.x + (target - committed.x) * glide;
       gliding = Math.abs(target - x) > 0.5;
@@ -79,31 +67,8 @@ export const Dock = () => {
 
   if (band === undefined || node === null) return null;
 
-  const cut = isCut(band.type);
-  const withGain = hasGain(band.type);
-  const shownType = ui.hoverType ?? band.type;
-  const previewing = ui.hoverType !== null && ui.hoverType !== band.type;
+  // A node down in the dock's lane stays on top; the dock turns translucent until hovered.
   const underDock = node.y + 13 > dockTop - 8 && node.x > x - edge && node.x < x + dockWidth + edge;
-  const activeField = ui.drag?.kind === 'scrub' ? ui.drag.field : ui.drag?.kind === 'q' ? 'q' : null;
-  const noteAxis = ui.axis === 'note';
-
-  const field = (name: ScrubField, label: ReactNode, value: string, extra?: 'is-freq' | 'is-disabled') => (
-    <button
-      type="button"
-      className={clsx('eq-field', extra, activeField === name && 'is-active')}
-      aria-label={`${name === 'f' ? 'Frequency' : name === 'q' ? 'Q' : 'Gain or slope'}, drag to change`}
-      onPointerDown={(event) => {
-        if (event.button !== 0 || extra === 'is-disabled') return;
-        event.stopPropagation();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        const graphElement = event.currentTarget.closest('.graph');
-        if (graphElement !== null) scrubDown(band, name, toGraphPoint(event, graphElement));
-      }}
-    >
-      <span className="eq-field__l">{label}</span>
-      <span className="eq-field__v">{value}</span>
-    </button>
-  );
 
   return (
     <div
@@ -114,73 +79,23 @@ export const Dock = () => {
         left: x,
         top: dockTop,
         width: dockWidth,
-        zIndex: ui.picker ? 'var(--z-strip)' : 'var(--z-dock)',
+        zIndex: picker ? 'var(--z-strip)' : 'var(--z-dock)',
       }}
       onPointerDown={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
-      <button
-        type="button"
-        className={clsx('eq-typeb', ui.picker && 'is-hover', previewing && 'is-preview')}
-        aria-label="Filter type"
-        aria-expanded={ui.picker}
-        onClick={() => {
-          selectionStore.set(({ typeMenu }) => ({ typeMenu: typeMenu === 'picker' ? null : 'picker' }));
-          uiStore.set({ hoverType: null });
-        }}
-      >
-        <TypeIcon type={shownType} style={{ stroke: 'var(--band)' }} />
-        <span>{typeNames[shownType]}</span>
-        <span className="eq-chev" style={{ flex: 'none', display: 'grid' }}>
-          <UiIcon name="chevronDown" size={12} />
-        </span>
-      </button>
+      <TypeButton band={band} open={picker} />
       <div className="eq-divider" />
-      {field(
-        'f',
-        <>
-          Freq<span className="eq-field__note">{noteAxis ? formatFrequency(band.f) : formatNote(band.f)}</span>
-        </>,
-        noteAxis ? formatNote(band.f) : formatFrequency(band.f),
-        'is-freq',
-      )}
-      {field(
-        'g',
-        cut ? 'Slope' : 'Gain',
-        cut ? formatSlope(band.slope) : withGain ? formatGain(band.g) : '—',
-        cut || withGain ? undefined : 'is-disabled',
-      )}
-      {field('q', 'Q', formatQ(band.q))}
+      <ScrubField band={band} field="f" />
+      <ScrubField band={band} field="g" />
+      <ScrubField band={band} field="q" />
       <div className="eq-divider" />
       <div className="eq-acts">
-        <button
-          type="button"
-          className={clsx('eq-act', !band.on && 'is-danger')}
-          aria-label="Bypass band"
-          aria-pressed={!band.on}
-          onClick={() => commands.toggleBypass(band)}
-        >
-          <UiIcon name="power" size={14} />
-        </button>
-        <button
-          type="button"
-          className={clsx('eq-act', ui.solo === band.slot && 'is-solo')}
-          aria-label="Solo band"
-          aria-pressed={ui.solo === band.slot}
-          onClick={() => commands.toggleSolo(band.slot)}
-        >
-          <UiIcon name="solo" size={14} />
-        </button>
-        <button
-          type="button"
-          className="eq-act"
-          aria-label="Delete band"
-          onClick={() => commands.deleteBand(band.slot)}
-        >
-          <UiIcon name="close" size={13} />
-        </button>
+        <BypassButton band={band} />
+        <SoloButton slot={band.slot} />
+        <DeleteButton slot={band.slot} />
       </div>
-      {ui.picker && <TypePicker band={band} />}
+      {picker && <TypePicker band={band} />}
     </div>
   );
 };

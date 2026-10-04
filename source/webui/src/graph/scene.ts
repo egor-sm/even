@@ -1,16 +1,21 @@
-import { native, type Section, toSections } from '~/shared/api';
-import { analyzerStats } from '~/dev/stats';
-import { type BandsState, bandsStore, findBand, selectionStore, typeIndex } from '~/entities/band';
-import { uiStore } from '~/model/ui';
 import { AnalyzerLayer, onAnalyzerFrame, Spectrum } from '~/entities/analyzer';
-import { createMapper, graph, gridLines, gridMorph, viewportStore } from '~/entities/viewport';
+import {
+  type BandsState,
+  bandsStore,
+  findBand,
+  responseDb,
+  selectionStore,
+  withBandFrequencies,
+} from '~/entities/band';
+import { createMapper, graph, gridLines, gridMorph, plotFrequencies, viewportStore } from '~/entities/viewport';
+import { drawGhost, GhostPreview } from '~/features/change-band-type';
+import { settingsStore } from '~/features/settings';
+import { drawSolo, soloRange } from '~/features/solo-band';
 import { CanvasLayer } from '~/shared/lib';
-import { drawGhost } from '~/graph/draw-ghost';
-import { drawGrid } from '~/graph/draw-grid';
-import { drawSolo } from '~/graph/draw-solo';
-import { drawResponse, responseDb, sampleFrequencies } from '~/graph/draw-response';
-import { type GraphColors, readGraphColors } from '~/graph/theme-colors';
-import { soloRange } from '~/features/solo-band/lib/solo-range';
+import { type GraphColors, readGraphColors } from '~/shared/ui';
+
+import { drawGrid } from './draw-grid';
+import { drawResponse } from './draw-response';
 
 const maxAnalyzerFps = 60;
 
@@ -20,17 +25,18 @@ type Dirty = { grid: boolean; solo: boolean; response: boolean; ghost: boolean; 
 type SceneState = {
   scale: number;
   theme: 'dark' | 'light';
-  hoverType: string | null;
   view: { range: number; morph: number };
   selected: number | null;
   solo: number | null;
 };
 
 const sceneState = (): SceneState => {
-  const { scale, theme, hoverType } = uiStore.get();
+  const { scale, theme } = settingsStore.get();
   const { selected, solo } = selectionStore.get();
-  return { scale, theme, hoverType, view: viewportStore.get().view, selected, solo };
+  return { scale, theme, view: viewportStore.get().view, selected, solo };
 };
+
+const allDirty: Dirty = { grid: true, solo: true, response: true, ghost: true, analyzer: true };
 
 /**
  * The canvas layers of the graph, outside of React: redraws a layer in the next animation frame
@@ -42,36 +48,36 @@ export class GraphScene {
   private readonly soloLayer = new CanvasLayer('graph-canvas solo', graph);
   private readonly response = new CanvasLayer('graph-canvas response', graph);
   private readonly ghostLayer = new CanvasLayer('graph-canvas ghost', graph);
+  private readonly canvases = [
+    this.grid.canvas,
+    this.analyzer.canvas,
+    this.soloLayer.canvas,
+    this.response.canvas,
+    this.ghostLayer.canvas,
+  ];
   private readonly pre = new Spectrum();
   private readonly post = new Spectrum();
+  private readonly ghost = new GhostPreview(() => this.invalidate({ ghost: true }));
   private readonly gridPairs = gridMorph(gridLines(createMapper(1), 'hz'), gridLines(createMapper(1), 'note'));
-  private readonly dirty: Dirty = { grid: true, solo: true, response: true, ghost: true, analyzer: true };
+  private readonly dirty: Dirty = { ...allDirty };
   private readonly unsubscribe: (() => void)[];
 
   private colors: GraphColors;
   private responseCache: { bands: BandsState; frequencies: number[]; bandDb: Map<number, Float64Array> } | null = null;
   private totalDb = new Float64Array(0);
-  /** Sections of the selected band with the hovered type, for the ghost curve. */
-  private ghost: { key: string; slot: number; sections: Section[] } | null = null;
-  private ghostRequest = 0;
   private frame: number | null = null;
   private lastAnalyzerDraw = 0;
-  private analyzerMoving = false;
 
   constructor(
     container: HTMLElement,
     private readonly themeRoot: HTMLElement,
+    /** Called after every analyzer frame drawn (development stats). */
+    private readonly onAnalyzerDraw?: (now: number) => void,
   ) {
-    container.append(
-      this.grid.canvas,
-      this.analyzer.canvas,
-      this.soloLayer.canvas,
-      this.response.canvas,
-      this.ghostLayer.canvas,
-    );
+    container.append(...this.canvases);
     this.colors = readGraphColors(themeRoot);
     this.analyzer.setColors(this.analyzerColors());
-    this.resize(uiStore.get().scale);
+    this.resize(settingsStore.get().scale);
 
     let previousState = sceneState();
     const onStateChange = () => {
@@ -80,15 +86,11 @@ export class GraphScene {
       previousState = state;
     };
     this.unsubscribe = [
-      uiStore.subscribe(onStateChange),
+      settingsStore.subscribe(onStateChange),
       selectionStore.subscribe(onStateChange),
       viewportStore.subscribe(onStateChange),
-      bandsStore.subscribe(() => {
-        this.updateGhost();
-        this.invalidate({ solo: true, response: true, ghost: true });
-      }),
-      onAnalyzerFrame((frame, info) => {
-        const receivedAt = performance.now();
+      bandsStore.subscribe(() => this.invalidate({ solo: true, response: true, ghost: true })),
+      onAnalyzerFrame((frame) => {
         for (const [spectrum, levels] of [
           [this.pre, frame.preDb],
           [this.post, frame.postDb],
@@ -96,8 +98,6 @@ export class GraphScene {
           if (levels === null) spectrum.clear();
           else spectrum.setLevels(levels, frame.minHz, frame.maxHz);
         }
-        analyzerStats.onFrame(receivedAt, info.latencyMs, info.bytes, performance.now() - receivedAt);
-        this.analyzerMoving = true;
         this.invalidate({ analyzer: true });
       }),
     ];
@@ -105,16 +105,10 @@ export class GraphScene {
 
   dispose(): void {
     for (const unsubscribe of this.unsubscribe) unsubscribe();
+    this.ghost.dispose();
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.analyzer.dispose();
-    for (const canvas of [
-      this.grid.canvas,
-      this.analyzer.canvas,
-      this.soloLayer.canvas,
-      this.response.canvas,
-      this.ghostLayer.canvas,
-    ])
-      canvas.remove();
+    for (const canvas of this.canvases) canvas.remove();
   }
 
   private analyzerColors() {
@@ -123,37 +117,30 @@ export class GraphScene {
 
   private resize(scalePercent: number): void {
     const scale = scalePercent / 100;
-    this.grid.resize(scale);
-    this.analyzer.resize(scale);
-    this.soloLayer.resize(scale);
-    this.response.resize(scale);
-    this.ghostLayer.resize(scale);
+    for (const layer of [this.grid, this.analyzer, this.soloLayer, this.response, this.ghostLayer]) layer.resize(scale);
   }
 
-  private onStateChange(previous: SceneState, ui: SceneState): void {
-    if (previous.scale !== ui.scale) {
-      this.resize(ui.scale);
-      this.invalidate({ grid: true, solo: true, response: true, ghost: true, analyzer: true });
+  private onStateChange(previous: SceneState, state: SceneState): void {
+    if (previous.scale !== state.scale) {
+      this.resize(state.scale);
+      this.invalidate(allDirty);
     }
-    if (previous.theme !== ui.theme) {
+    if (previous.theme !== state.theme) {
       // The theme attribute is applied by React after this store change: read the colors next frame.
       requestAnimationFrame(() => {
         this.colors = readGraphColors(this.themeRoot);
         this.analyzer.setColors(this.analyzerColors());
-        this.invalidate({ grid: true, solo: true, response: true, ghost: true, analyzer: true });
+        this.invalidate(allDirty);
       });
     }
-    if (previous.view !== ui.view) this.invalidate({ grid: true, solo: true, response: true, ghost: true });
-    if (previous.selected !== ui.selected || previous.solo !== ui.solo) this.invalidate({ solo: true, response: true });
-    if (previous.solo === null && ui.solo !== null) {
+    if (previous.view !== state.view) this.invalidate({ grid: true, solo: true, response: true, ghost: true });
+    if (previous.selected !== state.selected || previous.solo !== state.solo)
+      this.invalidate({ solo: true, response: true });
+    if (previous.solo === null && state.solo !== null) {
       // Fade the highlight in (restart the CSS animation).
       this.soloLayer.canvas.classList.remove('is-entering');
       void this.soloLayer.canvas.offsetWidth;
       this.soloLayer.canvas.classList.add('is-entering');
-    }
-    if (previous.selected !== ui.selected || previous.hoverType !== ui.hoverType) {
-      this.updateGhost();
-      this.invalidate({ ghost: true });
     }
   }
 
@@ -164,17 +151,17 @@ export class GraphScene {
 
   private readonly render = (now: number): void => {
     this.frame = null;
-    const ui = sceneState();
-    const mapper = createMapper(ui.view.range);
+    const state = sceneState();
+    const mapper = createMapper(state.view.range);
 
     if (this.dirty.grid) {
       this.dirty.grid = false;
-      drawGrid(this.grid, mapper, this.gridPairs, ui.view.morph, this.colors);
+      drawGrid(this.grid, mapper, this.gridPairs, state.view.morph, this.colors);
     }
 
     if (this.dirty.solo) {
       this.dirty.solo = false;
-      const band = findBand(bandsStore.get().bands, ui.solo);
+      const band = findBand(bandsStore.get().bands, state.solo);
       drawSolo(
         this.soloLayer,
         band === undefined
@@ -190,12 +177,12 @@ export class GraphScene {
 
     if (this.dirty.response) {
       this.dirty.response = false;
-      this.drawResponse(ui);
+      this.drawResponse(state);
     }
 
     if (this.dirty.ghost) {
       this.dirty.ghost = false;
-      this.drawGhost(ui);
+      this.drawGhost(state);
     }
 
     if (this.dirty.analyzer) {
@@ -210,19 +197,18 @@ export class GraphScene {
       const preMoving = this.pre.tick(dt);
       const postMoving = this.post.tick(dt);
       this.analyzer.draw({ ...graph, x: mapper.x, y: mapper.analyzerY }, this.pre, this.post);
-      analyzerStats.onRender(now);
+      this.onAnalyzerDraw?.(now);
 
-      this.analyzerMoving = preMoving || postMoving;
-      this.dirty.analyzer = this.analyzerMoving;
-      if (this.analyzerMoving) this.frame ??= requestAnimationFrame(this.render);
+      this.dirty.analyzer = preMoving || postMoving;
+      if (this.dirty.analyzer) this.frame ??= requestAnimationFrame(this.render);
     }
   };
 
-  private drawResponse(ui: SceneState): void {
+  private drawResponse(state: SceneState): void {
     const bands = bandsStore.get();
+    const mapper = createMapper(state.view.range);
     if (this.responseCache?.bands !== bands) {
-      const mapper = createMapper(ui.view.range);
-      const frequencies = sampleFrequencies(mapper, bands.bands);
+      const frequencies = withBandFrequencies(plotFrequencies(mapper), bands.bands);
       const bandDb = new Map(
         bands.bands.map((band) => [band.slot, responseDb(band.sections, frequencies, bands.sampleRate)] as const),
       );
@@ -239,54 +225,31 @@ export class GraphScene {
     }
 
     drawResponse(this.response, {
-      mapper: createMapper(ui.view.range),
+      mapper,
       frequencies,
       bandDb,
       totalDb,
       bands: bands.bands,
-      selected: ui.selected,
-      solo: ui.solo,
+      selected: state.selected,
+      solo: state.solo,
       colors: this.colors,
     });
   }
 
-  // Asks C++ for the selected band's sections with the hovered type; late answers are dropped.
-  private updateGhost(): void {
-    const { selected } = selectionStore.get();
-    const { hoverType } = uiStore.get();
-    const band = findBand(bandsStore.get().bands, selected);
-    if (band === undefined || hoverType === null || hoverType === band.type) {
-      this.ghostRequest++;
-      this.ghost = null;
-      return;
-    }
-
-    const key = [band.slot, hoverType, band.f, band.g, band.q, band.slope, band.on].join('|');
-    if (this.ghost?.key === key) return;
-
-    const request = ++this.ghostRequest;
-    void native.previewBand(band.slot, typeIndex(hoverType)).then((result) => {
-      if (request !== this.ghostRequest) return;
-      const sections = toSections(result);
-      this.ghost = sections === null ? null : { key, slot: band.slot, sections };
-      this.invalidate({ ghost: true });
-    });
-  }
-
-  private drawGhost(ui: SceneState): void {
-    const bands = bandsStore.get();
-    const band = findBand(bands.bands, this.ghost?.slot ?? null);
+  // The total with the selected band's response swapped for the previewed type (bypassed: unchanged).
+  private drawGhost(state: SceneState): void {
+    const preview = this.ghost.current();
     const cache = this.responseCache;
-    if (this.ghost === null || band === undefined || cache === null || ui.hoverType === null) {
+    if (preview === null || cache === null) {
       drawGhost(this.ghostLayer, null);
       return;
     }
 
-    // The total with the band's own response swapped for the previewed one (bypassed bands add nothing).
+    const { band, sections } = preview;
     const own = cache.bandDb.get(band.slot);
-    const previewDb = responseDb(this.ghost.sections, cache.frequencies, bands.sampleRate);
+    const previewDb = responseDb(sections, cache.frequencies, bandsStore.get().sampleRate);
     const totalDb = this.totalDb.map((db, i) => (band.on ? db - (own?.[i] ?? 0) + previewDb[i] : db));
-    const mapper = createMapper(ui.view.range);
+    const mapper = createMapper(state.view.range);
     drawGhost(this.ghostLayer, {
       mapper,
       frequencies: cache.frequencies,

@@ -1,7 +1,8 @@
-import { UiIcon } from '~/shared/ui';
 import { bandColorVar, findBand, selectionStore, useDisplayBands } from '~/entities/band';
-import { clamp, formatFrequency, formatNote, useStore } from '~/shared/lib';
 import { createMapper, viewportStore } from '~/entities/viewport';
+import { clamp, formatFrequency, formatNote, useStore } from '~/shared/lib';
+import { UiIcon } from '~/shared/ui';
+
 import { soloRange } from '../lib/solo-range';
 
 /** 'Solo · 158 Hz – 210 Hz' above the lit range of the soloed band. */

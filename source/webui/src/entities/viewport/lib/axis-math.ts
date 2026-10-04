@@ -1,4 +1,5 @@
 import { clamp, formatAxisFrequency, frequencyToMidi, isBlackKey } from '~/shared/lib';
+
 import { graph, type Mapper, maxHz, minHz } from './geometry';
 
 export type AxisMode = 'hz' | 'note';

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { magnitudeDb } from './response-math';
 import type { Section } from '~/shared/api';
+
+import { magnitudeDb } from './response-math';
 
 // Sections built the way dsp::design() builds them (band_design.cpp), to check the evaluation math.
 const sampleRate = 48000;

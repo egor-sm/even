@@ -14,8 +14,8 @@ import { drawSolo, soloRange } from '~/features/solo-band';
 import { CanvasLayer } from '~/shared/lib';
 import { type GraphColors, readGraphColors } from '~/shared/ui';
 
-import { drawGrid } from './draw-grid';
-import { drawResponse } from './draw-response';
+import { drawGrid } from '../lib/draw-grid';
+import { drawResponse } from '../lib/draw-response';
 
 const maxAnalyzerFps = 60;
 

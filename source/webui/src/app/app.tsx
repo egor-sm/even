@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { connectBackend } from '~/app/connect-backend';
-import { BottomBar } from '~/chrome/bottom-bar';
-import { TopBar } from '~/chrome/top-bar';
 import { DevPanel } from '~/dev/dev-panel';
 import { analyzerStats } from '~/dev/stats';
 import { settingsStore } from '~/features/settings';
-import { GraphView } from '~/graph/graph-view';
 import { shallowEqual, useStore } from '~/shared/lib';
+import { BandDock } from '~/widgets/band-dock';
+import { BottomBar } from '~/widgets/bottom-bar';
+import { GraphView } from '~/widgets/eq-graph';
+import { TopBar } from '~/widgets/top-bar';
+
+import { connectBackend } from './connect-backend';
 
 const onAnalyzerDraw = (now: number) => analyzerStats.onRender(now);
 
@@ -38,7 +40,7 @@ export const App = () => {
   return (
     <div className="eq" data-theme={theme} style={{ transform: `scale(${scale / 100})` }}>
       <TopBar />
-      <GraphView onAnalyzerDraw={onAnalyzerDraw} />
+      <GraphView overlay={<BandDock />} onAnalyzerDraw={onAnalyzerDraw} />
       <BottomBar />
       {devPanel && <DevPanel />}
     </div>

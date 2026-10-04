@@ -1,5 +1,5 @@
-import { useLayoutEffect, useState } from 'react';
 import { clsx } from 'clsx';
+import { useLayoutEffect, useState } from 'react';
 
 import { bandColorVar, findBand, hasGain, selectionStore, useDisplayBands } from '~/entities/band';
 import { graph, nodePoint, viewportStore } from '~/entities/viewport';
@@ -20,7 +20,7 @@ const dockX = (nodeX: number) => clamp(nodeX - dockWidth / 2, edge, graph.width 
  * The inspector of the selected band in the bottom lane of the graph, centred under its node and
  * following it; it holds still while a value inside it is scrubbed.
  */
-export const Dock = () => {
+export const BandDock = () => {
   const bands = useDisplayBands();
   const { selected, picker } = useStore(
     selectionStore,

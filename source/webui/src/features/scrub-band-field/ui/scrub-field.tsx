@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
 
 import { type Band, formatSlope, hasGain, isCut } from '~/entities/band';
 import { toGraphPoint, viewportStore } from '~/entities/viewport';

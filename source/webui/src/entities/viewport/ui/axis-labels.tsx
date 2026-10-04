@@ -1,7 +1,8 @@
-import { viewportStore } from '../model/viewport';
 import { formatAxisDb, useStore } from '~/shared/lib';
+
 import { dbLines, frequencyLabels } from '../lib/axis-math';
 import { createMapper } from '../lib/geometry';
+import { viewportStore } from '../model/viewport';
 
 /** dB labels of the grid lines, right-aligned in the dB axis. */
 export const DbLabels = () => {

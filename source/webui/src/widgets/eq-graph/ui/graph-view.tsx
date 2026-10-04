@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 
 import { selectBand, selectionStore } from '~/entities/band';
 import { DbLabels, FrequencyLabels, startAnimator, toGraphPoint } from '~/entities/viewport';
@@ -11,8 +11,7 @@ import { FrequencyAxis } from '~/features/frequency-axis';
 import { SoloTag } from '~/features/solo-band';
 import { endGesture, gestureStore, moveGesture } from '~/shared/lib';
 
-import { Dock } from './overlay/dock';
-import { GraphScene } from './scene';
+import { GraphScene } from '../model/scene';
 
 /** Pointer down on the empty graph: the first click folds the type strip, the next one deselects. */
 const backgroundDown = () => {
@@ -21,8 +20,15 @@ const backgroundDown = () => {
   else if (selected !== null || typeMenu !== null) selectBand(null);
 };
 
+type GraphViewProps = {
+  /** Placed over the graph after its own controls, e.g. the band dock. */
+  overlay?: ReactNode;
+  /** Called after every analyzer frame drawn (development stats). */
+  onAnalyzerDraw?: (now: number) => void;
+};
+
 /** The EQ graph: canvas layers (grid, analyzer, curves) with labels and band controls on top. */
-export const GraphView = ({ onAnalyzerDraw }: { onAnalyzerDraw?: (now: number) => void }) => {
+export const GraphView = ({ overlay, onAnalyzerDraw }: GraphViewProps) => {
   const graphRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +77,7 @@ export const GraphView = ({ onAnalyzerDraw }: { onAnalyzerDraw?: (now: number) =
       <QHandles />
       <BandNodes />
       <TypeStrip />
-      <Dock />
+      {overlay}
     </div>
   );
 };

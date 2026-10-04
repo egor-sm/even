@@ -185,6 +185,11 @@ body,
   }
 }
 
+.axis-units {
+  margin: 0;
+  min-inline-size: 0;
+}
+
 .db-label,
 .frequency-label {
   position: absolute;

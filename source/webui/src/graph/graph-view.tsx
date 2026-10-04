@@ -1,9 +1,13 @@
 import { useEffect, useRef } from 'react';
 
+import { DbAxis } from '../axes/db-axis';
+import { FrequencyAxis } from '../axes/frequency-axis';
+import { uiStore } from '../model/ui';
 import { startAnimator } from './animator';
 import { DbLabels, FrequencyLabels } from './axis-labels';
 import { backgroundDoubleClick, backgroundDown, pointerMove, pointerUp, toGraphPoint } from './interactions';
 import { BandNodes } from './overlay/band-nodes';
+import { Crosshair } from './overlay/crosshair';
 import { Dock } from './overlay/dock';
 import { QHandles } from './overlay/q-handles';
 import { TypeStrip } from './overlay/type-strip';
@@ -43,9 +47,16 @@ export const GraphView = () => {
           if (event.button === 0) backgroundDown();
         }}
         onDoubleClick={(event) => backgroundDoubleClick(point(event))}
+        onPointerMove={(event) => {
+          if (uiStore.get().drag === null) uiStore.set({ cursor: point(event) });
+        }}
+        onPointerLeave={() => uiStore.set({ cursor: null })}
       />
       <div className="graph-layers" ref={layersRef} />
+      <Crosshair />
       <FrequencyLabels />
+      <FrequencyAxis />
+      <DbAxis />
       <DbLabels />
       <QHandles />
       <BandNodes />

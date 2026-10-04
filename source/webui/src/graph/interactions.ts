@@ -4,7 +4,7 @@ import { commands } from '../model/commands';
 import { hasGain, isCut, slopes } from '../model/filter-types';
 import { frequencyToMidi, midiToFrequency } from '../model/format';
 import { type ScrubField, uiStore, withPreview } from '../model/ui';
-import { octavesToQ } from './axis-math';
+import { fitRange, keyAt, maxRange, minRange, octavesToQ, wheelRange } from './axis-math';
 import { clamp, createMapper, graph, maxHz, minHz } from './geometry';
 
 export type Point = { x: number; y: number };
@@ -154,6 +154,84 @@ const moveScrub = (point: Point): void => {
   }
 };
 
+// ---- dB axis: the display range ----
+
+export const rangeDown = (point: Point): void =>
+  uiStore.set(({ range }) => ({
+    drag: { kind: 'range', startY: point.y, startRange: range },
+    strip: false,
+    picker: false,
+    hoverType: null,
+  }));
+
+const moveRange = (point: Point): void => {
+  const { drag, range } = uiStore.get();
+  if (drag?.kind !== 'range') return;
+  // Twice the range per 160 px downwards.
+  const next = clamp(Math.round(drag.startRange * 2 ** ((point.y - drag.startY) / 160)), minRange, maxRange);
+  if (next !== range) uiStore.set({ range: next });
+};
+
+export const rangeWheel = (up: boolean): void => uiStore.set(({ range }) => ({ range: wheelRange(range, up) }));
+
+export const fitRangeToBands = (): void => uiStore.set({ range: fitRange(bandsStore.get().bands) });
+
+// ---- Keyboard (frequency axis in note mode) ----
+
+let tween = 0;
+
+/** Moves a band to a frequency in 180 ms (one gesture), easing out. */
+const glideFrequency = (band: Band, to: number): void => {
+  const token = ++tween;
+  const from = band.f;
+  const startedAt = performance.now();
+  bandParameters.begin(band.slot, ['frequency']);
+
+  const step = () => {
+    if (token !== tween) {
+      bandParameters.end(band.slot, ['frequency']);
+      return;
+    }
+    const k = Math.min(1, (performance.now() - startedAt) / 180);
+    const f = from * (to / from) ** (1 - (1 - k) ** 3);
+    uiStore.set({ preview: { slot: band.slot, f }, previewUntilResponse: true });
+    bandParameters.set(band.slot, 'frequency', f);
+    if (k < 1) requestAnimationFrame(step);
+    else bandParameters.end(band.slot, ['frequency']);
+  };
+  requestAnimationFrame(step);
+};
+
+/** The key under a point of the keyboard (y from the keyboard's top). */
+export const keyUnder = (point: Point, keyboardY: number): number =>
+  keyAt(createMapper(uiStore.get().view.range), point.x, keyboardY);
+
+/** Click on a key: the selected band glides to that note; with Alt, or without a selection, a new band. */
+export const keyDown = (midi: number, altKey: boolean): void => {
+  const band = selectedBand();
+  if (altKey || band === undefined) {
+    commands.createBand('bell', midiToFrequency(midi), 0);
+    uiStore.set({ hotKey: midi, strip: false });
+    return;
+  }
+  glideFrequency(band, midiToFrequency(midi));
+  uiStore.set({ hotKey: midi, strip: false, picker: false, drag: { kind: 'keys', slot: band.slot, midi } });
+};
+
+const moveKeys = (point: Point): void => {
+  const { drag } = uiStore.get();
+  if (drag?.kind !== 'keys') return;
+  // Dragging along the keys moves the band by semitones (on the white keys' row).
+  const midi = keyUnder(point, 32);
+  if (midi === drag.midi) return;
+  tween++;
+  const f = midiToFrequency(midi);
+  bandParameters.begin(drag.slot, ['frequency']);
+  uiStore.set({ preview: { slot: drag.slot, f }, previewUntilResponse: true, hotKey: midi, drag: { ...drag, midi } });
+  bandParameters.set(drag.slot, 'frequency', f);
+  bandParameters.end(drag.slot, ['frequency']);
+};
+
 /** Pointer move anywhere over the graph while a gesture runs. */
 export const pointerMove = (point: Point, shiftKey: boolean): void => {
   const { drag } = uiStore.get();
@@ -161,6 +239,8 @@ export const pointerMove = (point: Point, shiftKey: boolean): void => {
   if (drag.kind === 'node') moveNode(point, shiftKey);
   else if (drag.kind === 'q') moveQ(point);
   else if (drag.kind === 'scrub') moveScrub(point);
+  else if (drag.kind === 'range') moveRange(point);
+  else if (drag.kind === 'keys') moveKeys(point);
 };
 
 /** Pointer up: ends the gesture (one undo step) and keeps the preview until C++ confirms the values. */

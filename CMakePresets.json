@@ -29,7 +29,7 @@
       "displayName": "Debug + web UI dev server (run `vp dev` in source/webui/)",
       "inherits": "debug",
       "cacheVariables": {
-        "EQIT_WEBUI_DEV_SERVER_URL": "http://localhost:5173/"
+        "EVEN_WEBUI_DEV_SERVER_URL": "http://localhost:5173/"
       }
     },
     {

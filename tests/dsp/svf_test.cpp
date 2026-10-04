@@ -9,7 +9,7 @@
 #include <complex>
 
 using Catch::Matchers::WithinAbs;
-using eqit::dsp::Svf;
+using even::dsp::Svf;
 
 namespace {
 
@@ -25,7 +25,7 @@ double gainDb(Output output, double cutoff, double q, double frequency) {
   Svf filter;
   filter.setParameters(cutoff, q, sampleRate);
   // High q rings for a while: give the filter time to settle before measuring.
-  return eqit::test::measureGainDb([&](float x) { return output(filter.process(x)); }, frequency, sampleRate, 1.0);
+  return even::test::measureGainDb([&](float x) { return output(filter.process(x)); }, frequency, sampleRate, 1.0);
 }
 
 } // namespace
@@ -35,18 +35,18 @@ TEST_CASE("Svf: matches the bilinear-transformed analog response", "[dsp][svf]")
   const auto q = GENERATE(0.5, 0.707, 2.0, 8.0);
   const auto frequency = GENERATE(40.0, 400.0, 1500.0, 2000.0, 2600.0, 9000.0, 20000.0);
 
-  const auto s = eqit::test::warpedNormalizedS(frequency, cutoff, sampleRate);
+  const auto s = even::test::warpedNormalizedS(frequency, cutoff, sampleRate);
   const auto denominator = s * s + s / q + 1.0;
 
-  CHECK_THAT(gainDb(lowpass, cutoff, q, frequency), WithinAbs(eqit::test::toDb(std::abs(1.0 / denominator)), 0.05));
-  CHECK_THAT(gainDb(bandpass, cutoff, q, frequency), WithinAbs(eqit::test::toDb(std::abs(s / denominator)), 0.05));
-  CHECK_THAT(gainDb(highpass, cutoff, q, frequency), WithinAbs(eqit::test::toDb(std::abs(s * s / denominator)), 0.05));
+  CHECK_THAT(gainDb(lowpass, cutoff, q, frequency), WithinAbs(even::test::toDb(std::abs(1.0 / denominator)), 0.05));
+  CHECK_THAT(gainDb(bandpass, cutoff, q, frequency), WithinAbs(even::test::toDb(std::abs(s / denominator)), 0.05));
+  CHECK_THAT(gainDb(highpass, cutoff, q, frequency), WithinAbs(even::test::toDb(std::abs(s * s / denominator)), 0.05));
 }
 
 TEST_CASE("Svf: gain at the cutoff equals q (the resonance)", "[dsp][svf]") {
   const auto cutoff = GENERATE(100.0, 1000.0, 12000.0);
   const auto q = GENERATE(0.707, 1.0, 5.0);
-  const auto expected = eqit::test::toDb(q); // 0.707 -> -3 dB, 5 -> +14 dB
+  const auto expected = even::test::toDb(q); // 0.707 -> -3 dB, 5 -> +14 dB
 
   CHECK_THAT(gainDb(lowpass, cutoff, q, cutoff), WithinAbs(expected, 0.05));
   CHECK_THAT(gainDb(bandpass, cutoff, q, cutoff), WithinAbs(expected, 0.05));

@@ -1,10 +1,10 @@
 juce_add_plugin(
-  equalize_it
-  PRODUCT_NAME "Equalize It"
-  COMPANY_NAME "SmEgDm"
-  BUNDLE_ID "com.smegdm.equalize-it"
-  PLUGIN_MANUFACTURER_CODE Smeg
-  PLUGIN_CODE Eqit
+  even
+  PRODUCT_NAME "Even"
+  COMPANY_NAME "Egor Smirnov"
+  BUNDLE_ID "com.eveneq"
+  PLUGIN_MANUFACTURER_CODE EgSm
+  PLUGIN_CODE Even
   FORMATS Standalone VST3
   IS_SYNTH FALSE
   NEEDS_MIDI_INPUT FALSE
@@ -13,10 +13,10 @@ juce_add_plugin(
   NEEDS_WEB_BROWSER TRUE
   NEEDS_WEBVIEW2 TRUE
   MICROPHONE_PERMISSION_ENABLED TRUE
-  MICROPHONE_PERMISSION_TEXT "Equalize It analyses the audio input in the standalone app.")
+  MICROPHONE_PERMISSION_TEXT "Even analyses the audio input in the standalone app.")
 
 target_sources(
-  equalize_it
+  even
   PRIVATE plugin_processor.cpp
           plugin_editor.cpp
           parameters.cpp
@@ -25,22 +25,22 @@ target_sources(
           test_signal.cpp
           analyzer/spectrum_analyzer.cpp)
 
-target_compile_features(equalize_it PRIVATE cxx_std_23)
+target_compile_features(even PRIVATE cxx_std_23)
 
 target_compile_definitions(
-  equalize_it
+  even
   PRIVATE JUCE_WEB_BROWSER=1
           JUCE_USE_CURL=0
           JUCE_VST3_CAN_REPLACE_VST2=0
           JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING=1)
 
 configure_file(build_config.h.in "${CMAKE_BINARY_DIR}/generated/build_config.h" @ONLY)
-target_include_directories(equalize_it PRIVATE "${CMAKE_BINARY_DIR}/generated")
+target_include_directories(even PRIVATE "${CMAKE_BINARY_DIR}/generated")
 
 target_link_libraries(
-  equalize_it
-  PRIVATE eqit_webui_assets
-          eqit::dsp
+  even
+  PRIVATE even_webui_assets
+          even::dsp
           juce::juce_audio_utils
           juce::juce_dsp
           juce::juce_gui_extra

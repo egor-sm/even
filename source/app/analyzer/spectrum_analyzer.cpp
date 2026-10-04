@@ -5,7 +5,7 @@
 #include <cstring>
 #include <span>
 
-namespace eqit {
+namespace even {
 
 namespace {
 
@@ -169,4 +169,4 @@ void SpectrumAnalyzer::reduceToDisplayPoints(double rate) {
   }
 }
 
-} // namespace eqit
+} // namespace even

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // Second-order (12 dB/oct) state-variable filter built with the topology-preserving transform:
 // two trapezoidal integrators in a loop with the bandpass output fed back through 2R (damping),
@@ -50,4 +50,4 @@ private:
   float state2 = 0.0f;        // second (lowpass) integrator memory
 };
 
-} // namespace eqit::dsp
+} // namespace even::dsp

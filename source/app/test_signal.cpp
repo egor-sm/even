@@ -3,7 +3,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace eqit {
+namespace even {
 
 void TestSignal::prepare(double newSampleRate) {
   sampleRate = newSampleRate;
@@ -46,4 +46,4 @@ float TestSignal::nextPinkNoise() noexcept {
   return pink * 0.11f;
 }
 
-} // namespace eqit
+} // namespace even

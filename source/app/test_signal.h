@@ -4,7 +4,7 @@
 
 #include <array>
 
-namespace eqit {
+namespace even {
 
 // Debug signal for the analyzer: pink noise plus a logarithmic 20 Hz - 20 kHz sine sweep.
 class TestSignal {
@@ -29,4 +29,4 @@ private:
   std::array<float, 7> pinkState{};
 };
 
-} // namespace eqit
+} // namespace even

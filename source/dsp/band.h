@@ -7,7 +7,7 @@
 
 #include <array>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // One EQ band ready for real-time use: smooths parameter changes, recomputes coefficients every
 // few samples, and crossfades when the shape or cut slope changes or the band is switched on/off
@@ -75,4 +75,4 @@ private:
   int crossfadeRemaining = 0; // > 0 while fading from the other voice into the active one
 };
 
-} // namespace eqit::dsp
+} // namespace even::dsp

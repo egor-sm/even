@@ -12,9 +12,9 @@
 #include <vector>
 
 using Catch::Matchers::WithinAbs;
-using eqit::dsp::BandParameters;
-using eqit::dsp::Equalizer;
-using eqit::dsp::FilterShape;
+using even::dsp::BandParameters;
+using even::dsp::Equalizer;
+using even::dsp::FilterShape;
 
 namespace {
 
@@ -67,7 +67,7 @@ TEST_CASE("Equalizer: bands in series add up in dB", "[dsp][equalizer]") {
 
   auto expected = 0.0;
   for (const auto &band : bands)
-    expected += eqit::dsp::magnitudeDb(eqit::dsp::design(band, sampleRate), frequency, sampleRate);
+    expected += even::dsp::magnitudeDb(even::dsp::design(band, sampleRate), frequency, sampleRate);
 
   const auto input = sine(frequency, 48000);
   auto output = input;

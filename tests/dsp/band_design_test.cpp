@@ -15,8 +15,8 @@
 #include <vector>
 
 using Catch::Matchers::WithinAbs;
-using eqit::dsp::BandParameters;
-using eqit::dsp::FilterShape;
+using even::dsp::BandParameters;
+using even::dsp::FilterShape;
 
 namespace {
 
@@ -28,17 +28,17 @@ BandParameters band(FilterShape shape, double frequency, double gainDb, double q
 
 // Analytic response of the design (what the UI will draw).
 double designDb(const BandParameters &parameters, double frequency) {
-  return eqit::dsp::magnitudeDb(eqit::dsp::design(parameters, sampleRate), frequency, sampleRate);
+  return even::dsp::magnitudeDb(even::dsp::design(parameters, sampleRate), frequency, sampleRate);
 }
 
 // Response measured by running a sine through the actual filter sections in series.
 double measuredDb(const BandParameters &parameters, double frequency) {
-  const auto designed = eqit::dsp::design(parameters, sampleRate);
-  std::array<eqit::dsp::SectionFilter, eqit::dsp::BandDesign::maxSections> sections{};
+  const auto designed = even::dsp::design(parameters, sampleRate);
+  std::array<even::dsp::SectionFilter, even::dsp::BandDesign::maxSections> sections{};
   for (std::size_t i = 0; i < designed.count; ++i)
     sections[i].setSection(designed.sections[i]);
 
-  return eqit::test::measureGainDb(
+  return even::test::measureGainDb(
       [&](float x) {
         for (std::size_t i = 0; i < designed.count; ++i)
           x = sections[i].process(x);
@@ -232,7 +232,7 @@ TEST_CASE("Cuts: the cascade sounds exactly like the drawn response", "[dsp][ban
 }
 
 TEST_CASE("sanitize: snaps the slope to a supported one", "[dsp][band][cut]") {
-  CHECK(eqit::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 30), sampleRate).slopeDbPerOctave == 24);
-  CHECK(eqit::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 100), sampleRate).slopeDbPerOctave == 48);
-  CHECK(eqit::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 0), sampleRate).slopeDbPerOctave == 6);
+  CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 30), sampleRate).slopeDbPerOctave == 24);
+  CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 100), sampleRate).slopeDbPerOctave == 48);
+  CHECK(even::dsp::sanitize(band(FilterShape::lowCut, 100.0, 0.0, 1.0, 0), sampleRate).slopeDbPerOctave == 6);
 }

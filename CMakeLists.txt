@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(
-  equalize_it
+  even
   VERSION 0.1.0
   LANGUAGES C CXX)
 
@@ -12,12 +12,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(EQIT_WEBUI_DEV_SERVER_URL
+set(EVEN_WEBUI_DEV_SERVER_URL
     ""
     CACHE STRING
           "Load the web UI from this dev server (e.g. http://localhost:5173/) instead of the embedded bundle")
 
-option(EQIT_BUILD_TESTS "Build unit tests" ON)
+option(EVEN_BUILD_TESTS "Build unit tests" ON)
 
 include(cmake/CPM.cmake)
 include(cmake/warnings.cmake)
@@ -32,7 +32,7 @@ add_subdirectory(source/dsp)
 add_subdirectory(source/webui)
 add_subdirectory(source/app)
 
-if(EQIT_BUILD_TESTS)
+if(EVEN_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()

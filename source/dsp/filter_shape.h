@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // Band shapes, named as in common parametric EQs.
 enum class FilterShape : std::uint8_t {
@@ -39,4 +39,4 @@ struct BandParameters {
 // slope to a supported one, so that any user or host value can be designed and processed.
 [[nodiscard]] BandParameters sanitize(BandParameters parameters, double sampleRate) noexcept;
 
-} // namespace eqit::dsp
+} // namespace even::dsp

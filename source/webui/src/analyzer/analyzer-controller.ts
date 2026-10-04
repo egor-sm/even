@@ -8,9 +8,9 @@ import { AnalyzerStats } from './stats';
 declare global {
   interface Window {
     /** Called by C++ (PluginEditor::handleAsyncUpdate) via evaluateJavascript for every analyzer frame. */
-    eqitOnAnalyzerFrame?: (sentAtMs: number, frameBase64: string) => void;
+    evenOnAnalyzerFrame?: (sentAtMs: number, frameBase64: string) => void;
     /** Called by C++ (PluginEditor::timerCallback) whenever the EQ response changes. */
-    eqitOnResponse?: (responseBase64: string) => void;
+    evenOnResponse?: (responseBase64: string) => void;
   }
 }
 
@@ -41,8 +41,8 @@ export class AnalyzerController {
       selectBand: onSelectBand,
       previewNode: (preview) => this.view.setNodePreview(preview),
     });
-    window.eqitOnAnalyzerFrame = this.onFrame;
-    window.eqitOnResponse = this.onResponse;
+    window.evenOnAnalyzerFrame = this.onFrame;
+    window.evenOnResponse = this.onResponse;
   }
 
   setRenderer(kind: RendererKind): void {
@@ -55,8 +55,8 @@ export class AnalyzerController {
   }
 
   dispose(): void {
-    if (window.eqitOnAnalyzerFrame === this.onFrame) delete window.eqitOnAnalyzerFrame;
-    if (window.eqitOnResponse === this.onResponse) delete window.eqitOnResponse;
+    if (window.evenOnAnalyzerFrame === this.onFrame) delete window.evenOnAnalyzerFrame;
+    if (window.evenOnResponse === this.onResponse) delete window.evenOnResponse;
     if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
     this.pad.dispose();
     this.view.dispose();

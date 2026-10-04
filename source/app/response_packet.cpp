@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <cstring>
 
-namespace eqit {
+namespace even {
 
 namespace {
 
@@ -79,4 +79,4 @@ std::vector<std::byte> serializeResponse(const ResponseState &state) {
   return bytes;
 }
 
-} // namespace eqit
+} // namespace even

@@ -7,7 +7,7 @@
 #include <span>
 #include <vector>
 
-namespace eqit {
+namespace even {
 
 // Keeps the most recent samples written by a single producer (the audio thread).
 // Readers copy the latest window at any time without blocking the producer.
@@ -47,4 +47,4 @@ private:
   std::atomic<std::uint64_t> writePosition{0};
 };
 
-} // namespace eqit
+} // namespace even

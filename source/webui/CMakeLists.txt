@@ -39,4 +39,4 @@ add_custom_command(
   COMMENT "Building web UI"
   VERBATIM)
 
-juce_add_binary_data(eqit_webui_assets NAMESPACE WebUiAssets HEADER_NAME webui_assets.h SOURCES "${WEBUI_ARCHIVE}")
+juce_add_binary_data(even_webui_assets NAMESPACE WebUiAssets HEADER_NAME webui_assets.h SOURCES "${WEBUI_ARCHIVE}")

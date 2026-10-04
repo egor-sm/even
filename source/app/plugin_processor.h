@@ -11,7 +11,7 @@
 #include <array>
 #include <atomic>
 
-namespace eqit {
+namespace even {
 
 class PluginProcessor final : public juce::AudioProcessor {
 public:
@@ -71,4 +71,4 @@ private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };
 
-} // namespace eqit
+} // namespace even

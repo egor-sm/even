@@ -8,7 +8,7 @@
 
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
-using eqit::dsp::SmoothedValue;
+using even::dsp::SmoothedValue;
 
 namespace {
 

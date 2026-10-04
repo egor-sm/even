@@ -5,7 +5,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 namespace {
 
@@ -111,4 +111,4 @@ BandDesign design(const BandParameters &parameters, double sampleRate) noexcept 
   return result;
 }
 
-} // namespace eqit::dsp
+} // namespace even::dsp

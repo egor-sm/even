@@ -8,7 +8,7 @@
 #include <atomic>
 #include <cstdint>
 
-namespace eqit::parameters {
+namespace even::parameters {
 
 inline constexpr auto mute = "mute";
 
@@ -59,4 +59,4 @@ private:
   std::atomic<float> &slopeValue;
 };
 
-} // namespace eqit::parameters
+} // namespace even::parameters

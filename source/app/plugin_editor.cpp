@@ -6,7 +6,7 @@
 #include <optional>
 #include <string_view>
 
-namespace eqit {
+namespace even {
 
 namespace {
 
@@ -160,7 +160,7 @@ void PluginEditor::handleAsyncUpdate() {
   // One evaluateJavascript per frame: a single IPC round trip and no JSON encoding of the payload.
   // Base64 needs no escaping inside a JS string literal.
   const auto bytes = pluginProcessor.getAnalyzer().serializeLatestFrame();
-  webView.evaluateJavascript("window.eqitOnAnalyzerFrame?.(" + juce::String{juce::Time::currentTimeMillis()} + ",'" +
+  webView.evaluateJavascript("window.evenOnAnalyzerFrame?.(" + juce::String{juce::Time::currentTimeMillis()} + ",'" +
                              juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
 }
 
@@ -173,8 +173,8 @@ void PluginEditor::timerCallback() {
     return;
 
   const auto bytes = serializeResponse(state);
-  webView.evaluateJavascript("window.eqitOnResponse?.('" + juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
+  webView.evaluateJavascript("window.evenOnResponse?.('" + juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
   lastSentResponse = state;
 }
 
-} // namespace eqit
+} // namespace even

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // First-order (6 dB/oct) filter built with the topology-preserving transform (TPT):
 // the analog RC lowpass dy/dt = wc * (x - y) with its integrator replaced by a trapezoidal one
@@ -35,4 +35,4 @@ private:
   float state = 0.0f; // the trapezoidal integrator's memory
 };
 
-} // namespace eqit::dsp
+} // namespace even::dsp

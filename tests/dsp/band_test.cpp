@@ -13,9 +13,9 @@
 #include <vector>
 
 using Catch::Matchers::WithinAbs;
-using eqit::dsp::Band;
-using eqit::dsp::BandParameters;
-using eqit::dsp::FilterShape;
+using even::dsp::Band;
+using even::dsp::BandParameters;
+using even::dsp::FilterShape;
 
 namespace {
 
@@ -81,7 +81,7 @@ TEST_CASE("Band: with steady parameters it sounds exactly like the design", "[ds
   auto output = input;
   runBlocks(filter, output, [](std::size_t) {});
 
-  const auto expected = eqit::dsp::magnitudeDb(eqit::dsp::design(parameters, sampleRate), frequency, sampleRate);
+  const auto expected = even::dsp::magnitudeDb(even::dsp::design(parameters, sampleRate), frequency, sampleRate);
   CHECK_THAT(gainDb(input, output, 24000), WithinAbs(expected, 0.05));
 }
 
@@ -161,13 +161,13 @@ TEST_CASE("Band: abrupt changes do not click", "[dsp][band]") {
 
 TEST_CASE("Band: the click test does catch an unsmoothed change", "[dsp][band]") {
   // Sanity check of the measurement: switching coefficients abruptly must fail it.
-  eqit::dsp::SectionFilter section;
-  section.setSection(eqit::dsp::design(band(FilterShape::bell, 1000.0, -18.0, 4.0), sampleRate).sections[0]);
+  even::dsp::SectionFilter section;
+  section.setSection(even::dsp::design(band(FilterShape::bell, 1000.0, -18.0, 4.0), sampleRate).sections[0]);
 
   auto output = sine(1000.0, 24000);
   for (std::size_t n = 0; n < output.size(); ++n) {
     if (n == 10240)
-      section.setSection(eqit::dsp::design(band(FilterShape::bell, 1000.0, 18.0, 4.0), sampleRate).sections[0]);
+      section.setSection(even::dsp::design(band(FilterShape::bell, 1000.0, 18.0, 4.0), sampleRate).sections[0]);
     output[n] = section.process(output[n]);
   }
 

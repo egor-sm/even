@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdint>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // Exponential (one-pole) smoothing of a control value towards a target, advanced in steps of
 // several samples. On each step the value covers the same fraction of the remaining distance,
@@ -59,4 +59,4 @@ private:
   double target = 0.0;
 };
 
-} // namespace eqit::dsp
+} // namespace even::dsp

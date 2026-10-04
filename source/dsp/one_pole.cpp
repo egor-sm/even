@@ -4,7 +4,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 void OnePole::setCutoff(double cutoffHz, double sampleRate) noexcept {
   assert(cutoffHz > 0.0 && cutoffHz < sampleRate / 2.0);
@@ -17,4 +17,4 @@ void OnePole::setCoefficient(double prewarped) noexcept {
   gain = static_cast<float>(prewarped / (1.0 + prewarped));
 }
 
-} // namespace eqit::dsp
+} // namespace even::dsp

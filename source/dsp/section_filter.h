@@ -4,7 +4,7 @@
 #include "dsp/one_pole.h"
 #include "dsp/svf.h"
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // Filters one channel through one designed Section: a one-pole filter (order 1) or an SVF
 // (order 2), with the outputs mixed by the section's weights.
@@ -86,4 +86,4 @@ private:
   int rampRemaining = 0;
 };
 
-} // namespace eqit::dsp
+} // namespace even::dsp

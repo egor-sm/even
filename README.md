@@ -4,7 +4,7 @@
 <div align="center">
   <img src="media/logo.svg" alt="Logo" width="80" height="80">
 
-  <h3 align="center">Equalize It</h3>
+  <h3 align="center">Even</h3>
 
   <p align="center">
     12-band parametric EQ
@@ -72,14 +72,14 @@ cmake --build --preset release
 ```
 
 The web UI is built and embedded into the plugin automatically.
-Artefacts end up in `build/release/source/app/equalize_it_artefacts/Release`.
+Artefacts end up in `build/release/source/app/even_artefacts/Release`.
 
 ### Tests
 
 DSP code (`source/dsp`) is covered by [Catch2](https://github.com/catchorg/Catch2) tests in `tests/`:
 
 ```sh
-cmake --build --preset debug --target eqit_tests
+cmake --build --preset debug --target even_tests
 ctest --preset debug
 ```
 

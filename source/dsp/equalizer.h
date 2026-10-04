@@ -6,7 +6,7 @@
 #include <array>
 #include <cstddef>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // The full EQ: bands in series. Switched-off bands pass the signal through untouched and cost
 // almost nothing. Processing is allocation-free.
@@ -26,4 +26,4 @@ private:
   std::array<Band, maxBands> bands{};
 };
 
-} // namespace eqit::dsp
+} // namespace even::dsp

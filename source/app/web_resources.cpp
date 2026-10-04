@@ -5,7 +5,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace eqit {
+namespace even {
 
 namespace {
 
@@ -54,4 +54,4 @@ std::optional<juce::WebBrowserComponent::Resource> findWebUiResource(const juce:
   return juce::WebBrowserComponent::Resource{.data = std::move(data), .mimeType = getMimeType(path)};
 }
 
-} // namespace eqit
+} // namespace even

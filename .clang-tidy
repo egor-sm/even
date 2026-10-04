@@ -61,4 +61,4 @@ CheckOptions:
   readability-identifier-naming.ConstexprVariableCase: camelBack
   readability-identifier-naming.EnumConstantCase: camelBack
   readability-identifier-naming.TemplateParameterCase: CamelCase
-  cppcoreguidelines-macro-usage.AllowedRegexp: '^(EQIT_|JUCE_|JucePlugin_)'
+  cppcoreguidelines-macro-usage.AllowedRegexp: '^(EVEN_|JUCE_|JucePlugin_)'

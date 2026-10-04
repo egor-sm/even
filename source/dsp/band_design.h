@@ -5,7 +5,7 @@
 #include <array>
 #include <cstddef>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 // One filter section: coefficients plus the weights of its outputs. With s normalized so that
 // s = j at the section's cutoff, its transfer function is
@@ -34,4 +34,4 @@ struct BandDesign {
 // supported cut slope.
 [[nodiscard]] BandDesign design(const BandParameters &parameters, double sampleRate) noexcept;
 
-} // namespace eqit::dsp
+} // namespace even::dsp

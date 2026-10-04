@@ -3,7 +3,7 @@
 #include <cmath>
 #include <utility>
 
-namespace eqit::parameters {
+namespace even::parameters {
 
 namespace {
 
@@ -124,4 +124,4 @@ dsp::BandParameters BandValues::parameters() const noexcept {
   };
 }
 
-} // namespace eqit::parameters
+} // namespace even::parameters

@@ -12,7 +12,7 @@
 #include <mutex>
 #include <vector>
 
-namespace eqit {
+namespace even {
 
 // Computes the spectrum of the most recent input on a background thread and reduces it to
 // log-spaced, fractional-octave smoothed display points.
@@ -77,4 +77,4 @@ private:
   Frame latestFrame;
 };
 
-} // namespace eqit
+} // namespace even

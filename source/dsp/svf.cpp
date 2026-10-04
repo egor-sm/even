@@ -4,7 +4,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 void Svf::setParameters(double cutoffHz, double q, double sampleRate) noexcept {
   assert(cutoffHz > 0.0 && cutoffHz < sampleRate / 2.0);
@@ -22,4 +22,4 @@ void Svf::setCoefficients(double prewarped, double q) noexcept {
   feedbackScale = static_cast<float>(1.0 / (1.0 + damping * prewarped + prewarped * prewarped));
 }
 
-} // namespace eqit::dsp
+} // namespace even::dsp

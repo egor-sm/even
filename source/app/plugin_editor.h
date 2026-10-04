@@ -9,7 +9,7 @@
 #include <memory>
 #include <optional>
 
-namespace eqit {
+namespace even {
 
 class PluginEditor final : public juce::AudioProcessorEditor, private juce::AsyncUpdater, private juce::Timer {
 public:
@@ -78,4 +78,4 @@ private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };
 
-} // namespace eqit
+} // namespace even

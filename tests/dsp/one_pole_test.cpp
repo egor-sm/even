@@ -9,7 +9,7 @@
 #include <complex>
 
 using Catch::Matchers::WithinAbs;
-using eqit::dsp::OnePole;
+using even::dsp::OnePole;
 
 namespace {
 
@@ -18,13 +18,13 @@ constexpr double sampleRate = 48000.0;
 double lowpassGainDb(double cutoff, double frequency) {
   OnePole filter;
   filter.setCutoff(cutoff, sampleRate);
-  return eqit::test::measureGainDb([&](float x) { return filter.process(x).lowpass; }, frequency, sampleRate);
+  return even::test::measureGainDb([&](float x) { return filter.process(x).lowpass; }, frequency, sampleRate);
 }
 
 double highpassGainDb(double cutoff, double frequency) {
   OnePole filter;
   filter.setCutoff(cutoff, sampleRate);
-  return eqit::test::measureGainDb([&](float x) { return filter.process(x).highpass; }, frequency, sampleRate);
+  return even::test::measureGainDb([&](float x) { return filter.process(x).highpass; }, frequency, sampleRate);
 }
 
 } // namespace
@@ -54,9 +54,9 @@ TEST_CASE("OnePole: matches the bilinear-transformed analog response at any freq
   const auto frequency = GENERATE(50.0, 500.0, 2000.0, 3000.0, 8000.0, 16000.0, 22000.0);
 
   // H_lp(s) = 1 / (s + 1), H_hp(s) = s / (s + 1) with s normalized to the cutoff and warped.
-  const auto s = eqit::test::warpedNormalizedS(frequency, cutoff, sampleRate);
-  const auto lowpass = eqit::test::toDb(std::abs(1.0 / (s + 1.0)));
-  const auto highpass = eqit::test::toDb(std::abs(s / (s + 1.0)));
+  const auto s = even::test::warpedNormalizedS(frequency, cutoff, sampleRate);
+  const auto lowpass = even::test::toDb(std::abs(1.0 / (s + 1.0)));
+  const auto highpass = even::test::toDb(std::abs(s / (s + 1.0)));
 
   CHECK_THAT(lowpassGainDb(cutoff, frequency), WithinAbs(lowpass, 0.05));
   CHECK_THAT(highpassGainDb(cutoff, frequency), WithinAbs(highpass, 0.05));

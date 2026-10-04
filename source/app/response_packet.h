@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace eqit {
+namespace even {
 
 struct BandState {
   bool enabled = false;
@@ -33,4 +33,4 @@ struct ResponseState {
 //                                      f64 bandpassMix, f64 highpassMix}
 [[nodiscard]] std::vector<std::byte> serializeResponse(const ResponseState &state);
 
-} // namespace eqit
+} // namespace even

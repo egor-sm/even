@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 void Equalizer::prepare(double sampleRate) noexcept {
   for (auto &band : bands)
@@ -19,4 +19,4 @@ void Equalizer::process(float *const *channels, int numChannels, int numSamples)
     band.process(channels, numChannels, numSamples);
 }
 
-} // namespace eqit::dsp
+} // namespace even::dsp

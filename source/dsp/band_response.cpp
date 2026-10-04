@@ -5,7 +5,7 @@
 #include <complex>
 #include <numbers>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 double magnitudeDb(const BandDesign &design, double frequencyHz, double sampleRate) noexcept {
   const auto warped = std::tan(std::numbers::pi * frequencyHz / sampleRate);
@@ -29,4 +29,4 @@ double magnitudeDb(const BandDesign &design, double frequencyHz, double sampleRa
   return 20.0 * std::log10(std::max(magnitude, 1e-15));
 }
 
-} // namespace eqit::dsp
+} // namespace even::dsp

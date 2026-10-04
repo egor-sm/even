@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <numbers>
 
-namespace eqit::test {
+namespace even::test {
 
 // Gain in dB of a single-channel processor at `frequency`, measured by feeding a sine.
 // The first `settleSeconds` let the filter reach its steady state and are not measured.
@@ -44,4 +44,4 @@ inline double toDb(double magnitude) {
   return 20.0 * std::log10(magnitude);
 }
 
-} // namespace eqit::test
+} // namespace even::test

@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-namespace eqit {
+namespace even {
 
 PluginProcessor::PluginProcessor()
     : AudioProcessor(BusesProperties()
@@ -81,8 +81,8 @@ void PluginProcessor::setStateInformation(const void *data, int sizeInBytes) {
     state.replaceState(juce::ValueTree::fromXml(*xml));
 }
 
-} // namespace eqit
+} // namespace even
 
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
-  return new eqit::PluginProcessor();
+  return new even::PluginProcessor();
 }

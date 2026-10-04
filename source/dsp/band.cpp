@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace eqit::dsp {
+namespace even::dsp {
 
 void Band::prepare(double newSampleRate) noexcept {
   sampleRate = newSampleRate;
@@ -131,4 +131,4 @@ void Band::updateCoefficients(Voice &voice, int rampSamples) noexcept {
       cascade[i].setSection(designed.sections[i], rampSamples);
 }
 
-} // namespace eqit::dsp
+} // namespace even::dsp

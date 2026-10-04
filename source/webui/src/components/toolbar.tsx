@@ -18,7 +18,7 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
 
   return (
     <header className="toolbar">
-      <h1 className="title">Equalize It</h1>
+      <h1 className="title">Even</h1>
       <label className="control">
         Renderer
         <select

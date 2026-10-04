@@ -1,11 +1,11 @@
-# Strict warnings for our own (non-JUCE) targets: link eqit_warnings privately.
-add_library(eqit_warnings INTERFACE)
+# Strict warnings for our own (non-JUCE) targets: link even_warnings privately.
+add_library(even_warnings INTERFACE)
 
 if(MSVC)
-  target_compile_options(eqit_warnings INTERFACE /W4 /permissive-)
+  target_compile_options(even_warnings INTERFACE /W4 /permissive-)
 else()
   target_compile_options(
-    eqit_warnings
+    even_warnings
     INTERFACE -Wall
               -Wextra
               -Wpedantic

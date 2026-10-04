@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 import { bandColorVar, findBand } from '../../model/bands';
 import { hasQHandles } from '../../model/filter-types';
 import { uiStore } from '../../model/ui';
@@ -37,7 +39,7 @@ export const QHandles = () => {
       <button
         key={side}
         type="button"
-        className={`eq-qh${active ? ' is-active' : ''}${band.on ? '' : ' is-bypassed'}`}
+        className={clsx('eq-qh', active && 'is-active', !band.on && 'is-bypassed')}
         aria-label={side < 0 ? 'Q, lower edge' : 'Q, upper edge'}
         style={{
           ['--band' as string]: bandColorVar(band.color),

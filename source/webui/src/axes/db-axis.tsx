@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 import { UiIcon } from '../design/icons';
 import { uiStore } from '../model/ui';
 import { shallowEqual, useStore } from '../store/store';
@@ -14,7 +16,7 @@ export const DbAxis = () => {
   return (
     <button
       type="button"
-      className={`eq-axis is-y${active ? ' is-active' : ''}`}
+      className={clsx('eq-axis is-y', active && 'is-active')}
       aria-label={`Display range ±${range} dB. Drag or scroll to change, double-click to fit`}
       style={{ position: 'absolute', left: 0, top: 26, height: 602 }}
       onPointerDown={(event) => {

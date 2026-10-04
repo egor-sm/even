@@ -1,4 +1,5 @@
 import { type ReactNode, useLayoutEffect, useState } from 'react';
+import { clsx } from 'clsx';
 
 import { TypeIcon, UiIcon } from '../../design/icons';
 import { bandColorVar, findBand } from '../../model/bands';
@@ -84,13 +85,13 @@ export const Dock = () => {
   const activeField = ui.drag?.kind === 'scrub' ? ui.drag.field : ui.drag?.kind === 'q' ? 'q' : null;
   const noteAxis = ui.axis === 'note';
 
-  const field = (name: ScrubField, label: ReactNode, value: string, extra = '') => (
+  const field = (name: ScrubField, label: ReactNode, value: string, extra?: 'is-freq' | 'is-disabled') => (
     <button
       type="button"
-      className={['eq-field', extra, activeField === name ? 'is-active' : ''].filter(Boolean).join(' ')}
+      className={clsx('eq-field', extra, activeField === name && 'is-active')}
       aria-label={`${name === 'f' ? 'Frequency' : name === 'q' ? 'Q' : 'Gain or slope'}, drag to change`}
       onPointerDown={(event) => {
-        if (event.button !== 0 || extra.includes('is-disabled')) return;
+        if (event.button !== 0 || extra === 'is-disabled') return;
         event.stopPropagation();
         event.currentTarget.setPointerCapture(event.pointerId);
         const graphElement = event.currentTarget.closest('.graph');
@@ -104,9 +105,7 @@ export const Dock = () => {
 
   return (
     <div
-      className={['eq-dock', 'is-entering', underDock ? 'is-ghost' : '', band.on ? '' : 'is-bypassed']
-        .filter(Boolean)
-        .join(' ')}
+      className={clsx('eq-dock is-entering', underDock && 'is-ghost', !band.on && 'is-bypassed')}
       style={{
         ['--band' as string]: bandColorVar(band.color),
         position: 'absolute',
@@ -120,7 +119,7 @@ export const Dock = () => {
     >
       <button
         type="button"
-        className={['eq-typeb', ui.picker ? 'is-hover' : '', previewing ? 'is-preview' : ''].filter(Boolean).join(' ')}
+        className={clsx('eq-typeb', ui.picker && 'is-hover', previewing && 'is-preview')}
         aria-label="Filter type"
         aria-expanded={ui.picker}
         onClick={() => uiStore.set(({ picker }) => ({ picker: !picker, strip: false, hoverType: null }))}
@@ -144,14 +143,14 @@ export const Dock = () => {
         'g',
         cut ? 'Slope' : 'Gain',
         cut ? formatSlope(band.slope) : withGain ? formatGain(band.g) : '—',
-        cut || withGain ? '' : 'is-disabled',
+        cut || withGain ? undefined : 'is-disabled',
       )}
       {field('q', 'Q', formatQ(band.q))}
       <div className="eq-divider" />
       <div className="eq-acts">
         <button
           type="button"
-          className={`eq-act${band.on ? '' : ' is-danger'}`}
+          className={clsx('eq-act', !band.on && 'is-danger')}
           aria-label="Bypass band"
           aria-pressed={!band.on}
           onClick={() => commands.toggleBypass(band)}
@@ -160,7 +159,7 @@ export const Dock = () => {
         </button>
         <button
           type="button"
-          className={`eq-act${ui.solo === band.slot ? ' is-solo' : ''}`}
+          className={clsx('eq-act', ui.solo === band.slot && 'is-solo')}
           aria-label="Solo band"
           aria-pressed={ui.solo === band.slot}
           onClick={() => commands.toggleSolo(band.slot)}

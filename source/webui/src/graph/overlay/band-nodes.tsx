@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 import { bandColorVar } from '../../model/bands';
 import { typeNames } from '../../model/filter-types';
 import { formatFrequency } from '../../model/format';
@@ -22,18 +24,16 @@ export const BandNodes = () => {
     if (x < 34 || x > 1272) return null;
 
     const dragging = drag?.kind === 'node' && drag.slot === band.slot && drag.moved;
-    const classes = [
-      'eq-node',
-      band.slot === selected ? 'is-selected' : '',
-      band.on ? '' : 'is-bypassed',
-      dragging ? 'is-dragging' : '',
-    ];
-
     return (
       <button
         key={band.slot}
         type="button"
-        className={classes.filter(Boolean).join(' ')}
+        className={clsx(
+          'eq-node',
+          band.slot === selected && 'is-selected',
+          !band.on && 'is-bypassed',
+          dragging && 'is-dragging',
+        )}
         aria-label={`Band ${index + 1}, ${typeNames[band.type]} ${formatFrequency(band.f)}`}
         style={{
           ['--band' as string]: bandColorVar(band.color),

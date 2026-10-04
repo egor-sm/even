@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { clsx } from 'clsx';
 
 import { typeIconPaths } from '../../design/icons';
 import { type Band, bandColorVar } from '../../model/bands';
@@ -15,7 +16,7 @@ const Tile = ({ band, type, delay }: { band: Band; type: FilterType; delay: numb
   return (
     <button
       type="button"
-      className={`eq-tile${current ? ' is-on' : hovered ? ' is-hover' : ''}`}
+      className={clsx('eq-tile', current ? 'is-on' : hovered && 'is-hover')}
       role="menuitemradio"
       aria-checked={current}
       style={style}

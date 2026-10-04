@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 import { TypeIcon, UiIcon } from '../../design/icons';
 import { bandColorVar, findBand } from '../../model/bands';
 import { commands } from '../../model/commands';
@@ -79,7 +81,7 @@ export const TypeStrip = () => {
 
   return (
     <div
-      className={`eq-strip${above ? '' : ' is-below'}`}
+      className={clsx('eq-strip', !above && 'is-below')}
       role="menu"
       aria-label="Filter type"
       tabIndex={-1}
@@ -99,7 +101,7 @@ export const TypeStrip = () => {
           <button
             key={type}
             type="button"
-            className={`eq-strip__btn${current ? ' is-on' : ''}`}
+            className={clsx('eq-strip__btn', current && 'is-on')}
             role="menuitemradio"
             aria-checked={current}
             aria-label={typeNames[type]}

@@ -3,6 +3,10 @@ import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    // `~/shared/ui` instead of climbing up with `../../`; mirrored in tsconfig.json.
+    alias: { '~': decodeURIComponent(new URL('src', import.meta.url).pathname) },
+  },
   // Assets are served by the app's ResourceProvider, so keep URLs relative.
   base: './',
   server: {

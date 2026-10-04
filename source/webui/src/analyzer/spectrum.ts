@@ -1,5 +1,3 @@
-import type { AnalyzerFrame } from './frame';
-
 export type SpectrumOptions = {
   /** Spectral tilt around 1 kHz; 4.5 dB/oct makes pink noise look roughly flat. */
   slopeDbPerOctave: number;
@@ -31,7 +29,7 @@ export class Spectrum {
 
   constructor(private readonly options: SpectrumOptions = defaultSpectrumOptions) {}
 
-  setFrame({ levelsDb, minHz, maxHz }: AnalyzerFrame): void {
+  setLevels(levelsDb: Float32Array, minHz: number, maxHz: number): void {
     const count = levelsDb.length;
     if (count < 2) return;
 
@@ -39,6 +37,14 @@ export class Spectrum {
       this.resetLayout(count, minHz, maxHz);
 
     for (let i = 0; i < count; i++) this.target[i] = Math.max(levelsDb[i] + this.tilt[i], floorDb);
+  }
+
+  /** No spectrum (the analyzer mode leaves it out): nothing to draw. */
+  clear(): void {
+    this.frequencies = new Float32Array(0);
+    this.display = new Float32Array(0);
+    this.target = new Float32Array(0);
+    this.tilt = new Float32Array(0);
   }
 
   /**

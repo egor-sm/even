@@ -30,6 +30,22 @@ std::optional<dsp::FilterShape> shapeArgument(const juce::Array<juce::var> &args
   return static_cast<dsp::FilterShape>(shape);
 }
 
+std::optional<AnalyzerMode> analyzerModeArgument(const juce::Array<juce::var> &args, int index) {
+  if (index >= args.size())
+    return std::nullopt;
+
+  const auto name = args[index].toString();
+  if (name == "prepost")
+    return AnalyzerMode::prePost;
+  if (name == "post")
+    return AnalyzerMode::post;
+  if (name == "pre")
+    return AnalyzerMode::pre;
+  if (name == "off")
+    return AnalyzerMode::off;
+  return std::nullopt;
+}
+
 std::optional<juce::String> getDevServerUrl() {
   constexpr auto url = build_config::webUiDevServerUrl;
 
@@ -97,9 +113,11 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                                 pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
                                 complete({});
                               })
-          .withNativeFunction("setAnalyzerSource",
+          // "prepost", "post", "pre" or "off".
+          .withNativeFunction("setAnalyzerMode",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                pluginProcessor.setAnalyzeOutput(!args.isEmpty() && args[0].toString() == "output");
+                                if (const auto mode = analyzerModeArgument(args, 0))
+                                  pluginProcessor.getAnalyzer().setMode(*mode);
                                 complete({});
                               })
           .withNativeFunction("requestResponse",

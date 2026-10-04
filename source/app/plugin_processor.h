@@ -54,9 +54,6 @@ public:
   // Current band settings (target values), e.g. for drawing the EQ response. Message thread.
   [[nodiscard]] ResponseState getResponseState() const;
 
-  // Whether the analyzer shows the input (before processing) or the output.
-  void setAnalyzeOutput(bool output) { analyzeOutput.store(output); }
-
 private:
   // Reads the band parameters (lock-free) and hands them to the equalizer as targets.
   void updateBandTargets() noexcept;
@@ -72,8 +69,6 @@ private:
   SpectrumAnalyzer analyzer;
   TestSignal testSignal;
   std::atomic<bool> testSignalEnabled{false};
-
-  std::atomic<bool> analyzeOutput{false};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

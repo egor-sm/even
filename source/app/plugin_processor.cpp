@@ -38,16 +38,12 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
   if (testSignalEnabled.load(std::memory_order_relaxed))
     testSignal.render(buffer);
 
-  const auto showOutput = analyzeOutput.load(std::memory_order_relaxed);
-
-  if (!showOutput)
-    analyzer.pushMonoSum(buffer);
+  analyzer.pushInput(buffer);
 
   updateBandTargets();
   equalizer.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
 
-  if (showOutput)
-    analyzer.pushMonoSum(buffer);
+  analyzer.pushOutput(buffer);
 
   if (muteValue.load(std::memory_order_relaxed) >= 0.5f)
     buffer.clear();

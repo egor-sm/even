@@ -6,6 +6,8 @@ export const native = {
   setTestSignal: Juce.getNativeFunction('setTestSignal'),
   setAnalyzerActive: Juce.getNativeFunction('setAnalyzerActive'),
   requestResponse: Juce.getNativeFunction('requestResponse'),
+  /** ('prepost' | 'post' | 'pre' | 'off') */
+  setAnalyzerMode: Juce.getNativeFunction('setAnalyzerMode'),
   /** (shapeIndex, frequencyHz, gainDb) => the new band's number, or undefined when all bands are used. */
   createBand: Juce.getNativeFunction('createBand'),
   /** (band) */
@@ -16,6 +18,4 @@ export const native = {
   undo: Juce.getNativeFunction('undo'),
   redo: Juce.getNativeFunction('redo'),
   getHistoryState: Juce.getNativeFunction('getHistoryState'),
-  // Temporary scaffolding for the DSP learning steps.
-  setAnalyzerSource: Juce.getNativeFunction('setAnalyzerSource'),
 };

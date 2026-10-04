@@ -28,6 +28,9 @@ public:
     writePosition.store(start + static_cast<std::uint64_t>(numSamples), std::memory_order_release);
   }
 
+  // Total number of samples written so far.
+  [[nodiscard]] std::uint64_t position() const noexcept { return writePosition.load(std::memory_order_acquire); }
+
   // Copies the last destination.size() samples (zero-padded before the first write).
   // Returns the total number of samples written at the time of the copy.
   // The capacity must leave enough headroom for the producer not to lap the copy.

@@ -148,6 +148,11 @@ select {
   height: 100%;
 }
 
+/* The input spectrum stays behind the output one. */
+.spectrum.pre {
+  opacity: 0.5;
+}
+
 .stats {
   position: absolute;
   z-index: 1;

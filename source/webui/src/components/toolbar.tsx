@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { RendererKind } from '../analyzer/spectrum-view';
 import { native } from '../juce/native';
@@ -14,9 +14,12 @@ type ToolbarProps = {
 export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
   const [muted, setMuted] = useToggleParameter('mute');
   const [testSignal, setTestSignal] = useState(false);
-  const [analyzerSource, setAnalyzerSource] = useState('input');
+  const [analyzerMode, setAnalyzerMode] = useState('prepost');
   const info = usePluginInfo();
   const history = useHistory();
+
+  // The mode lives in C++ without being saved: hand it the page's choice when the page loads.
+  useEffect(() => void native.setAnalyzerMode('prepost'), []);
 
   return (
     <header className="toolbar">
@@ -40,14 +43,16 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
       <label className="control">
         Analyzer
         <select
-          value={analyzerSource}
+          value={analyzerMode}
           onChange={(event) => {
-            setAnalyzerSource(event.target.value);
-            void native.setAnalyzerSource(event.target.value);
+            setAnalyzerMode(event.target.value);
+            void native.setAnalyzerMode(event.target.value);
           }}
         >
-          <option value="input">Input</option>
-          <option value="output">Output</option>
+          <option value="prepost">Pre + Post</option>
+          <option value="post">Post</option>
+          <option value="pre">Pre</option>
+          <option value="off">Off</option>
         </select>
       </label>
       <label className="control">

@@ -23,7 +23,8 @@ const maxRenderFps = 60;
 export class AnalyzerController {
   readonly stats = new AnalyzerStats();
 
-  private readonly spectrum = new Spectrum();
+  private readonly pre = new Spectrum();
+  private readonly post = new Spectrum();
   private readonly view: SpectrumView;
   private readonly pad: PadInteraction;
   private response: EqResponse | null = null;
@@ -67,7 +68,13 @@ export class AnalyzerController {
     const frame = decodeBase64Frame(frameBase64);
     if (frame === null) return;
 
-    this.spectrum.setFrame(frame);
+    for (const [spectrum, levelsDb] of [
+      [this.pre, frame.preDb],
+      [this.post, frame.postDb],
+    ] as const) {
+      if (levelsDb === null) spectrum.clear();
+      else spectrum.setLevels(levelsDb, frame.minHz, frame.maxHz);
+    }
     this.stats.onFrame(receivedAt, Date.now() - sentAtMs, frameBase64.length, performance.now() - receivedAt);
     this.requestRender();
   };
@@ -96,8 +103,10 @@ export class AnalyzerController {
     const dtSeconds = Math.min((now - this.lastRenderAt) / 1000, 0.1);
     this.lastRenderAt = now;
 
-    const moving = this.spectrum.tick(dtSeconds);
-    this.view.draw(this.spectrum.frequencies, this.spectrum.display);
+    const preMoving = this.pre.tick(dtSeconds);
+    const postMoving = this.post.tick(dtSeconds);
+    const moving = preMoving || postMoving;
+    this.view.draw(this.pre, this.post);
     this.stats.onRender(now);
 
     if (moving) this.requestRender();

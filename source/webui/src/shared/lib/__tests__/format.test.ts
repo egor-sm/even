@@ -10,7 +10,7 @@ import {
   isBlackKey,
   midiToFrequency,
   noteName,
-} from './format';
+} from '../format';
 
 describe('formatting', () => {
   it('formats frequencies with units and adaptive precision', () => {

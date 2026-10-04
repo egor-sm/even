@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { soloRange } from './solo-range';
+import { soloRange } from '../solo-range';
 
 describe('solo range', () => {
   it('lights the working range of each type', () => {

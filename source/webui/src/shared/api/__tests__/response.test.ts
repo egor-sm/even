@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { parseResponse } from './response';
+import { parseResponse } from '../response';
 
 // Builds a packet the way serializeResponse() in response_packet.cpp lays it out.
 const packet = (version = 5) => {

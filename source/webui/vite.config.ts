@@ -14,7 +14,7 @@ export default defineConfig({
     strictPort: true,
   },
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
     // Modules load the JUCE bridge, which needs a window; component tests need a DOM.
     environment: 'happy-dom',
   },

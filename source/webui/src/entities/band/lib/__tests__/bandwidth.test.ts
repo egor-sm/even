@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { octavesToQ, qToOctaves } from './bandwidth';
+import { octavesToQ, qToOctaves } from '../bandwidth';
 
 describe('bandwidth', () => {
   it('converts q to bandwidth and back', () => {

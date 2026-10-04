@@ -6,7 +6,7 @@ import { graphRootAttribute, useViewportStore } from '~/entities/viewport';
 import { endGesture, moveGesture } from '~/shared/lib';
 import { recordingBackend } from '~/shared/testing';
 
-import { BandDock } from './band-dock';
+import { BandDock } from '../band-dock';
 
 const bell: Band = {
   slot: 2,

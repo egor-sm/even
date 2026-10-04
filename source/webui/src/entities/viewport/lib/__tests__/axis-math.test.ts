@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { dbLines, dbStep, frequencyLabels, gridLines, gridMorph, keyAt } from './axis-math';
-import { createMapper, graph } from './geometry';
+import { dbLines, dbStep, frequencyLabels, gridLines, gridMorph, keyAt } from '../axis-math';
+import { createMapper, graph } from '../geometry';
 
 const mapper = createMapper(18);
 

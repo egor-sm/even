@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { parseBinaryFrame } from './frame';
+import { parseBinaryFrame } from '../frame';
 
 // Builds a frame the way SpectrumAnalyzer::serializeLatestFrame() lays it out, with two points.
 const frame = (spectra: number, version = 3) => {

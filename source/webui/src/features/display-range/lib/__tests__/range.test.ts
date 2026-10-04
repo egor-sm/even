@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { fitRange, wheelRange } from './range';
+import { fitRange, wheelRange } from '../range';
 
 describe('range', () => {
   it('fits the largest enabled gain with headroom', () => {

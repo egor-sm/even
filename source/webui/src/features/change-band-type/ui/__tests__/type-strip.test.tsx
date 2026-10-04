@@ -5,8 +5,8 @@ import { type Band, useBandsStore, useSelectionStore } from '~/entities/band';
 import { useViewportStore } from '~/entities/viewport';
 import { recordingBackend } from '~/shared/testing';
 
-import { TypeButton } from './type-button';
-import { TypeStrip } from './type-strip';
+import { TypeButton } from '../type-button';
+import { TypeStrip } from '../type-strip';
 
 const bell: Band = {
   slot: 3,

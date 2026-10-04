@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { bridgeNormalised, bridgeScaled } from './slider-values';
+import { bridgeNormalised, bridgeScaled } from '../slider-values';
 
 describe('JUCE bridge slider values', () => {
   it('delivers the requested value in parameter units, whatever the C++ mapping', () => {

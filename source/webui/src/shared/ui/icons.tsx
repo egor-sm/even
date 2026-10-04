@@ -26,23 +26,25 @@ type IconProps = {
   style?: CSSProperties;
 };
 
-export const Icon = ({ d, size = 16, strokeWidth = 2, style }: IconProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    style={style}
-  >
-    <path d={d} />
-  </svg>
-);
+export function Icon({ d, size = 16, strokeWidth = 2, style }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={style}
+    >
+      <path d={d} />
+    </svg>
+  );
+}
 
-export const UiIcon = ({ name, size, style }: { name: keyof typeof uiIcons; size?: number; style?: CSSProperties }) => (
-  <Icon d={uiIcons[name].d} strokeWidth={uiIcons[name].strokeWidth} size={size} style={style} />
-);
+export function UiIcon({ name, size, style }: { name: keyof typeof uiIcons; size?: number; style?: CSSProperties }) {
+  return <Icon d={uiIcons[name].d} strokeWidth={uiIcons[name].strokeWidth} size={size} style={style} />;
+}

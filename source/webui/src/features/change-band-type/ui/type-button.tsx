@@ -6,7 +6,7 @@ import { UiIcon } from '~/shared/ui';
 import { openTypeMenu, usePreviewedType } from '../model/type-preview';
 
 /** The dock's type button: shows the type (or the previewed one) and opens the type picker. */
-export const TypeButton = ({ band, open }: { band: Band; open: boolean }) => {
+export function TypeButton({ band, open }: { band: Band; open: boolean }) {
   const previewed = usePreviewedType();
   const shown = previewed ?? band.type;
 
@@ -25,4 +25,4 @@ export const TypeButton = ({ band, open }: { band: Band; open: boolean }) => {
       </span>
     </button>
   );
-};
+}

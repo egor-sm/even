@@ -10,7 +10,7 @@ import { scrubDown, type ScrubField as Field } from '../model/scrub-gesture';
 const labels: Record<Field, string> = { f: 'Frequency', g: 'Gain or slope', q: 'Q' };
 
 /** A value of the selected band in the dock: drag horizontally to change it. */
-export const ScrubField = ({ band, field }: { band: Band; field: Field }) => {
+export function ScrubField({ band, field }: { band: Band; field: Field }) {
   const notes = useStore(viewportStore, (state) => state.axis === 'note');
   const active = useStore(gestureStore, ({ active: gesture }) =>
     gesture?.kind === 'scrub' ? gesture.field === field : gesture?.kind === 'q' && field === 'q',
@@ -49,4 +49,4 @@ export const ScrubField = ({ band, field }: { band: Band; field: Field }) => {
       <span className="eq-field__v">{value}</span>
     </button>
   );
-};
+}

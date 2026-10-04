@@ -17,7 +17,7 @@ import { cursorStore } from '../model/cursor';
  * Cursor readout over the empty graph: dashed crosshair with the frequency (and note) on the
  * frequency axis and the dB on the dB axis. Over a key, or while snapping to notes, the note's line.
  */
-export const Crosshair = () => {
+export function Crosshair() {
   const cursor = useStore(cursorStore, (state) => state.point);
   const dragging = useStore(gestureStore, (state) => state.active !== null);
   const { hotKey, axis, range } = useStore(
@@ -88,4 +88,4 @@ export const Crosshair = () => {
       )}
     </>
   );
-};
+}

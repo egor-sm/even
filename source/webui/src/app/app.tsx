@@ -12,7 +12,7 @@ import { connectBackend } from './connect-backend';
 
 const onAnalyzerDraw = (now: number) => analyzerStats.onRender(now);
 
-export const App = () => {
+export function App() {
   const { theme, scale } = useStore(settingsStore, (state) => state, shallowEqual);
   const [devPanel, setDevPanel] = useState(import.meta.env.DEV);
 
@@ -44,4 +44,4 @@ export const App = () => {
       {devPanel && <DevPanel />}
     </div>
   );
-};
+}

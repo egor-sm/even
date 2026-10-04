@@ -6,7 +6,7 @@ import { logoDark, logoLight } from '~/shared/ui';
 import styles from './top-bar.module.css';
 
 /** Logo, undo and redo, theme switch. */
-export const TopBar = () => {
+export function TopBar() {
   const theme = useStore(settingsStore, (state) => state.theme);
 
   return (
@@ -18,4 +18,4 @@ export const TopBar = () => {
       <ThemeButton />
     </header>
   );
-};
+}

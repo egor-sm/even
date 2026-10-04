@@ -9,7 +9,7 @@ import { nodeDown, nodeWheel } from '../model/node-gestures';
 const nodeSize = 14;
 
 /** One node per band at (frequency, gain): select, drag, wheel for q. */
-export const BandNodes = () => {
+export function BandNodes() {
   const bands = useDisplayBands();
   const { selected, solo } = useStore(
     selectionStore,
@@ -57,4 +57,4 @@ export const BandNodes = () => {
       />
     );
   });
-};
+}

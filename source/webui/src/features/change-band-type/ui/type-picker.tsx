@@ -4,7 +4,7 @@ import { type Band, bandColorVar, type FilterType, pickerRows, typeIconPaths, ty
 
 import { hoverType, setBandType, usePreviewedType } from '../model/type-preview';
 
-const Tile = ({ band, type, delay }: { band: Band; type: FilterType; delay: number }) => {
+function Tile({ band, type, delay }: { band: Band; type: FilterType; delay: number }) {
   const hovered = usePreviewedType() === type;
   const current = band.type === type;
 
@@ -35,22 +35,24 @@ const Tile = ({ band, type, delay }: { band: Band; type: FilterType; delay: numb
       <span>{typeNames[type]}</span>
     </button>
   );
-};
+}
 
 /** The 4 × 2 type menu opening upwards from the dock's type button. */
-export const TypePicker = ({ band }: { band: Band }) => (
-  <div
-    className="eq-picker"
-    role="menu"
-    aria-label="Filter type"
-    style={{ ['--band' as string]: bandColorVar(band.color), position: 'absolute', left: 0, top: -157 }}
-  >
-    {pickerRows[0].map((type, i) => (
-      <Tile key={type} band={band} type={type} delay={30 + i * 18} />
-    ))}
-    <div className="eq-picker__sep" />
-    {pickerRows[1].map((type, i) => (
-      <Tile key={type} band={band} type={type} delay={30 + (i + 4) * 18} />
-    ))}
-  </div>
-);
+export function TypePicker({ band }: { band: Band }) {
+  return (
+    <div
+      className="eq-picker"
+      role="menu"
+      aria-label="Filter type"
+      style={{ ['--band' as string]: bandColorVar(band.color), position: 'absolute', left: 0, top: -157 }}
+    >
+      {pickerRows[0].map((type, i) => (
+        <Tile key={type} band={band} type={type} delay={30 + i * 18} />
+      ))}
+      <div className="eq-picker__sep" />
+      {pickerRows[1].map((type, i) => (
+        <Tile key={type} band={band} type={type} delay={30 + (i + 4) * 18} />
+      ))}
+    </div>
+  );
+}

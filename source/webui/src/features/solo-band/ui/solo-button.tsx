@@ -6,7 +6,7 @@ import { UiIcon } from '~/shared/ui';
 
 import { toggleSolo } from '../model/solo';
 
-export const SoloButton = ({ slot }: { slot: number }) => {
+export function SoloButton({ slot }: { slot: number }) {
   const soloed = useStore(selectionStore, (state) => state.solo === slot);
   return (
     <button
@@ -19,4 +19,4 @@ export const SoloButton = ({ slot }: { slot: number }) => {
       <UiIcon name="solo" size={14} />
     </button>
   );
-};
+}

@@ -38,6 +38,7 @@ export default defineConfig({
       'vite-plus/prefer-vite-plus-imports': 'error',
       // Not needed with the automatic JSX runtime (React 17+).
       'react/react-in-jsx-scope': 'off',
+      'react/function-component-definition': ['error', { namedComponents: 'function-declaration' }],
     },
     options: {
       typeAware: true,

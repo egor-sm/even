@@ -31,7 +31,7 @@ const keyboardPoint = (event: PointerEvent<SVGSVGElement>) => {
  * The frequency axis: Hz labels (drawn by FrequencyLabels) or a piano keyboard. Hovering shows the
  * Hz | notes switch; the keyboard moves the selected band to a note (Alt + click: a new band).
  */
-export const FrequencyAxis = () => {
+export function FrequencyAxis() {
   const { axis, morph, hotKey } = useStore(
     viewportStore,
     (state) => ({ axis: state.axis, morph: state.view.morph, hotKey: state.hotKey }),
@@ -140,4 +140,4 @@ export const FrequencyAxis = () => {
       </fieldset>
     </div>
   );
-};
+}

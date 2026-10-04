@@ -17,7 +17,7 @@ import { qDown } from '../model/q-gesture';
 import styles from './q-handles.module.css';
 
 /** Two handles at the edges of the selected bell, notch or band pass (its width): drag for q. */
-export const QHandles = () => {
+export function QHandles() {
   const bands = useDisplayBands();
   const sampleRate = useSampleRate();
   const selected = useStore(selectionStore, (state) => state.selected);
@@ -61,4 +61,4 @@ export const QHandles = () => {
       />
     );
   });
-};
+}

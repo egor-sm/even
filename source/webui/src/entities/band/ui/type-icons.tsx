@@ -16,6 +16,6 @@ export const typeIconPaths: Record<FilterType, string> = {
   tilt: 'M2 17L22 7M10 12h4',
 };
 
-export const TypeIcon = ({ type, size = 18, style }: { type: FilterType; size?: number; style?: CSSProperties }) => (
-  <Icon d={typeIconPaths[type]} size={size} style={style} />
-);
+export function TypeIcon({ type, size = 18, style }: { type: FilterType; size?: number; style?: CSSProperties }) {
+  return <Icon d={typeIconPaths[type]} size={size} style={style} />;
+}

@@ -8,7 +8,7 @@ import { viewportStore } from '../model/viewport';
 import styles from './axis-labels.module.css';
 
 /** dB labels of the grid lines, right-aligned in the dB axis. */
-export const DbLabels = () => {
+export function DbLabels() {
   const range = useStore(viewportStore, (state) => state.view.range);
   const mapper = createMapper(range);
 
@@ -17,10 +17,10 @@ export const DbLabels = () => {
       {formatAxisDb(db)}
     </div>
   ));
-};
+}
 
 /** Hz labels under the plot; they fade out and rise while the axis turns into the keyboard. */
-export const FrequencyLabels = () => {
+export function FrequencyLabels() {
   const morph = useStore(viewportStore, (state) => state.view.morph);
   if (morph >= 0.999) return null;
 
@@ -30,4 +30,4 @@ export const FrequencyLabels = () => {
       {label.text}
     </div>
   ));
-};
+}

@@ -37,7 +37,7 @@ const sizes = {
  * Above the selected node: a pill with the current type, which expands into a row of the eight
  * types; while the node is dragged, a readout of its frequency and gain.
  */
-export const TypeStrip = () => {
+export function TypeStrip() {
   const bands = useDisplayBands();
   const { selected, strip } = useStore(
     selectionStore,
@@ -132,4 +132,4 @@ export const TypeStrip = () => {
       })}
     </div>
   );
-};
+}

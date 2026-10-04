@@ -7,7 +7,7 @@ import { analyzerModes, analyzerModeStore, setAnalyzerMode } from '../model/anal
 import styles from './analyzer-mode-menu.module.css';
 
 /** The pill in the bottom bar showing the analyzer mode; opens the menu. */
-export const AnalyzerModePill = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => {
+export function AnalyzerModePill({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const mode = useStore(analyzerModeStore, (state) => state.mode);
   const name = analyzerModes.find((entry) => entry.mode === mode)?.name ?? '';
 
@@ -18,10 +18,10 @@ export const AnalyzerModePill = ({ open, onToggle }: { open: boolean; onToggle: 
       <UiIcon name="chevronDown" size={12} />
     </button>
   );
-};
+}
 
 /** The analyzer mode menu, opening upwards from its pill; a click outside closes it. */
-export const AnalyzerModeMenu = ({ onClose }: { onClose: () => void }) => {
+export function AnalyzerModeMenu({ onClose }: { onClose: () => void }) {
   const current = useStore(analyzerModeStore, (state) => state.mode);
 
   return (
@@ -54,4 +54,4 @@ export const AnalyzerModeMenu = ({ onClose }: { onClose: () => void }) => {
       </div>
     </>
   );
-};
+}

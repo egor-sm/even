@@ -20,7 +20,7 @@ const dockX = (nodeX: number) => clamp(nodeX - dockWidth / 2, edge, graph.width 
  * The inspector of the selected band in the bottom lane of the graph, centred under its node and
  * following it; it holds still while a value inside it is scrubbed.
  */
-export const BandDock = () => {
+export function BandDock() {
   const bands = useDisplayBands();
   const { selected, picker } = useStore(
     selectionStore,
@@ -98,4 +98,4 @@ export const BandDock = () => {
       {picker && <TypePicker band={band} />}
     </div>
   );
-};
+}

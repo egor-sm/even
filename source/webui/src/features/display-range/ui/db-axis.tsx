@@ -7,7 +7,7 @@ import { UiIcon } from '~/shared/ui';
 import { fitRangeToBands, rangeDown, rangeWheel } from '../model/range-gestures';
 
 /** The dB axis: drag or scroll to change the display range, double-click to fit it to the bands. */
-export const DbAxis = () => {
+export function DbAxis() {
   const range = useStore(viewportStore, (state) => state.range);
   const active = useStore(gestureStore, (state) => state.active?.kind === 'range');
 
@@ -36,4 +36,4 @@ export const DbAxis = () => {
       </span>
     </button>
   );
-};
+}

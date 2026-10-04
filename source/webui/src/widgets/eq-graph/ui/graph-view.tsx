@@ -29,7 +29,7 @@ type GraphViewProps = {
 };
 
 /** The EQ graph: canvas layers (grid, analyzer, curves) with labels and band controls on top. */
-export const GraphView = ({ overlay, onAnalyzerDraw }: GraphViewProps) => {
+export function GraphView({ overlay, onAnalyzerDraw }: GraphViewProps) {
   const graphRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef<HTMLDivElement>(null);
 
@@ -82,4 +82,4 @@ export const GraphView = ({ overlay, onAnalyzerDraw }: GraphViewProps) => {
       {overlay}
     </div>
   );
-};
+}

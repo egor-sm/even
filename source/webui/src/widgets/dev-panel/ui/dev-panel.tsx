@@ -8,7 +8,7 @@ import { analyzerStats } from '../model/analyzer-stats';
 import styles from './dev-panel.module.css';
 
 /** Development aids, shown in dev builds or with Ctrl+Shift+D: test signal, mute, UI scale, analyzer stats. */
-export const DevPanel = () => {
+export function DevPanel() {
   const scale = useStore(settingsStore, (state) => state.scale);
   const [testSignal, setTestSignal] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -56,4 +56,4 @@ export const DevPanel = () => {
       <pre>{statsText}</pre>
     </div>
   );
-};
+}

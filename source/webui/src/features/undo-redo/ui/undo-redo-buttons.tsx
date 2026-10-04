@@ -4,7 +4,7 @@ import { UiIcon } from '~/shared/ui';
 import { historyStore, redo, undo } from '../model/history';
 import styles from './undo-redo-buttons.module.css';
 
-export const UndoRedoButtons = () => {
+export function UndoRedoButtons() {
   const { canUndo, canRedo } = useStore(historyStore, (state) => state, shallowEqual);
   return (
     <div className={styles.group}>
@@ -16,4 +16,4 @@ export const UndoRedoButtons = () => {
       </button>
     </div>
   );
-};
+}

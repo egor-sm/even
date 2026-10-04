@@ -1,0 +1,175 @@
+/* The page and the window frame: 1280 × 760 at 100 %, scaled as a whole by the UI scale. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--surface-canvas);
+}
+
+.eq {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--size-window-w);
+  height: var(--size-window-h);
+  overflow: hidden;
+  transform-origin: 0 0;
+  background: var(--surface-canvas);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: normal;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.eq * {
+  box-sizing: border-box;
+}
+
+:where(.eq button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.eq :focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq *,
+  .eq *::before,
+  .eq *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Bars */
+
+.top-bar,
+.bottom-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  background: var(--surface-bar);
+}
+
+.top-bar {
+  height: var(--size-topbar);
+  gap: 14px;
+  padding: 0 var(--space-12) 0 var(--space-16);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.bottom-bar {
+  height: var(--size-bottombar);
+  gap: var(--space-12);
+  padding: 0 var(--space-12);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.logo {
+  display: block;
+  height: 13px;
+  width: auto;
+  margin-right: 4px;
+}
+
+.bar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-default);
+}
+
+.bar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bar-spacer {
+  flex: 1;
+}
+
+/* Analyzer menu */
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+.analyzer-menu {
+  position: absolute;
+  left: var(--space-12);
+  bottom: calc(var(--size-bottombar) - 4px);
+  z-index: 51;
+  width: 168px;
+  animation: menu-in var(--dur-pop) var(--ease-out) both;
+}
+
+.menu-entry {
+  display: contents;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Graph */
+
+.graph {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  height: var(--size-graph-h);
+}
+
+/* Development panel (not part of the design) */
+
+.dev-panel {
+  position: absolute;
+  right: var(--space-12);
+  bottom: calc(var(--size-bottombar) + var(--space-8));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-10);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  font-size: 11px;
+}
+
+.dev-panel label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.dev-panel pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}

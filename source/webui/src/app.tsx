@@ -1,23 +1,39 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 
-import type { RendererKind } from './analyzer/spectrum-view';
-import { Analyzer } from './components/analyzer';
-import { BandSelector } from './components/band-selector';
-import { BandStrip } from './components/band-strip';
-import { Toolbar } from './components/toolbar';
+import { connectBackend } from './bridge/connection';
+import { BottomBar } from './chrome/bottom-bar';
+import { TopBar } from './chrome/top-bar';
+import { DevPanel } from './dev/dev-panel';
+import { GraphView } from './graph/graph-view';
+import { uiStore } from './model/ui';
+import { shallowEqual, useStore } from './store/store';
+
+const noStats = () => '';
 
 export const App = () => {
-  const [renderer, setRenderer] = useState<RendererKind>('webgl');
-  const [selectedBand, setSelectedBand] = useState(1);
+  const { theme, scale, devPanel } = useStore(
+    uiStore,
+    (state) => ({ theme: state.theme, scale: state.scale, devPanel: state.devPanel }),
+    shallowEqual,
+  );
+
+  useEffect(() => connectBackend(), []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd')
+        uiStore.set(({ devPanel: shown }) => ({ devPanel: !shown }));
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   return (
-    <main className="app">
-      <Toolbar renderer={renderer} onRendererChange={setRenderer} />
-      <div className="band-bar">
-        <BandSelector selected={selectedBand} onSelect={setSelectedBand} />
-        <BandStrip band={selectedBand} />
-      </div>
-      <Analyzer renderer={renderer} selectedBand={selectedBand} onSelectBand={setSelectedBand} />
-    </main>
+    <div className="eq" data-theme={theme} style={{ transform: `scale(${scale / 100})` }}>
+      <TopBar />
+      <GraphView />
+      <BottomBar />
+      {devPanel && <DevPanel stats={noStats} />}
+    </div>
   );
 };

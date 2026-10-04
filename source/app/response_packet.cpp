@@ -11,7 +11,7 @@ namespace even {
 
 namespace {
 
-constexpr std::uint32_t formatVersion = 4;
+constexpr std::uint32_t formatVersion = 5;
 constexpr std::uint32_t enabledFlag = 1;
 
 bool sameBits(double a, double b) noexcept {
@@ -56,7 +56,7 @@ std::vector<std::byte> serializeResponse(const ResponseState &state) {
     appendBytes(bytes, static_cast<std::uint32_t>(design.count));
     appendBytes(bytes, band.enabled ? enabledFlag : std::uint32_t{0});
     appendBytes(bytes, band.serial);
-    appendBytes(bytes, std::uint32_t{0});
+    appendBytes(bytes, static_cast<std::uint32_t>(band.slopeIndex));
     appendBytes(bytes, parameters.frequencyHz);
     appendBytes(bytes, dsp::usesGain(parameters.shape) ? parameters.gainDb : 0.0);
     appendBytes(bytes, parameters.q);

@@ -21,7 +21,7 @@ struct ResponseState {
 // Layout (little-endian, 8-byte aligned):
 //   header, 16 bytes:  u32 version, u32 bandCount, f64 sampleRate
 //   per used band:     u32 band (1-based slot), u32 shape, u32 sectionCount, u32 flags (bit 0: enabled),
-//                      u32 serial (creation order), u32 reserved,
+//                      u32 serial (creation order), u32 slopeIndex (into dsp::cutSlopesDbPerOctave),
 //                      f64 frequencyHz, f64 gainDb (0 for shapes without gain), f64 q,
 //                      sectionCount x {u32 order, u32 reserved, f64 g, f64 q, f64 lowpassMix,
 //                                      f64 bandpassMix, f64 highpassMix}

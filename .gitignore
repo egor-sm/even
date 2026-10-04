@@ -15,3 +15,6 @@ node_modules/
 
 # Design handoff (local only for now)
 /even-design/
+
+# Browser automation output
+/.playwright-mcp/

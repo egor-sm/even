@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "@juce-framework/webview": "^1.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"

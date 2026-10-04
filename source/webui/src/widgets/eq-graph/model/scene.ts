@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 import { AnalyzerLayer, onAnalyzerFrame, Spectrum } from '~/entities/analyzer';
 import {
   type BandsState,
@@ -8,14 +10,15 @@ import {
   withBandFrequencies,
 } from '~/entities/band';
 import { createMapper, graph, gridLines, gridMorph, plotFrequencies, viewportStore } from '~/entities/viewport';
-import { drawGhost, GhostPreview } from '~/features/change-band-type';
+import { drawGhost, GhostPreview, ghostLayerClass } from '~/features/change-band-type';
 import { settingsStore } from '~/features/settings';
-import { drawSolo, soloRange } from '~/features/solo-band';
+import { drawSolo, soloLayerEnteringClass, soloRange } from '~/features/solo-band';
 import { CanvasLayer } from '~/shared/lib';
 import { type GraphColors, readGraphColors } from '~/shared/ui';
 
 import { drawGrid } from '../lib/draw-grid';
 import { drawResponse } from '../lib/draw-response';
+import styles from './scene.module.css';
 
 const maxAnalyzerFps = 60;
 
@@ -43,11 +46,11 @@ const allDirty: Dirty = { grid: true, solo: true, response: true, ghost: true, a
  * after something it shows changed, and runs the analyzer ballistics while the spectrum moves.
  */
 export class GraphScene {
-  private readonly grid = new CanvasLayer('graph-canvas grid', graph);
-  private readonly analyzer = new AnalyzerLayer(graph);
-  private readonly soloLayer = new CanvasLayer('graph-canvas solo', graph);
-  private readonly response = new CanvasLayer('graph-canvas response', graph);
-  private readonly ghostLayer = new CanvasLayer('graph-canvas ghost', graph);
+  private readonly grid = new CanvasLayer(styles.canvas ?? '', graph);
+  private readonly analyzer = new AnalyzerLayer(styles.canvas ?? '', graph);
+  private readonly soloLayer = new CanvasLayer(styles.canvas ?? '', graph);
+  private readonly response = new CanvasLayer(styles.canvas ?? '', graph);
+  private readonly ghostLayer = new CanvasLayer(clsx(styles.canvas, ghostLayerClass), graph);
   private readonly canvases = [
     this.grid.canvas,
     this.analyzer.canvas,
@@ -138,9 +141,9 @@ export class GraphScene {
       this.invalidate({ solo: true, response: true });
     if (previous.solo === null && state.solo !== null) {
       // Fade the highlight in (restart the CSS animation).
-      this.soloLayer.canvas.classList.remove('is-entering');
+      this.soloLayer.canvas.classList.remove(soloLayerEnteringClass);
       void this.soloLayer.canvas.offsetWidth;
-      this.soloLayer.canvas.classList.add('is-entering');
+      this.soloLayer.canvas.classList.add(soloLayerEnteringClass);
     }
   }
 

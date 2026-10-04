@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 
-import { toGraphPoint, viewportStore } from '~/entities/viewport';
+import { eventGraphPoint, viewportStore } from '~/entities/viewport';
 import { gestureStore, useStore } from '~/shared/lib';
 import { UiIcon } from '~/shared/ui';
 
@@ -21,8 +21,8 @@ export const DbAxis = () => {
         if (event.button !== 0) return;
         event.stopPropagation();
         event.currentTarget.setPointerCapture(event.pointerId);
-        const graphElement = event.currentTarget.closest('.graph');
-        if (graphElement !== null) rangeDown(toGraphPoint(event, graphElement));
+        const point = eventGraphPoint(event);
+        if (point !== null) rangeDown(point);
       }}
       onDoubleClick={fitRangeToBands}
       onWheel={(event) => {

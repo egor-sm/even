@@ -14,6 +14,7 @@ import { createMapper, graph, maxHz, minHz, viewportStore } from '~/entities/vie
 import { clamp, gestureStore, useStore } from '~/shared/lib';
 
 import { qDown } from '../model/q-gesture';
+import styles from './q-handles.module.css';
 
 /** Two handles at the edges of the selected bell, notch or band pass (its width): drag for q. */
 export const QHandles = () => {
@@ -42,7 +43,7 @@ export const QHandles = () => {
       <button
         key={side}
         type="button"
-        className={clsx('eq-qh', active && 'is-active', !band.on && 'is-bypassed')}
+        className={clsx('eq-qh', styles.handle, active && 'is-active', !band.on && 'is-bypassed')}
         aria-label={side < 0 ? 'Q, lower edge' : 'Q, upper edge'}
         style={{
           ['--band' as string]: bandColorVar(band.color),

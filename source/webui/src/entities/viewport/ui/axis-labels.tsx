@@ -1,8 +1,11 @@
+import { clsx } from 'clsx';
+
 import { formatAxisDb, useStore } from '~/shared/lib';
 
 import { dbLines, frequencyLabels } from '../lib/axis-math';
 import { createMapper } from '../lib/geometry';
 import { viewportStore } from '../model/viewport';
+import styles from './axis-labels.module.css';
 
 /** dB labels of the grid lines, right-aligned in the dB axis. */
 export const DbLabels = () => {
@@ -10,7 +13,7 @@ export const DbLabels = () => {
   const mapper = createMapper(range);
 
   return dbLines(range).map((db) => (
-    <div key={db} className="db-label" style={{ top: mapper.y(db) }}>
+    <div key={db} className={clsx(styles.label, styles.db)} style={{ top: mapper.y(db) }}>
       {formatAxisDb(db)}
     </div>
   ));
@@ -23,7 +26,7 @@ export const FrequencyLabels = () => {
 
   const style = { opacity: 1 - Math.min(1, morph * 1.6), translate: `-50% ${-morph * 8}px` };
   return frequencyLabels(createMapper(1)).map((label) => (
-    <div key={label.text} className="frequency-label" style={{ ...style, left: label.x }}>
+    <div key={label.text} className={clsx(styles.label, styles.frequency)} style={{ ...style, left: label.x }}>
       {label.text}
     </div>
   ));

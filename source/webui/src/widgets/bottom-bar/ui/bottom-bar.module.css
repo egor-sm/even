@@ -1,0 +1,12 @@
+.bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--size-bottombar);
+  gap: var(--space-12);
+  padding: 0 var(--space-12);
+  background: var(--surface-bar);
+  border-top: 1px solid var(--border-subtle);
+}

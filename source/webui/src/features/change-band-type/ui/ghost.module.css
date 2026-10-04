@@ -1,0 +1,13 @@
+/* The ghost curve (type preview) pulses. */
+.layer {
+  animation: ghost-pulse 1.2s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes ghost-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.55;
+  }
+}

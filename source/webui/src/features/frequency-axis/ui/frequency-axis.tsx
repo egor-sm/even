@@ -1,20 +1,29 @@
+import { clsx } from 'clsx';
 import { type PointerEvent, useMemo } from 'react';
 
 import { bandColorVar, useDisplayBands } from '~/entities/band';
-import { createMapper, graph, keyboardPaths, keyDot, keyPath, toGraphPoint, viewportStore } from '~/entities/viewport';
+import {
+  createMapper,
+  graph,
+  keyboardPaths,
+  keyDot,
+  keyPath,
+  eventGraphPoint,
+  viewportStore,
+} from '~/entities/viewport';
 import { clamp, gestureStore, shallowEqual, useStore } from '~/shared/lib';
 import { UiIcon } from '~/shared/ui';
 
 import { keyDown, keyUnder } from '../model/key-gestures';
+import styles from './frequency-axis.module.css';
 
 const axisLeft = graph.left;
 const axisTop = graph.bottom;
 
 /** Pointer position on the keyboard: graph x, and y from the keyboard's top. */
 const keyboardPoint = (event: PointerEvent<SVGSVGElement>) => {
-  const graphElement = event.currentTarget.closest('.graph');
-  if (graphElement === null) return null;
-  const point = toGraphPoint(event, graphElement);
+  const point = eventGraphPoint(event);
+  if (point === null) return null;
   return { point, keyboardY: point.y - axisTop };
 };
 
@@ -110,7 +119,7 @@ export const FrequencyAxis = () => {
               );
             })}
       </div>
-      <fieldset className="eq-axis__tag axis-units" aria-label="Frequency axis units">
+      <fieldset className={clsx('eq-axis__tag', styles.units)} aria-label="Frequency axis units">
         <button
           type="button"
           className="eq-axis__seg"

@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 
 import { selectBand, selectionStore } from '~/entities/band';
-import { DbLabels, FrequencyLabels, startAnimator, toGraphPoint } from '~/entities/viewport';
+import { DbLabels, FrequencyLabels, graphRootAttribute, startAnimator, toGraphPoint } from '~/entities/viewport';
 import { QHandles } from '~/features/adjust-band-q';
 import { TypeStrip } from '~/features/change-band-type';
 import { Crosshair, setCursor } from '~/features/cursor-readout';
@@ -12,6 +12,7 @@ import { SoloTag } from '~/features/solo-band';
 import { endGesture, gestureStore, moveGesture } from '~/shared/lib';
 
 import { GraphScene } from '../model/scene';
+import styles from './graph-view.module.css';
 
 /** Pointer down on the empty graph: the first click folds the type strip, the next one deselects. */
 const backgroundDown = () => {
@@ -50,14 +51,15 @@ export const GraphView = ({ overlay, onAnalyzerDraw }: GraphViewProps) => {
   // Gestures capture the pointer on the element that starts them; its events bubble up to here.
   return (
     <div
-      className="graph"
+      className={styles.graph}
+      {...{ [graphRootAttribute]: true }}
       ref={graphRef}
       onPointerMove={(event) => moveGesture(point(event), { shiftKey: event.shiftKey })}
       onPointerUp={endGesture}
       onPointerCancel={endGesture}
     >
       <div
-        className="graph-background"
+        className={styles.background}
         onPointerDown={(event) => {
           if (event.button === 0) backgroundDown();
         }}
@@ -67,7 +69,7 @@ export const GraphView = ({ overlay, onAnalyzerDraw }: GraphViewProps) => {
         }}
         onPointerLeave={() => setCursor(null)}
       />
-      <div className="graph-layers" ref={layersRef} />
+      <div className={styles.layers} ref={layersRef} />
       <SoloTag />
       <Crosshair />
       <FrequencyLabels />

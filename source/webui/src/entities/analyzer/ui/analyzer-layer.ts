@@ -75,8 +75,11 @@ export class AnalyzerLayer {
   private points = new Float32Array(0);
   private vertices = new Float32Array(0);
 
-  constructor(private readonly size: { width: number; height: number }) {
-    this.canvas.className = 'graph-canvas analyzer';
+  constructor(
+    className: string,
+    private readonly size: { width: number; height: number },
+  ) {
+    this.canvas.className = className;
     const gl = this.canvas.getContext('webgl2', { antialias: true, premultipliedAlpha: true, alpha: true });
     if (gl === null) throw new Error('WebGL2 is not available');
     this.gl = gl;

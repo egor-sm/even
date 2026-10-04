@@ -61,11 +61,20 @@ export const clipToPlot = (context: CanvasRenderingContext2D): void => {
   context.clip();
 };
 
+/** Marks the graph's root element, so controls inside it can find it to convert pointer positions. */
+export const graphRootAttribute = 'data-graph';
+
 /** Pointer position in graph units: the window may be scaled, the graph is 1280 wide at any scale. */
 export const toGraphPoint = (event: { clientX: number; clientY: number }, graphElement: Element): Point => {
   const rect = graphElement.getBoundingClientRect();
   const unit = rect.width / graph.width || 1;
   return { x: (event.clientX - rect.left) / unit, y: (event.clientY - rect.top) / unit };
+};
+
+/** Pointer position of an event on a control inside the graph, in graph units (null outside a graph). */
+export const eventGraphPoint = (event: { clientX: number; clientY: number; currentTarget: Element }): Point | null => {
+  const root = event.currentTarget.closest(`[${graphRootAttribute}]`);
+  return root === null ? null : toGraphPoint(event, root);
 };
 
 /** Where a band's node sits for a frequency and gain (pass 0 for types without gain), kept in range. */

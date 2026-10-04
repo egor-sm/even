@@ -1,0 +1,35 @@
+/* The highlight on the graph fades in when solo starts (the class restarts the animation). */
+.layerEntering {
+  animation: solo-in var(--dur-enter) var(--ease-out) both;
+}
+
+.tag {
+  position: absolute;
+  z-index: 8;
+  top: 34px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  translate: -50% 0;
+  animation: tag-in var(--dur-enter) var(--ease-out) both;
+}
+
+@keyframes solo-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tag-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,7 +1,10 @@
+import { clsx } from 'clsx';
+
 import { useStore } from '~/shared/lib';
 import { UiIcon } from '~/shared/ui';
 
 import { analyzerModes, analyzerModeStore, setAnalyzerMode } from '../model/analyzer-mode';
+import styles from './analyzer-mode-menu.module.css';
 
 /** The pill in the bottom bar showing the analyzer mode; opens the menu. */
 export const AnalyzerModePill = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => {
@@ -23,10 +26,10 @@ export const AnalyzerModeMenu = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <div className="menu-backdrop" onPointerDown={onClose} />
-      <div className="eq-menu analyzer-menu" role="menu" aria-label="Analyzer">
+      <div className={styles.backdrop} onPointerDown={onClose} />
+      <div className={clsx('eq-menu', styles.menu)} role="menu" aria-label="Analyzer">
         {analyzerModes.map(({ mode, name }) => (
-          <div key={mode} className="menu-entry">
+          <div key={mode} className={styles.entry}>
             {mode === 'off' && <div className="eq-menu__sep" />}
             <button
               type="button"

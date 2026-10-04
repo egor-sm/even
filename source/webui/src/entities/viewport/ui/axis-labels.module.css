@@ -1,0 +1,20 @@
+.label {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--graph-label);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Right-aligned in the dB axis. */
+.db {
+  left: 36px;
+  translate: -100% -50%;
+  text-align: right;
+}
+
+.frequency {
+  top: 640px;
+}

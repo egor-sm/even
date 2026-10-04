@@ -1,0 +1,17 @@
+.graph {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  height: var(--size-graph-h);
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+}
+
+.layers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

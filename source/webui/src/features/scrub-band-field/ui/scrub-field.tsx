@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 import { type Band, formatSlope, hasGain, isCut } from '~/entities/band';
-import { toGraphPoint, viewportStore } from '~/entities/viewport';
+import { eventGraphPoint, viewportStore } from '~/entities/viewport';
 import { formatFrequency, formatGain, formatNote, formatQ, gestureStore, useStore } from '~/shared/lib';
 
 import { scrubDown, type ScrubField as Field } from '../model/scrub-gesture';
@@ -41,8 +41,8 @@ export const ScrubField = ({ band, field }: { band: Band; field: Field }) => {
         if (event.button !== 0 || disabled) return;
         event.stopPropagation();
         event.currentTarget.setPointerCapture(event.pointerId);
-        const graphElement = event.currentTarget.closest('.graph');
-        if (graphElement !== null) scrubDown(band, field, toGraphPoint(event, graphElement));
+        const point = eventGraphPoint(event);
+        if (point !== null) scrubDown(band, field, point);
       }}
     >
       <span className="eq-field__l">{label}</span>

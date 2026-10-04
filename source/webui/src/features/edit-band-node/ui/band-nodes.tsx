@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 
 import { bandColorVar, hasGain, selectionStore, typeNames, useDisplayBands } from '~/entities/band';
-import { nodePoint, toGraphPoint, viewportStore } from '~/entities/viewport';
+import { eventGraphPoint, nodePoint, viewportStore } from '~/entities/viewport';
 import { formatFrequency, gestureStore, shallowEqual, useStore } from '~/shared/lib';
 
 import { nodeDown, nodeWheel } from '../model/node-gestures';
@@ -48,8 +48,8 @@ export const BandNodes = () => {
           if (event.button !== 0) return;
           event.stopPropagation();
           event.currentTarget.setPointerCapture(event.pointerId);
-          const graphElement = event.currentTarget.closest('.graph');
-          if (graphElement !== null) nodeDown(band, toGraphPoint(event, graphElement));
+          const point = eventGraphPoint(event);
+          if (point !== null) nodeDown(band, point);
         }}
         onWheel={(event) => {
           if (event.deltaY !== 0) nodeWheel(band, event.deltaY < 0);

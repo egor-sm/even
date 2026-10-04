@@ -1,0 +1,8 @@
+/* Every canvas layer covers the graph, drawn in its 1280 × 664 units. */
+.canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1280px;
+  height: var(--size-graph-h);
+}

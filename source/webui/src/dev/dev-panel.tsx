@@ -4,6 +4,7 @@ import { setScale, settingsStore, uiScales } from '~/features/settings';
 import { native, setMute } from '~/shared/api';
 import { useStore } from '~/shared/lib';
 
+import styles from './dev-panel.module.css';
 import { analyzerStats } from './stats';
 
 /** Development aids, shown in dev builds or with Ctrl+Shift+D: test signal, mute, UI scale, analyzer stats. */
@@ -19,7 +20,7 @@ export const DevPanel = () => {
   }, []);
 
   return (
-    <div className="dev-panel">
+    <div className={styles.panel}>
       <label>
         <input
           type="checkbox"

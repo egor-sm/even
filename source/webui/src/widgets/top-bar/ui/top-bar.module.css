@@ -1,0 +1,29 @@
+.bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--size-topbar);
+  gap: 14px;
+  padding: 0 var(--space-12) 0 var(--space-16);
+  background: var(--surface-bar);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.logo {
+  display: block;
+  height: 13px;
+  width: auto;
+  margin-right: 4px;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-default);
+}
+
+.spacer {
+  flex: 1;
+}

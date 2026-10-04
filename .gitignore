@@ -12,3 +12,6 @@ node_modules/
 /.vscode/
 /.idea/
 .DS_Store
+
+# Design handoff (local only for now)
+/even-design/

@@ -127,9 +127,17 @@ Web UI code (`source/webui`) is formatted, linted and type checked by [Vite+](ht
 
 ```sh
 cd source/webui
-vp check          # format check + lint + type check
-vp check --fix    # apply formatting and autofixes
+vp check                   # format check + lint + type check
+vp check --fix             # apply formatting and autofixes
+vp test                    # unit and component tests
+pnpm exec steiger src      # Feature-Sliced Design boundaries (steiger.config.ts)
 ```
+
+`source/webui/src` follows [Feature-Sliced Design](https://feature-sliced.design) without pages and processes:
+`app` (entry, wiring to C++) → `widgets` (top bar, graph, band dock, bottom bar) → `features` (one user action
+each: edit a node, change the type, solo, …) → `entities` (bands, viewport, analyzer) → `shared` (JUCE bridge,
+helpers, design system). Layers import only downwards, slices only through their `index.ts` and not from
+each other; imports across layers use the `~/` alias. `dev/` (mock backend, stats) is outside the layers.
 
 ## License
 

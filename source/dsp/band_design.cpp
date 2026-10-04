@@ -30,6 +30,9 @@ Section designSection(const BandParameters &parameters, double warped) noexcept 
     return mix(warped / fourthRoot, q, gain, sqrtGain, 1.0);
   case FilterShape::highShelf:
     return mix(warped * fourthRoot, q, 1.0, sqrtGain, gain);
+  case FilterShape::tiltShelf:
+    // The high shelf scaled by 1 / sqrt(G): 1 / sqrt(G) below, sqrt(G) above, unity at the frequency.
+    return mix(warped * fourthRoot, q, 1.0 / sqrtGain, 1.0, sqrtGain);
   case FilterShape::notch:
     return mix(warped, q, 1.0, 0.0, 1.0);
   case FilterShape::bandPass:

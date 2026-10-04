@@ -14,10 +14,12 @@ enum class FilterShape : std::uint8_t {
   highCut,   // removes everything above the frequency (lowpass)
   notch,     // removes a narrow band around the frequency
   bandPass,  // keeps only a band around the frequency
+  tiltShelf, // tilts the whole spectrum around the frequency: -gain/2 below, +gain/2 above
 };
 
 [[nodiscard]] constexpr bool usesGain(FilterShape shape) noexcept {
-  return shape == FilterShape::bell || shape == FilterShape::lowShelf || shape == FilterShape::highShelf;
+  return shape == FilterShape::bell || shape == FilterShape::lowShelf || shape == FilterShape::highShelf ||
+         shape == FilterShape::tiltShelf;
 }
 
 [[nodiscard]] constexpr bool isCut(FilterShape shape) noexcept {

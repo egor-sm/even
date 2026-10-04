@@ -7,8 +7,8 @@ export const numBands = 12;
 export const bandId = (band: number, field: 'Enabled' | 'Shape' | 'Frequency' | 'Gain' | 'Q' | 'Slope') =>
   `band${band}${field}`;
 
-/** Shape choice indices that use the gain parameter (Bell, Low Shelf, High Shelf; see parameters.h). */
-export const shapeUsesGain = (shapeIndex: number) => shapeIndex <= 2;
+/** Shape choice indices that use the gain parameter (Bell, Low Shelf, High Shelf, Tilt Shelf; see parameters.h). */
+export const shapeUsesGain = (shapeIndex: number) => shapeIndex <= 2 || shapeIndex === 7;
 
 /** The relay states of one band (the JUCE bridge caches them by name). */
 export const bandStates = (band: number) => ({

@@ -4,7 +4,7 @@ import { useToggleParameter } from '../juce/use-toggle-parameter';
 import { ParameterSlider } from './parameter-slider';
 
 // Shapes that use the gain parameter; names match shapeNames in parameters.h.
-const shapesWithGain = new Set(['Bell', 'Low Shelf', 'High Shelf']);
+const shapesWithGain = new Set(['Bell', 'Low Shelf', 'High Shelf', 'Tilt Shelf']);
 
 const formatFrequency = (hz: number) => (hz >= 1000 ? `${(hz / 1000).toFixed(2)} kHz` : `${hz.toFixed(0)} Hz`);
 

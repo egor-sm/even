@@ -62,7 +62,8 @@ TEST_CASE("Band: the filter sounds exactly like the drawn response", "[dsp][band
       GENERATE(band(FilterShape::bell, 1000.0, 9.0, 1.5), band(FilterShape::bell, 300.0, -15.0, 4.0),
                band(FilterShape::lowShelf, 200.0, 6.0, 0.707), band(FilterShape::highShelf, 5000.0, -10.0, 1.2),
                band(FilterShape::lowCut, 80.0, 0.0, 0.707), band(FilterShape::highCut, 9000.0, 0.0, 2.0),
-               band(FilterShape::notch, 2000.0, 0.0, 5.0), band(FilterShape::bandPass, 700.0, 0.0, 1.0));
+               band(FilterShape::notch, 2000.0, 0.0, 5.0), band(FilterShape::bandPass, 700.0, 0.0, 1.0),
+               band(FilterShape::tiltShelf, 1200.0, 9.0, 0.707));
   const auto frequency = GENERATE(31.0, 250.0, 1700.0, 6100.0, 17000.0);
 
   CHECK_THAT(measuredDb(parameters, frequency), WithinAbs(designDb(parameters, frequency), 0.05));
@@ -126,13 +127,33 @@ TEST_CASE("Shelves: full gain on the shelf, half the gain at the frequency, unit
 }
 
 TEST_CASE("Shelves: a cut is the exact mirror of the same boost", "[dsp][band][shelf]") {
-  const auto shape = GENERATE(FilterShape::lowShelf, FilterShape::highShelf);
+  const auto shape = GENERATE(FilterShape::lowShelf, FilterShape::highShelf, FilterShape::tiltShelf);
   const auto q = GENERATE(0.5, 0.707, 2.0);
 
   for (const auto frequency : logFrequencies(20.0, 23000.0, 60)) {
     const auto boost = designDb(band(shape, 1000.0, 12.0, q), frequency);
     const auto cut = designDb(band(shape, 1000.0, -12.0, q), frequency);
     CHECK_THAT(boost + cut, WithinAbs(0.0, 1e-9));
+  }
+}
+
+TEST_CASE("Tilt shelf: -gain/2 below, +gain/2 above, unity at the frequency", "[dsp][band][shelf]") {
+  const auto gainDb = GENERATE(-12.0, 6.0, 24.0);
+  const auto frequency = GENERATE(300.0, 15000.0);
+  const auto tilt = band(FilterShape::tiltShelf, frequency, gainDb, 0.707);
+
+  CHECK_THAT(designDb(tilt, frequency), WithinAbs(0.0, 1e-9));
+  CHECK_THAT(designDb(tilt, 5.0), WithinAbs(-gainDb / 2.0, 0.05));
+  CHECK_THAT(measuredDb(tilt, frequency), WithinAbs(0.0, 0.05));
+}
+
+TEST_CASE("Tilt shelf: equals the high shelf of the same gain, lowered by half the gain", "[dsp][band][shelf]") {
+  const auto q = GENERATE(0.5, 0.707, 2.0);
+
+  for (const auto frequency : logFrequencies(20.0, 23000.0, 60)) {
+    const auto tilt = designDb(band(FilterShape::tiltShelf, 1000.0, 10.0, q), frequency);
+    const auto highShelf = designDb(band(FilterShape::highShelf, 1000.0, 10.0, q), frequency);
+    CHECK_THAT(tilt, WithinAbs(highShelf - 5.0, 1e-9));
   }
 }
 

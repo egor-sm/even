@@ -19,7 +19,8 @@ enum class BandField : std::uint8_t { enabled, shape, frequency, gain, q, slope 
 [[nodiscard]] juce::String bandId(int band, BandField field);
 
 // Choice order of the shape parameter; matches dsp::FilterShape.
-inline constexpr std::array shapeNames{"Bell", "Low Shelf", "High Shelf", "Low Cut", "High Cut", "Notch", "Band Pass"};
+inline constexpr std::array shapeNames{"Bell",     "Low Shelf", "High Shelf", "Low Cut",
+                                       "High Cut", "Notch",     "Band Pass",  "Tilt Shelf"};
 
 // Choice order of the slope parameter (cuts only); matches dsp::cutSlopesDbPerOctave.
 inline constexpr std::array slopeNames{"6 dB/oct", "12 dB/oct", "18 dB/oct", "24 dB/oct", "36 dB/oct", "48 dB/oct"};

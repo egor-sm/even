@@ -22,6 +22,7 @@ target_sources(
           parameters.cpp
           band_slots.cpp
           band_history.cpp
+          user_settings.cpp
           response_packet.cpp
           web_resources.cpp
           test_signal.cpp

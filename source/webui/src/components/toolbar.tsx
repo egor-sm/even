@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { RendererKind } from '../analyzer/spectrum-view';
 import { native } from '../juce/native';
 import { useHistory } from '../juce/use-history';
+import { uiScales, useSettings } from '../juce/use-settings';
 import { usePluginInfo } from '../juce/use-plugin-info';
 import { useToggleParameter } from '../juce/use-toggle-parameter';
 
@@ -17,6 +18,7 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
   const [analyzerMode, setAnalyzerMode] = useState('prepost');
   const info = usePluginInfo();
   const history = useHistory();
+  const { settings, setSetting } = useSettings();
 
   // The mode lives in C++ without being saved: hand it the page's choice when the page loads.
   useEffect(() => void native.setAnalyzerMode('prepost'), []);
@@ -53,6 +55,20 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
           <option value="post">Post</option>
           <option value="pre">Pre</option>
           <option value="off">Off</option>
+        </select>
+      </label>
+      <label className="control">
+        Scale
+        <select
+          value={settings?.scale ?? 100}
+          disabled={settings === null}
+          onChange={(event) => setSetting('scale', Number(event.target.value))}
+        >
+          {uiScales.map((scale) => (
+            <option key={scale} value={scale}>
+              {scale}%
+            </option>
+          ))}
         </select>
       </label>
       <label className="control">

@@ -65,9 +65,8 @@ PluginEditor::PluginEditor(PluginProcessor &processorToUse)
 
   webView.goToURL(getDevServerUrl().value_or(juce::WebBrowserComponent::getResourceProviderRoot()));
 
-  setResizable(true, true);
-  setResizeLimits(480, 320, 2400, 1600);
-  setSize(960, 540);
+  setResizable(false, false);
+  applyScale();
 
   setAnalyzerActive(true);
   startTimerHz(60);
@@ -165,6 +164,20 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                               })
           .withNativeFunction("getHistoryState", [this](const juce::Array<juce::var> &,
                                                         const auto &complete) { complete(historyStateVar()); })
+          // Returns {theme, scale}.
+          .withNativeFunction("getSettings",
+                              [this](const juce::Array<juce::var> &, const auto &complete) { complete(settingsVar()); })
+          // (key, value) with key "theme" ("dark" | "light") or "scale" (percent); returns {theme, scale}.
+          .withNativeFunction("setSetting",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                if (args.size() >= 2 && args[0].toString() == "theme") {
+                                  settings->setTheme(args[1].toString());
+                                } else if (args.size() >= 2 && args[0].toString() == "scale") {
+                                  settings->setScalePercent(static_cast<int>(args[1]));
+                                  applyScale();
+                                }
+                                complete(settingsVar());
+                              })
           .withNativeFunction("setAnalyzerActive",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {
                                 setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
@@ -221,6 +234,18 @@ PluginEditor::BandAttachmentArray PluginEditor::createBandAttachments() {
 std::optional<juce::WebBrowserComponent::Resource> PluginEditor::getResource(const juce::String &url) const {
   // WebView2 passes the query string along; WKWebView does not.
   return findWebUiResource(url.upToFirstOccurrenceOf("?", false, false));
+}
+
+void PluginEditor::applyScale() {
+  const auto percent = settings->scalePercent();
+  setSize(baseWidth * percent / 100, baseHeight * percent / 100);
+}
+
+juce::var PluginEditor::settingsVar() const {
+  auto object = std::make_unique<juce::DynamicObject>();
+  object->setProperty("theme", settings->theme());
+  object->setProperty("scale", settings->scalePercent());
+  return juce::var{object.release()};
 }
 
 void PluginEditor::setAnalyzerActive(bool active) {

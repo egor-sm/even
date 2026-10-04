@@ -1,6 +1,7 @@
 #pragma once
 
 #include "plugin_processor.h"
+#include "user_settings.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_extra/juce_gui_extra.h>
@@ -18,6 +19,10 @@ public:
 
   void resized() override;
 
+  // The layout is designed for this size; the window is this times the UI scale.
+  static constexpr int baseWidth = 1280;
+  static constexpr int baseHeight = 760;
+
 private:
   [[nodiscard]] juce::WebBrowserComponent::Options createWebViewOptions();
   [[nodiscard]] std::optional<juce::WebBrowserComponent::Resource> getResource(const juce::String &url) const;
@@ -26,6 +31,9 @@ private:
   void handleAsyncUpdate() override;
 
   void setAnalyzerActive(bool active);
+
+  void applyScale();
+  [[nodiscard]] juce::var settingsVar() const;
 
   // Polls the band parameters on the message thread and sends the EQ response curves to the page
   // when they change. Polling keeps the audio thread out of it: parameter listeners would be called
@@ -65,6 +73,7 @@ private:
   [[nodiscard]] BandAttachmentArray createBandAttachments();
 
   PluginProcessor &pluginProcessor;
+  juce::SharedResourcePointer<UserSettings> settings;
 
   // Relays must outlive the web view and be constructed before it.
   juce::WebToggleButtonRelay muteRelay{parameters::mute};

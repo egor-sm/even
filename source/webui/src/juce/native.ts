@@ -18,4 +18,8 @@ export const native = {
   undo: Juce.getNativeFunction('undo'),
   redo: Juce.getNativeFunction('redo'),
   getHistoryState: Juce.getNativeFunction('getHistoryState'),
+  /** Returns {theme, scale}. */
+  getSettings: Juce.getNativeFunction('getSettings'),
+  /** (key: 'theme' | 'scale', value) => {theme, scale}. */
+  setSetting: Juce.getNativeFunction('setSetting'),
 };

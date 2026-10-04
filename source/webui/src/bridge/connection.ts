@@ -57,8 +57,16 @@ export const connectBackend = (): (() => void) => {
   window.evenOnResponse = (base64) => {
     const response = decodeBase64Response(base64);
     if (response === null) return;
-    bandsStore.set(bandsFromResponse(response));
-    if (uiStore.get().previewUntilResponse) uiStore.set({ preview: null, previewUntilResponse: false });
+    const state = bandsFromResponse(response);
+    bandsStore.set(state);
+
+    // Undo, redo or the host may have removed the selected or soloed band.
+    const { selected, solo, previewUntilResponse } = uiStore.get();
+    const exists = (slot: number | null) => slot !== null && state.bands.some((band) => band.slot === slot);
+    if (selected !== null && !exists(selected))
+      uiStore.set({ selected: null, strip: false, picker: false, hoverType: null });
+    if (solo !== null && !exists(solo)) uiStore.set({ solo: null });
+    if (previewUntilResponse) uiStore.set({ preview: null, previewUntilResponse: false });
   };
 
   window.evenOnHistory = (canUndo, canRedo) => uiStore.set({ canUndo, canRedo });

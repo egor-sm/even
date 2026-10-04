@@ -1,0 +1,60 @@
+import { bandColorVar } from '../../model/bands';
+import { typeNames } from '../../model/filter-types';
+import { formatFrequency } from '../../model/format';
+import { uiStore } from '../../model/ui';
+import { shallowEqual, useStore } from '../../store/store';
+import { nodeDown, nodePosition, nodeWheel, toGraphPoint } from '../interactions';
+import { useDisplayBands } from './use-bands';
+
+const nodeSize = 14;
+
+/** One node per band at (frequency, gain): select, drag, wheel for q. */
+export const BandNodes = () => {
+  const bands = useDisplayBands();
+  const { selected, solo, drag, range } = useStore(
+    uiStore,
+    (state) => ({ selected: state.selected, solo: state.solo, drag: state.drag, range: state.view.range }),
+    shallowEqual,
+  );
+
+  return bands.map((band, index) => {
+    const { x, y } = nodePosition(band, range);
+    if (x < 34 || x > 1272) return null;
+
+    const dragging = drag?.kind === 'node' && drag.slot === band.slot && drag.moved;
+    const classes = [
+      'eq-node',
+      band.slot === selected ? 'is-selected' : '',
+      band.on ? '' : 'is-bypassed',
+      dragging ? 'is-dragging' : '',
+    ];
+
+    return (
+      <button
+        key={band.slot}
+        type="button"
+        className={classes.filter(Boolean).join(' ')}
+        aria-label={`Band ${index + 1}, ${typeNames[band.type]} ${formatFrequency(band.f)}`}
+        style={{
+          ['--band' as string]: bandColorVar(band.color),
+          position: 'absolute',
+          left: x - nodeSize / 2,
+          top: y - nodeSize / 2,
+          opacity: solo !== null && solo !== band.slot ? 0.35 : 1,
+          transition:
+            'opacity var(--dur-base), box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out)',
+        }}
+        onPointerDown={(event) => {
+          if (event.button !== 0) return;
+          event.stopPropagation();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const graphElement = event.currentTarget.closest('.graph');
+          if (graphElement !== null) nodeDown(band, toGraphPoint(event, graphElement));
+        }}
+        onWheel={(event) => {
+          if (event.deltaY !== 0) nodeWheel(band, event.deltaY < 0);
+        }}
+      />
+    );
+  });
+};

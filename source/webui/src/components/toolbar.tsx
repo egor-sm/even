@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import type { RendererKind } from '../analyzer/spectrum-view';
 import { native } from '../juce/native';
+import { useHistory } from '../juce/use-history';
 import { usePluginInfo } from '../juce/use-plugin-info';
 import { useToggleParameter } from '../juce/use-toggle-parameter';
 
@@ -15,10 +16,17 @@ export const Toolbar = ({ renderer, onRendererChange }: ToolbarProps) => {
   const [testSignal, setTestSignal] = useState(false);
   const [analyzerSource, setAnalyzerSource] = useState('input');
   const info = usePluginInfo();
+  const history = useHistory();
 
   return (
     <header className="toolbar">
       <h1 className="title">Even</h1>
+      <button type="button" disabled={!history.canUndo} onClick={history.undo}>
+        Undo
+      </button>
+      <button type="button" disabled={!history.canRedo} onClick={history.redo}>
+        Redo
+      </button>
       <label className="control">
         Renderer
         <select

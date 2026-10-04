@@ -21,6 +21,7 @@ target_sources(
           plugin_editor.cpp
           parameters.cpp
           band_slots.cpp
+          band_history.cpp
           response_packet.cpp
           web_resources.cpp
           test_signal.cpp

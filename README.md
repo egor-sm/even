@@ -101,7 +101,7 @@ Then launch the Standalone app; changes in `source/webui/src` are applied withou
 source/
   app/      JUCE app built as VST3 / Standalone (processor, editor hosting the web view, web UI resources)
   dsp/      Plain C++ DSP building blocks (no JUCE), unit-tested
-  model/    Plain C++ editing model: band slots and edit rules (no JUCE), unit-tested
+  model/    Plain C++ editing model: band slots, edit rules, undo history (no JUCE), unit-tested
   webui/    Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview
 tests/      Catch2 unit tests
 cmake/      CMake helpers (CPM.cmake, compiler warnings)

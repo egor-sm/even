@@ -1,6 +1,7 @@
 #pragma once
 
 #include "analyzer/spectrum_analyzer.h"
+#include "band_history.h"
 #include "band_slots.h"
 #include "dsp/equalizer.h"
 #include "parameters.h"
@@ -45,6 +46,7 @@ public:
   [[nodiscard]] SpectrumAnalyzer &getAnalyzer() { return analyzer; }
   // Band edits that change several parameters at once (message thread).
   [[nodiscard]] BandSlots &getBandSlots() { return bandSlots; }
+  [[nodiscard]] BandHistory &getBandHistory() { return bandHistory; }
 
   // Replaces the input with a test signal (debug aid for the analyzer).
   void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
@@ -61,6 +63,7 @@ private:
 
   juce::AudioProcessorValueTreeState state;
   BandSlots bandSlots{state};
+  BandHistory bandHistory{state, bandSlots};
   std::atomic<float> &muteValue;
   std::array<parameters::BandValues, parameters::numBands> bandValues;
   dsp::Equalizer equalizer;

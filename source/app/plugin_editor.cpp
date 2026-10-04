@@ -134,6 +134,19 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                                   pluginProcessor.getBandSlots().setShape(*slot, *shape);
                                 complete({});
                               })
+          // Each returns {canUndo, canRedo}.
+          .withNativeFunction("undo",
+                              [this](const juce::Array<juce::var> &, const auto &complete) {
+                                pluginProcessor.getBandHistory().undo();
+                                complete(historyStateVar());
+                              })
+          .withNativeFunction("redo",
+                              [this](const juce::Array<juce::var> &, const auto &complete) {
+                                pluginProcessor.getBandHistory().redo();
+                                complete(historyStateVar());
+                              })
+          .withNativeFunction("getHistoryState", [this](const juce::Array<juce::var> &,
+                                                        const auto &complete) { complete(historyStateVar()); })
           .withNativeFunction("setAnalyzerActive",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {
                                 setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
@@ -214,9 +227,28 @@ void PluginEditor::handleAsyncUpdate() {
                              juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
 }
 
+PluginEditor::HistoryState PluginEditor::getHistoryState() {
+  const auto &history = pluginProcessor.getBandHistory();
+  return {.canUndo = history.canUndo(), .canRedo = history.canRedo()};
+}
+
+juce::var PluginEditor::historyStateVar() {
+  const auto state = getHistoryState();
+  auto object = std::make_unique<juce::DynamicObject>();
+  object->setProperty("canUndo", state.canUndo);
+  object->setProperty("canRedo", state.canRedo);
+  return juce::var{object.release()};
+}
+
 void PluginEditor::timerCallback() {
   if (!webView.isShowing())
     return;
+
+  if (const auto history = getHistoryState(); history != lastSentHistory) {
+    webView.evaluateJavascript("window.evenOnHistory?.(" + juce::String{history.canUndo ? "true" : "false"} + "," +
+                               juce::String{history.canRedo ? "true" : "false"} + ")");
+    lastSentHistory = history;
+  }
 
   const auto state = pluginProcessor.getResponseState();
   if (lastSentResponse && isSameResponse(state, *lastSentResponse))

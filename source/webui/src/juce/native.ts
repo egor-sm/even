@@ -12,6 +12,10 @@ export const native = {
   deleteBand: Juce.getNativeFunction('deleteBand'),
   /** (band, shapeIndex): also adjusts q and gain to suit the new shape. */
   setBandShape: Juce.getNativeFunction('setBandShape'),
+  /** Each returns {canUndo, canRedo}. */
+  undo: Juce.getNativeFunction('undo'),
+  redo: Juce.getNativeFunction('redo'),
+  getHistoryState: Juce.getNativeFunction('getHistoryState'),
   // Temporary scaffolding for the DSP learning steps.
   setAnalyzerSource: Juce.getNativeFunction('setAnalyzerSource'),
 };

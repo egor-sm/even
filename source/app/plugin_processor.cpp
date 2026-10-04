@@ -72,8 +72,10 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock &destData) {
 }
 
 void PluginProcessor::setStateInformation(const void *data, int sizeInBytes) {
-  if (const auto xml = getXmlFromBinary(data, sizeInBytes); xml && xml->hasTagName(state.state.getType()))
+  if (const auto xml = getXmlFromBinary(data, sizeInBytes); xml && xml->hasTagName(state.state.getType())) {
     state.replaceState(juce::ValueTree::fromXml(*xml));
+    bandHistory.stateReplaced();
+  }
 }
 
 } // namespace even

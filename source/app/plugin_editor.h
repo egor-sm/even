@@ -77,6 +77,15 @@ private:
 
   std::optional<ResponseState> lastSentResponse;
 
+  struct HistoryState {
+    bool canUndo = false;
+    bool canRedo = false;
+    bool operator==(const HistoryState &) const = default;
+  };
+  [[nodiscard]] HistoryState getHistoryState();
+  [[nodiscard]] juce::var historyStateVar();
+  std::optional<HistoryState> lastSentHistory;
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };
 

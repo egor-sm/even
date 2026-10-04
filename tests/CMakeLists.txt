@@ -16,9 +16,10 @@ add_executable(
   dsp/smoothed_value_test.cpp
   dsp/band_test.cpp
   dsp/band_response_test.cpp
-  dsp/equalizer_test.cpp)
+  dsp/equalizer_test.cpp
+  model/band_slot_test.cpp)
 
 target_include_directories(even_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(even_tests PRIVATE even::dsp Catch2::Catch2WithMain even_warnings)
+target_link_libraries(even_tests PRIVATE even::model Catch2::Catch2WithMain even_warnings)
 
 catch_discover_tests(even_tests)

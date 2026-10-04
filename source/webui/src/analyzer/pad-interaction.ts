@@ -1,4 +1,5 @@
-import { bandStates, numBands, shapeUsesGain } from '../juce/bands';
+import { bandStates, shapeUsesGain } from '../juce/bands';
+import { native } from '../juce/native';
 import { bandRanges } from '../juce/parameter-scales';
 import { setSliderValue } from '../juce/slider-values';
 import { findNode, pointToValue, valueToPoint, type PadNode, type PadPoint, type PadValue } from './pad-math';
@@ -17,6 +18,7 @@ export type PadCallbacks = {
 };
 
 const hitRadiusCss = 12;
+const bellShapeIndex = 0; // shapeNames in parameters.h
 const fineDragFactor = 0.1;
 const qWheelStep = 1.1;
 const wheelGestureEndMs = 300;
@@ -36,7 +38,7 @@ const setGain = (band: number, gainDb: number) => setSliderValue(bandStates(band
 
 /**
  * The graph as an XY pad: drag a node to set frequency (x) and gain (y), wheel over a node for q,
- * double-click empty space to switch on a free band there, double-click a node to switch it off.
+ * double-click empty space to create a bell there, double-click a node to delete its band.
  */
 export class PadInteraction {
   private drag: Drag | null = null;
@@ -148,21 +150,15 @@ export class PadInteraction {
     const band = this.nodeAt(pointer);
 
     if (band !== null) {
-      bandStates(band).enabled.setValue(false);
+      void native.deleteBand(band);
       return;
     }
 
-    // Switch on the first free band as a bell at the clicked position.
-    const free = Array.from({ length: numBands }, (_, i) => i + 1).find((n) => !bandStates(n).enabled.getValue());
-    if (free === undefined) return;
-
+    // C++ takes a free slot (if any) for a bell at the clicked position.
     const value = pointToValue(this.callbacks.getScale(), pointer);
-    const states = bandStates(free);
-    states.shape.setChoiceIndex(0);
-    setFrequency(free, value.frequencyHz);
-    setGain(free, value.gainDb);
-    states.enabled.setValue(true);
-    this.callbacks.selectBand(free);
+    void native.createBand(bellShapeIndex, value.frequencyHz, value.gainDb).then((created: unknown) => {
+      if (typeof created === 'number') this.callbacks.selectBand(created);
+    });
   };
 
   private readonly onWheel = (event: WheelEvent): void => {

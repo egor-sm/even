@@ -5,10 +5,30 @@
 
 #include <optional>
 #include <string_view>
+#include <utility>
 
 namespace even {
 
 namespace {
+
+// A 1-based band number from the page as a slot index.
+std::optional<std::size_t> slotArgument(const juce::Array<juce::var> &args, int index) {
+  if (index >= args.size())
+    return std::nullopt;
+  const auto band = static_cast<int>(args[index]);
+  if (band < 1 || band > parameters::numBands)
+    return std::nullopt;
+  return static_cast<std::size_t>(band - 1);
+}
+
+std::optional<dsp::FilterShape> shapeArgument(const juce::Array<juce::var> &args, int index) {
+  if (index >= args.size())
+    return std::nullopt;
+  const auto shape = static_cast<int>(args[index]);
+  if (shape < 0 || std::cmp_greater_equal(shape, parameters::shapeNames.size()))
+    return std::nullopt;
+  return static_cast<dsp::FilterShape>(shape);
+}
 
 std::optional<juce::String> getDevServerUrl() {
   constexpr auto url = build_config::webUiDevServerUrl;
@@ -87,6 +107,33 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                                 lastSentResponse.reset(); // the next timer tick resends it
                                 complete({});
                               })
+          // Returns the new band's number, or undefined when every band is in use.
+          .withNativeFunction("createBand",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                const auto shape = shapeArgument(args, 0);
+                                if (!shape || args.size() < 3) {
+                                  complete({});
+                                  return;
+                                }
+                                const auto slot = pluginProcessor.getBandSlots().create(
+                                    *shape, static_cast<double>(args[1]), static_cast<double>(args[2]));
+                                complete(slot ? juce::var{static_cast<int>(*slot) + 1} : juce::var{});
+                              })
+          .withNativeFunction("deleteBand",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                if (const auto slot = slotArgument(args, 0))
+                                  pluginProcessor.getBandSlots().remove(*slot);
+                                complete({});
+                              })
+          // Changes the shape together with the q and gain adjustments that go with it (model::withShape).
+          .withNativeFunction("setBandShape",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                const auto slot = slotArgument(args, 0);
+                                const auto shape = shapeArgument(args, 1);
+                                if (slot && shape)
+                                  pluginProcessor.getBandSlots().setShape(*slot, *shape);
+                                complete({});
+                              })
           .withNativeFunction("setAnalyzerActive",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {
                                 setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
@@ -95,7 +142,8 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
           .withResourceProvider([this](const juce::String &url) { return getResource(url); }, allowedOrigin);
 
   for (const auto &relays : bandRelays)
-    options = options.withOptionsFrom(relays->enabled)
+    options = options.withOptionsFrom(relays->used)
+                  .withOptionsFrom(relays->enabled)
                   .withOptionsFrom(relays->shape)
                   .withOptionsFrom(relays->frequency)
                   .withOptionsFrom(relays->gain)
@@ -106,7 +154,8 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
 }
 
 PluginEditor::BandRelays::BandRelays(int band)
-    : enabled(parameters::bandId(band, parameters::BandField::enabled)),
+    : used(parameters::bandId(band, parameters::BandField::used)),
+      enabled(parameters::bandId(band, parameters::BandField::enabled)),
       shape(parameters::bandId(band, parameters::BandField::shape)),
       frequency(parameters::bandId(band, parameters::BandField::frequency)),
       gain(parameters::bandId(band, parameters::BandField::gain)),
@@ -114,7 +163,8 @@ PluginEditor::BandRelays::BandRelays(int band)
       slope(parameters::bandId(band, parameters::BandField::slope)) {}
 
 PluginEditor::BandAttachments::BandAttachments(juce::AudioProcessorValueTreeState &state, int band, BandRelays &relays)
-    : enabled(*state.getParameter(parameters::bandId(band, parameters::BandField::enabled)), relays.enabled, nullptr),
+    : used(*state.getParameter(parameters::bandId(band, parameters::BandField::used)), relays.used, nullptr),
+      enabled(*state.getParameter(parameters::bandId(band, parameters::BandField::enabled)), relays.enabled, nullptr),
       shape(*state.getParameter(parameters::bandId(band, parameters::BandField::shape)), relays.shape, nullptr),
       frequency(*state.getParameter(parameters::bandId(band, parameters::BandField::frequency)), relays.frequency,
                 nullptr),

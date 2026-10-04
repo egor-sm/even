@@ -1,6 +1,7 @@
 #pragma once
 
 #include "analyzer/spectrum_analyzer.h"
+#include "band_slots.h"
 #include "dsp/equalizer.h"
 #include "parameters.h"
 #include "response_packet.h"
@@ -42,11 +43,13 @@ public:
 
   [[nodiscard]] juce::AudioProcessorValueTreeState &getState() { return state; }
   [[nodiscard]] SpectrumAnalyzer &getAnalyzer() { return analyzer; }
+  // Band edits that change several parameters at once (message thread).
+  [[nodiscard]] BandSlots &getBandSlots() { return bandSlots; }
 
   // Replaces the input with a test signal (debug aid for the analyzer).
   void setTestSignalEnabled(bool enabled) { testSignalEnabled.store(enabled); }
 
-  // Current band settings (target values), e.g. for drawing the EQ response.
+  // Current band settings (target values), e.g. for drawing the EQ response. Message thread.
   [[nodiscard]] ResponseState getResponseState() const;
 
   // Whether the analyzer shows the input (before processing) or the output.
@@ -57,6 +60,7 @@ private:
   void updateBandTargets() noexcept;
 
   juce::AudioProcessorValueTreeState state;
+  BandSlots bandSlots{state};
   std::atomic<float> &muteValue;
   std::array<parameters::BandValues, parameters::numBands> bandValues;
   dsp::Equalizer equalizer;

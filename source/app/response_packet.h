@@ -1,33 +1,27 @@
 #pragma once
 
-#include "dsp/filter_shape.h"
-#include "parameters.h"
+#include "model/band_slot.h"
 
-#include <array>
 #include <cstddef>
 #include <vector>
 
 namespace even {
 
-struct BandState {
-  bool enabled = false;
-  dsp::BandParameters parameters;
-};
-
 // Everything the EQ response curve depends on; resent to the UI whenever it changes.
 struct ResponseState {
   double sampleRate = 0.0;
-  std::array<BandState, parameters::numBands> bands{};
+  model::Bands bands{};
 };
 
 // Exact (bitwise) comparison: any change at all, however small, must redraw the curve.
 [[nodiscard]] bool isSameResponse(const ResponseState &a, const ResponseState &b) noexcept;
 
-// Packs the designed sections of all enabled bands for the UI, which evaluates and draws
-// each section's transfer function (see dsp::Section) at s = j * tan(pi * f / sampleRate) / g.
+// Packs the designed sections of all used bands (bypassed ones too) for the UI, which evaluates
+// and draws each section's transfer function (see dsp::Section) at s = j * tan(pi * f / sampleRate) / g.
 // Layout (little-endian, 8-byte aligned):
 //   header, 16 bytes:  u32 version, u32 bandCount, f64 sampleRate
-//   per enabled band:  u32 band (1-based), u32 shape, u32 sectionCount, u32 reserved,
+//   per used band:     u32 band (1-based slot), u32 shape, u32 sectionCount, u32 flags (bit 0: enabled),
+//                      u32 serial (creation order), u32 reserved,
 //                      f64 frequencyHz, f64 gainDb (0 for shapes without gain), f64 q,
 //                      sectionCount x {u32 order, u32 reserved, f64 g, f64 q, f64 lowpassMix,
 //                                      f64 bandpassMix, f64 highpassMix}

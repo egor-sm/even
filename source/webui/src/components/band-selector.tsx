@@ -9,7 +9,7 @@ type BandTabProps = {
 };
 
 const BandTab = ({ band, selected, onSelect }: BandTabProps) => {
-  const [enabled] = useToggleParameter(`band${band}Enabled`);
+  const [used] = useToggleParameter(`band${band}Used`);
 
   return (
     <button
@@ -17,8 +17,8 @@ const BandTab = ({ band, selected, onSelect }: BandTabProps) => {
       className="band-tab"
       aria-pressed={selected}
       aria-label={`Band ${band}`}
-      data-enabled={enabled}
-      style={enabled ? { backgroundColor: bandColor(band) } : undefined}
+      data-enabled={used}
+      style={used ? { backgroundColor: bandColor(band) } : undefined}
       onClick={() => onSelect(band)}
     >
       {band}
@@ -31,7 +31,7 @@ type BandSelectorProps = {
   onSelect: (band: number) => void;
 };
 
-/** One button per band: filled with the band color when the band is on, outlined when selected. */
+/** One button per band slot: filled with the band color when the slot is used, outlined when selected. */
 export const BandSelector = ({ selected, onSelect }: BandSelectorProps) => (
   <div className="band-selector">
     {Array.from({ length: numBands }, (_, i) => i + 1).map((band) => (

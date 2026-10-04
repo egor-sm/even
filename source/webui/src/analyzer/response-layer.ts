@@ -78,6 +78,8 @@ export class ResponseLayer {
     ctx.lineJoin = 'round';
 
     for (const band of response.bands) {
+      if (!band.enabled) continue; // bypassed: no contribution to the curve
+
       ctx.beginPath();
       ctx.moveTo(xs[0], zeroY);
       for (let i = 0; i < frequencies.length; i++) {
@@ -118,7 +120,7 @@ export class ResponseLayer {
 
       ctx.beginPath();
       ctx.arc(x, y, 8 * pixelRatio, 0, 2 * Math.PI);
-      ctx.fillStyle = bandColor(band.band);
+      ctx.fillStyle = bandColor(band.band, band.enabled ? 1 : 0.35);
       ctx.fill();
       ctx.fillStyle = '#15171c';
       ctx.fillText(String(band.band), x, y + 0.5 * pixelRatio);

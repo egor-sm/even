@@ -11,7 +11,8 @@ namespace even {
 
 namespace {
 
-constexpr std::uint32_t formatVersion = 3;
+constexpr std::uint32_t formatVersion = 4;
+constexpr std::uint32_t enabledFlag = 1;
 
 bool sameBits(double a, double b) noexcept {
   return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b);
@@ -27,38 +28,34 @@ void appendBytes(std::vector<std::byte> &bytes, const T &value) {
 } // namespace
 
 bool isSameResponse(const ResponseState &a, const ResponseState &b) noexcept {
-  return sameBits(a.sampleRate, b.sampleRate) &&
-         std::ranges::equal(a.bands, b.bands, [](const BandState &x, const BandState &y) {
-           const auto &p = x.parameters;
-           const auto &q = y.parameters;
-           return x.enabled == y.enabled && p.shape == q.shape && sameBits(p.frequencyHz, q.frequencyHz) &&
-                  sameBits(p.gainDb, q.gainDb) && sameBits(p.q, q.q) && p.slopeDbPerOctave == q.slopeDbPerOctave;
-         });
+  return sameBits(a.sampleRate, b.sampleRate) && model::isSameBands(a.bands, b.bands);
 }
 
 std::vector<std::byte> serializeResponse(const ResponseState &state) {
   // Before the host prepares the processor there is no sample rate yet; any typical one draws fine.
   const auto sampleRate = state.sampleRate > 0.0 ? state.sampleRate : 48000.0;
 
-  const auto enabledBands = static_cast<std::uint32_t>(
-      std::ranges::count_if(state.bands, [](const BandState &band) { return band.enabled; }));
+  const auto usedBands = static_cast<std::uint32_t>(
+      std::ranges::count_if(state.bands, [](const model::BandSlot &band) { return band.used; }));
 
   std::vector<std::byte> bytes;
   appendBytes(bytes, formatVersion);
-  appendBytes(bytes, enabledBands);
+  appendBytes(bytes, usedBands);
   appendBytes(bytes, sampleRate);
 
   for (std::size_t i = 0; i < state.bands.size(); ++i) {
-    const auto &[enabled, rawParameters] = state.bands[i];
-    if (!enabled)
+    const auto &band = state.bands[i];
+    if (!band.used)
       continue;
 
-    const auto parameters = dsp::sanitize(rawParameters, sampleRate);
+    const auto parameters = dsp::sanitize(model::toParameters(band), sampleRate);
     const auto design = dsp::design(parameters, sampleRate);
 
     appendBytes(bytes, static_cast<std::uint32_t>(i + 1));
     appendBytes(bytes, static_cast<std::uint32_t>(parameters.shape));
     appendBytes(bytes, static_cast<std::uint32_t>(design.count));
+    appendBytes(bytes, band.enabled ? enabledFlag : std::uint32_t{0});
+    appendBytes(bytes, band.serial);
     appendBytes(bytes, std::uint32_t{0});
     appendBytes(bytes, parameters.frequencyHz);
     appendBytes(bytes, dsp::usesGain(parameters.shape) ? parameters.gainDb : 0.0);

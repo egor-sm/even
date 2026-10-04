@@ -36,6 +36,7 @@ private:
   struct BandRelays {
     explicit BandRelays(int band);
 
+    juce::WebToggleButtonRelay used;
     juce::WebToggleButtonRelay enabled;
     juce::WebComboBoxRelay shape;
     juce::WebSliderRelay frequency;
@@ -48,6 +49,7 @@ private:
   struct BandAttachments {
     BandAttachments(juce::AudioProcessorValueTreeState &state, int band, BandRelays &relays);
 
+    juce::WebToggleButtonParameterAttachment used;
     juce::WebToggleButtonParameterAttachment enabled;
     juce::WebComboBoxParameterAttachment shape;
     juce::WebSliderParameterAttachment frequency;

@@ -55,16 +55,11 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 
 void PluginProcessor::updateBandTargets() noexcept {
   for (std::size_t i = 0; i < bandValues.size(); ++i)
-    equalizer.setBand(i, bandValues[i].parameters(), bandValues[i].enabled());
+    equalizer.setBand(i, bandValues[i].parameters(), bandValues[i].active());
 }
 
 ResponseState PluginProcessor::getResponseState() const {
-  ResponseState result{.sampleRate = getSampleRate()};
-
-  for (std::size_t i = 0; i < bandValues.size(); ++i)
-    result.bands[i] = {.enabled = bandValues[i].enabled(), .parameters = bandValues[i].parameters()};
-
-  return result;
+  return {.sampleRate = getSampleRate(), .bands = bandSlots.readAll()};
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {

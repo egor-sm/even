@@ -1,3 +1,4 @@
+import { native } from '../juce/native';
 import { useChoiceParameter } from '../juce/use-choice-parameter';
 import { useSliderParameter } from '../juce/use-slider-parameter';
 import { useToggleParameter } from '../juce/use-toggle-parameter';
@@ -34,7 +35,7 @@ export const BandStrip = ({ band }: BandStripProps) => {
       </label>
       <label className="control">
         Shape
-        <select value={shape.index} onChange={(event) => shape.setIndex(Number(event.target.value))}>
+        <select value={shape.index} onChange={(event) => void native.setBandShape(band, Number(event.target.value))}>
           {shape.choices.map((choice, index) => (
             <option key={choice} value={index}>
               {choice}

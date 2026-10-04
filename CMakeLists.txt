@@ -29,6 +29,7 @@ CPMAddPackage(
   URL_HASH SHA256=a81e5508b8a0efa483917794ebeaff56aed3075730c405a947734413f40c1aba)
 
 add_subdirectory(source/dsp)
+add_subdirectory(source/model)
 add_subdirectory(source/webui)
 add_subdirectory(source/app)
 

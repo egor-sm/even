@@ -2,8 +2,12 @@ import { decodeBase64 } from './frame';
 import type { Section } from './response-math';
 
 export type BandResponse = {
-  /** 1-based band number. */
+  /** 1-based band number (slot). */
   band: number;
+  /** False when the band is bypassed: it is shown but does not process. */
+  enabled: boolean;
+  /** Creation order of the band, from 1. */
+  serial: number;
   /** Index into the shape choices (parameters.h, shapeNames). */
   shape: number;
   frequencyHz: number;
@@ -19,9 +23,10 @@ export type EqResponse = {
 };
 
 const headerBytes = 16;
-const bandHeaderBytes = 40;
+const bandHeaderBytes = 48;
 const sectionBytes = 48;
-const supportedVersion = 3;
+const supportedVersion = 4;
+const enabledFlag = 1;
 
 /** Parses the packet produced by serializeResponse() (response_packet.h). */
 export const parseResponse = (buffer: ArrayBuffer): EqResponse | null => {
@@ -41,9 +46,11 @@ export const parseResponse = (buffer: ArrayBuffer): EqResponse | null => {
     const band: BandResponse = {
       band: view.getUint32(offset, true),
       shape: view.getUint32(offset + 4, true),
-      frequencyHz: view.getFloat64(offset + 16, true),
-      gainDb: view.getFloat64(offset + 24, true),
-      q: view.getFloat64(offset + 32, true),
+      enabled: (view.getUint32(offset + 12, true) & enabledFlag) !== 0,
+      serial: view.getUint32(offset + 16, true),
+      frequencyHz: view.getFloat64(offset + 24, true),
+      gainDb: view.getFloat64(offset + 32, true),
+      q: view.getFloat64(offset + 40, true),
       sections: [],
     };
     offset += bandHeaderBytes;

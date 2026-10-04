@@ -20,6 +20,7 @@ target_sources(
   PRIVATE plugin_processor.cpp
           plugin_editor.cpp
           parameters.cpp
+          band_slots.cpp
           response_packet.cpp
           web_resources.cpp
           test_signal.cpp
@@ -40,7 +41,7 @@ target_include_directories(even PRIVATE "${CMAKE_BINARY_DIR}/generated")
 target_link_libraries(
   even
   PRIVATE even_webui_assets
-          even::dsp
+          even::model
           juce::juce_audio_utils
           juce::juce_dsp
           juce::juce_gui_extra

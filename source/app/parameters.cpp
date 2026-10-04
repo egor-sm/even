@@ -34,6 +34,8 @@ juce::String bandId(int band, BandField field) {
   auto prefix = "band" + juce::String{band};
 
   switch (field) {
+  case BandField::used:
+    return prefix + "Used";
   case BandField::enabled:
     return prefix + "Enabled";
   case BandField::shape:
@@ -68,7 +70,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
     const auto name = [band](const char *field) { return "Band " + juce::String{band} + " " + field; };
     const auto id = [band](BandField field) { return juce::ParameterID{bandId(band, field), 1}; };
 
-    layout.add(std::make_unique<juce::AudioParameterBool>(id(BandField::enabled), name("Enabled"), false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(id(BandField::used), name("Used"), false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(id(BandField::enabled), name("Enabled"), true));
     layout.add(std::make_unique<juce::AudioParameterChoice>(id(BandField::shape), name("Shape"), shapes, 0));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         id(BandField::frequency), name("Frequency"), logarithmicRange(minFrequencyHz, maxFrequencyHz),
@@ -100,11 +103,20 @@ std::array<BandValues, numBands> BandValues::all(juce::AudioProcessorValueTreeSt
 }
 
 BandValues::BandValues(juce::AudioProcessorValueTreeState &state, int band)
-    : enabledValue(rawValue(state, bandId(band, BandField::enabled))),
+    : usedValue(rawValue(state, bandId(band, BandField::used))),
+      enabledValue(rawValue(state, bandId(band, BandField::enabled))),
       shapeValue(rawValue(state, bandId(band, BandField::shape))),
       frequencyValue(rawValue(state, bandId(band, BandField::frequency))),
       gainValue(rawValue(state, bandId(band, BandField::gain))), qValue(rawValue(state, bandId(band, BandField::q))),
       slopeValue(rawValue(state, bandId(band, BandField::slope))) {}
+
+bool BandValues::active() const noexcept {
+  return used() && enabled();
+}
+
+bool BandValues::used() const noexcept {
+  return usedValue.load(std::memory_order_relaxed) >= 0.5f;
+}
 
 bool BandValues::enabled() const noexcept {
   return enabledValue.load(std::memory_order_relaxed) >= 0.5f;

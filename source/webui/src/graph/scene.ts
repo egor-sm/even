@@ -5,10 +5,11 @@ import { type BandsState, bandsStore, findBand } from '../model/bands';
 import { typeIndex } from '../model/filter-types';
 import { type UiState, uiStore } from '../model/ui';
 import { AnalyzerLayer } from './analyzer-layer';
-import { gridLines, gridMorph } from './axis-math';
+import { gridLines, gridMorph, soloRange } from './axis-math';
 import { CanvasLayer } from './canvas-layer';
 import { drawGhost } from './draw-ghost';
 import { drawGrid } from './draw-grid';
+import { drawSolo } from './draw-solo';
 import { drawResponse, responseDb, sampleFrequencies } from './draw-response';
 import { createMapper } from './geometry';
 import { type Section } from './response-math';
@@ -17,7 +18,7 @@ import { type GraphColors, readGraphColors } from './theme-colors';
 
 const maxAnalyzerFps = 60;
 
-type Dirty = { grid: boolean; response: boolean; ghost: boolean; analyzer: boolean };
+type Dirty = { grid: boolean; solo: boolean; response: boolean; ghost: boolean; analyzer: boolean };
 
 /**
  * The canvas layers of the graph, outside of React: redraws a layer in the next animation frame
@@ -26,12 +27,13 @@ type Dirty = { grid: boolean; response: boolean; ghost: boolean; analyzer: boole
 export class GraphScene {
   private readonly grid = new CanvasLayer('grid');
   private readonly analyzer = new AnalyzerLayer();
+  private readonly soloLayer = new CanvasLayer('solo');
   private readonly response = new CanvasLayer('response');
   private readonly ghostLayer = new CanvasLayer('ghost');
   private readonly pre = new Spectrum();
   private readonly post = new Spectrum();
   private readonly gridPairs = gridMorph(gridLines(createMapper(1), 'hz'), gridLines(createMapper(1), 'note'));
-  private readonly dirty: Dirty = { grid: true, response: true, ghost: true, analyzer: true };
+  private readonly dirty: Dirty = { grid: true, solo: true, response: true, ghost: true, analyzer: true };
   private readonly unsubscribe: (() => void)[];
 
   private colors: GraphColors;
@@ -48,7 +50,13 @@ export class GraphScene {
     container: HTMLElement,
     private readonly themeRoot: HTMLElement,
   ) {
-    container.append(this.grid.canvas, this.analyzer.canvas, this.response.canvas, this.ghostLayer.canvas);
+    container.append(
+      this.grid.canvas,
+      this.analyzer.canvas,
+      this.soloLayer.canvas,
+      this.response.canvas,
+      this.ghostLayer.canvas,
+    );
     this.colors = readGraphColors(themeRoot);
     this.analyzer.setColors(this.analyzerColors());
     this.resize(uiStore.get().scale);
@@ -62,7 +70,7 @@ export class GraphScene {
       }),
       bandsStore.subscribe(() => {
         this.updateGhost();
-        this.invalidate({ response: true, ghost: true });
+        this.invalidate({ solo: true, response: true, ghost: true });
       }),
       onAnalyzerFrame((frame, info) => {
         const receivedAt = performance.now();
@@ -84,7 +92,13 @@ export class GraphScene {
     for (const unsubscribe of this.unsubscribe) unsubscribe();
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.analyzer.dispose();
-    for (const canvas of [this.grid.canvas, this.analyzer.canvas, this.response.canvas, this.ghostLayer.canvas])
+    for (const canvas of [
+      this.grid.canvas,
+      this.analyzer.canvas,
+      this.soloLayer.canvas,
+      this.response.canvas,
+      this.ghostLayer.canvas,
+    ])
       canvas.remove();
   }
 
@@ -96,6 +110,7 @@ export class GraphScene {
     const scale = scalePercent / 100;
     this.grid.resize(scale);
     this.analyzer.resize(scale);
+    this.soloLayer.resize(scale);
     this.response.resize(scale);
     this.ghostLayer.resize(scale);
   }
@@ -103,18 +118,24 @@ export class GraphScene {
   private onUiChange(previous: UiState, ui: UiState): void {
     if (previous.scale !== ui.scale) {
       this.resize(ui.scale);
-      this.invalidate({ grid: true, response: true, ghost: true, analyzer: true });
+      this.invalidate({ grid: true, solo: true, response: true, ghost: true, analyzer: true });
     }
     if (previous.theme !== ui.theme) {
       // The theme attribute is applied by React after this store change: read the colors next frame.
       requestAnimationFrame(() => {
         this.colors = readGraphColors(this.themeRoot);
         this.analyzer.setColors(this.analyzerColors());
-        this.invalidate({ grid: true, response: true, ghost: true, analyzer: true });
+        this.invalidate({ grid: true, solo: true, response: true, ghost: true, analyzer: true });
       });
     }
-    if (previous.view !== ui.view) this.invalidate({ grid: true, response: true, ghost: true });
-    if (previous.selected !== ui.selected || previous.solo !== ui.solo) this.invalidate({ response: true });
+    if (previous.view !== ui.view) this.invalidate({ grid: true, solo: true, response: true, ghost: true });
+    if (previous.selected !== ui.selected || previous.solo !== ui.solo) this.invalidate({ solo: true, response: true });
+    if (previous.solo === null && ui.solo !== null) {
+      // Fade the highlight in (restart the CSS animation).
+      this.soloLayer.canvas.classList.remove('is-entering');
+      void this.soloLayer.canvas.offsetWidth;
+      this.soloLayer.canvas.classList.add('is-entering');
+    }
     if (previous.selected !== ui.selected || previous.hoverType !== ui.hoverType) {
       this.updateGhost();
       this.invalidate({ ghost: true });
@@ -134,6 +155,22 @@ export class GraphScene {
     if (this.dirty.grid) {
       this.dirty.grid = false;
       drawGrid(this.grid, mapper, this.gridPairs, ui.view.morph, this.colors);
+    }
+
+    if (this.dirty.solo) {
+      this.dirty.solo = false;
+      const band = findBand(bandsStore.get().bands, ui.solo);
+      drawSolo(
+        this.soloLayer,
+        band === undefined
+          ? null
+          : {
+              mapper,
+              range: soloRange(band),
+              color: this.colors.bands[band.color - 1] ?? this.colors.focus,
+              canvasColor: this.colors.canvas,
+            },
+      );
     }
 
     if (this.dirty.response) {

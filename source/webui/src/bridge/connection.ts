@@ -78,6 +78,15 @@ export const connectBackend = (): (() => void) => {
     for (const listener of frameListeners) listener(frame, info);
   };
 
+  // Solo lives in the UI state; C++ follows it.
+  let solo = uiStore.get().solo;
+  const unsubscribeSolo = uiStore.subscribe(() => {
+    const next = uiStore.get().solo;
+    if (next === solo) return;
+    solo = next;
+    void native.setSolo(next ?? 0);
+  });
+
   document.addEventListener('visibilitychange', syncVisibility);
   syncVisibility();
 
@@ -87,6 +96,7 @@ export const connectBackend = (): (() => void) => {
   void native.setAnalyzerMode(uiStore.get().analyzerMode);
 
   return () => {
+    unsubscribeSolo();
     document.removeEventListener('visibilitychange', syncVisibility);
     delete window.evenOnResponse;
     delete window.evenOnHistory;

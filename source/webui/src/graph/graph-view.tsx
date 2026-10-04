@@ -10,6 +10,7 @@ import { BandNodes } from './overlay/band-nodes';
 import { Crosshair } from './overlay/crosshair';
 import { Dock } from './overlay/dock';
 import { QHandles } from './overlay/q-handles';
+import { SoloTag } from './overlay/solo-tag';
 import { TypeStrip } from './overlay/type-strip';
 import { GraphScene } from './scene';
 
@@ -53,6 +54,7 @@ export const GraphView = () => {
         onPointerLeave={() => uiStore.set({ cursor: null })}
       />
       <div className="graph-layers" ref={layersRef} />
+      <SoloTag />
       <Crosshair />
       <FrequencyLabels />
       <FrequencyAxis />

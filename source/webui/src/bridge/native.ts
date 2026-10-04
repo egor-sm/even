@@ -35,6 +35,8 @@ export const native = {
   deleteBand: (slot: number) => call('deleteBand', slot),
   /** Also adjusts q and gain to suit the new type (model::withShape). */
   setBandShape: (slot: number, typeIndex: number) => call('setBandShape', slot, typeIndex),
+  /** Solos a band (only its working range is heard); 0 ends solo. */
+  setSolo: (slot: number) => call('setSolo', slot),
   /** Resolves to the sections the band would have with another type (see toSections). */
   previewBand: (slot: number, typeIndex: number) => call('previewBand', slot, typeIndex),
   /** Each resolves to {canUndo, canRedo}. */

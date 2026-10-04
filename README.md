@@ -95,6 +95,8 @@ cmake --build --preset dev
 
 Then launch the Standalone app; changes in `source/webui/src` are applied without rebuilding the plugin.
 
+Opened in a plain browser (`vp dev` only), the UI talks to a development mock backend that sends EQ responses and analyzer frames in the plugin's formats, so the UI can be worked on without the app. Development builds show a panel with a test signal, mute, UI scale and analyzer stats; in any build Ctrl+Shift+D toggles it.
+
 ### Project layout
 
 ```

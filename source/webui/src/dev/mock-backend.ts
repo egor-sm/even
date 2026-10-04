@@ -160,6 +160,7 @@ const nextSerial = () => Math.max(0, ...slots.filter((slot) => slot.used).map((s
 export const mockNative: Record<string, (args: unknown[]) => unknown> = {
   getPluginInfo: () => ({ name: 'Even', version: 'mock', juceVersion: '-', wrapper: 'Browser' }),
   setTestSignal: () => undefined,
+  setSolo: () => undefined,
   setAnalyzerActive: ([active]) => setAnalyzerActive(active === true),
   setAnalyzerMode: ([mode]) => {
     analyzerMode = String(mode);

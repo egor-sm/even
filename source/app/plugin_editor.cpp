@@ -91,6 +91,8 @@ PluginEditor::PluginEditor(PluginProcessor &processorToUse)
 }
 
 PluginEditor::~PluginEditor() {
+  // Solo is a way of listening while editing: it ends with the editor.
+  pluginProcessor.setSoloBand(std::nullopt);
   // Stop the analyzer first so no new updates are triggered while tearing down.
   pluginProcessor.getAnalyzer().stop();
   cancelPendingUpdate();
@@ -211,6 +213,12 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                                 const auto band = model::withShape(pluginProcessor.getBandSlots().read(*slot), *shape);
                                 const auto parameters = dsp::sanitize(model::toParameters(band), sampleRate);
                                 complete(sectionsVar(dsp::design(parameters, sampleRate)));
+                              })
+          // (band) solos it; anything else (0, null) ends solo.
+          .withNativeFunction("setSolo",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                pluginProcessor.setSoloBand(slotArgument(args, 0));
+                                complete({});
                               })
           .withNativeFunction("setAnalyzerActive",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {

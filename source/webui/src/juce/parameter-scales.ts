@@ -9,8 +9,8 @@ export type ParameterScale = 'linear' | 'logarithmic';
 
 export const bandRanges = {
   frequencyHz: { min: 20, max: 20000 },
-  gainDb: { min: -24, max: 24 },
-  q: { min: 0.1, max: 40 },
+  gainDb: { min: -30, max: 30 },
+  q: { min: 0.1, max: 30 },
 } as const;
 
 const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);

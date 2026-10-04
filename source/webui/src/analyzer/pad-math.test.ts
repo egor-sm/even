@@ -33,10 +33,10 @@ describe('pad coordinates', () => {
   });
 
   it('clamps positions outside the graph to the parameter ranges', () => {
-    expect(pointToValue(scale, { x: -50, y: -50 })).toEqual({ frequencyHz: 20, gainDb: 24 });
+    expect(pointToValue(scale, { x: -50, y: -500 })).toEqual({ frequencyHz: 20, gainDb: 30 });
     const value = pointToValue(scale, { x: 2000, y: 2000 });
     expect(value.frequencyHz).toBe(20000);
-    expect(value.gainDb).toBe(-24);
+    expect(value.gainDb).toBe(-30);
   });
 });
 

@@ -32,9 +32,9 @@ inline constexpr int defaultSlopeIndex = 1; // 12 dB/oct
 // travel); the web UI mirrors it in source/webui/src/juce/parameter-scales.ts.
 inline constexpr float minFrequencyHz = 20.0f;
 inline constexpr float maxFrequencyHz = 20000.0f;
-inline constexpr float maxGainDb = 24.0f;
+inline constexpr float maxGainDb = 30.0f;
 inline constexpr float minQ = 0.1f;
-inline constexpr float maxQ = 40.0f;
+inline constexpr float maxQ = 30.0f;
 
 [[nodiscard]] juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 

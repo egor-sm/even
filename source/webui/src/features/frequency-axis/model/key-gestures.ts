@@ -1,5 +1,13 @@
-import { type Band, bandsStore, createBand, findBand, selectionStore, setPreview, withPreview } from '~/entities/band';
-import { createMapper, keyAt, viewportStore } from '~/entities/viewport';
+import {
+  type Band,
+  useBandsStore,
+  createBand,
+  findBand,
+  useSelectionStore,
+  setPreview,
+  withPreview,
+} from '~/entities/band';
+import { createMapper, keyAt, useViewportStore } from '~/entities/viewport';
 import { bandParameters } from '~/shared/api';
 import { midiToFrequency, type Point, startGesture } from '~/shared/lib';
 
@@ -30,16 +38,16 @@ const glideFrequency = (band: Band, to: number): void => {
 
 /** The key under a point of the keyboard (graph x, y from the keyboard's top). */
 export const keyUnder = (point: Point, keyboardY: number): number =>
-  keyAt(createMapper(viewportStore.get().view.range), point.x, keyboardY);
+  keyAt(createMapper(useViewportStore.getState().view.range), point.x, keyboardY);
 
 /**
  * Click on a key: the selected band glides to that note, and dragging along the keys moves it by
  * semitones; with Alt, or without a selection, a new band on that note.
  */
 export const keyDown = (midi: number, altKey: boolean): void => {
-  const { selected, preview } = selectionStore.get();
-  const found = findBand(bandsStore.get().bands, selected);
-  viewportStore.set({ hotKey: midi });
+  const { selected, preview } = useSelectionStore.getState();
+  const found = findBand(useBandsStore.getState().bands, selected);
+  useViewportStore.setState({ hotKey: midi });
 
   if (altKey || found === undefined) {
     createBand('bell', midiToFrequency(midi), 0);
@@ -47,7 +55,7 @@ export const keyDown = (midi: number, altKey: boolean): void => {
   }
 
   const band = withPreview(found, preview);
-  selectionStore.set({ typeMenu: null });
+  useSelectionStore.setState({ typeMenu: null });
   glideFrequency(band, midiToFrequency(midi));
 
   let current = midi;
@@ -62,12 +70,12 @@ export const keyDown = (midi: number, altKey: boolean): void => {
         glide++;
         const f = midiToFrequency(next);
         setPreview({ slot: band.slot, f }, true);
-        viewportStore.set({ hotKey: next });
+        useViewportStore.setState({ hotKey: next });
         bandParameters.begin(band.slot, ['frequency']);
         bandParameters.set(band.slot, 'frequency', f);
         bandParameters.end(band.slot, ['frequency']);
       },
-      end: () => viewportStore.set({ hotKey: null }),
+      end: () => useViewportStore.setState({ hotKey: null }),
     },
   );
 };

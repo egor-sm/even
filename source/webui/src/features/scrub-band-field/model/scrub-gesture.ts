@@ -1,5 +1,14 @@
-import { type Band, bandsStore, findBand, hasGain, isCut, selectionStore, setPreview, slopes } from '~/entities/band';
-import { maxHz, minHz, viewportStore } from '~/entities/viewport';
+import {
+  type Band,
+  useBandsStore,
+  findBand,
+  hasGain,
+  isCut,
+  useSelectionStore,
+  setPreview,
+  slopes,
+} from '~/entities/band';
+import { maxHz, minHz, useViewportStore } from '~/entities/viewport';
 import { bandParameters, type ContinuousField } from '~/shared/api';
 import { clamp, frequencyToMidi, midiToFrequency, type Point, startGesture } from '~/shared/lib';
 
@@ -27,16 +36,16 @@ const gestureField = (band: Band, field: ScrubField): ContinuousField | null => 
 export const scrubDown = (band: Band, field: ScrubField, start: Point): void => {
   const from = startValue(band, field);
   const edited = gestureField(band, field);
-  selectionStore.set({ typeMenu: null });
+  useSelectionStore.setState({ typeMenu: null });
   if (edited !== null) bandParameters.begin(band.slot, [edited]);
 
   startGesture(
     { kind: 'scrub', slot: band.slot, field },
     {
       move: (point) => {
-        const current = findBand(bandsStore.get().bands, band.slot);
+        const current = findBand(useBandsStore.getState().bands, band.slot);
         if (current === undefined) return;
-        const { axis, range } = viewportStore.get();
+        const { axis, range } = useViewportStore.getState();
         const dx = point.x - start.x;
 
         if (field === 'f') {
@@ -63,7 +72,7 @@ export const scrubDown = (band: Band, field: ScrubField, start: Point): void => 
       },
       end: () => {
         if (edited !== null) bandParameters.end(band.slot, [edited]);
-        selectionStore.set(({ preview }) => ({ previewUntilResponse: preview !== null }));
+        useSelectionStore.setState(({ preview }) => ({ previewUntilResponse: preview !== null }));
       },
     },
   );

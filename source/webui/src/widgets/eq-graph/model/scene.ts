@@ -1,10 +1,10 @@
 import { clsx } from 'clsx';
 
 import { AnalyzerLayer, onAnalyzerFrame, Spectrum } from '~/entities/analyzer';
-import { type BandsState, bandsStore, findBand, selectionStore } from '~/entities/band';
-import { createMapper, graph, gridLines, gridMorph, plotFrequencies, viewportStore } from '~/entities/viewport';
+import { type BandsState, useBandsStore, findBand, useSelectionStore } from '~/entities/band';
+import { createMapper, graph, gridLines, gridMorph, plotFrequencies, useViewportStore } from '~/entities/viewport';
 import { drawGhost, GhostPreview, ghostLayerClass } from '~/features/change-band-type';
-import { settingsStore } from '~/features/settings';
+import { useSettingsStore } from '~/features/settings';
 import { drawSolo, soloLayerEnteringClass, soloRange } from '~/features/solo-band';
 import { responseDb, withBandFrequencies } from '~/shared/api';
 import { CanvasLayer } from '~/shared/lib';
@@ -28,9 +28,9 @@ type SceneState = {
 };
 
 const sceneState = (): SceneState => {
-  const { scale, theme } = settingsStore.get();
-  const { selected, solo } = selectionStore.get();
-  return { scale, theme, view: viewportStore.get().view, selected, solo };
+  const { scale, theme } = useSettingsStore.getState();
+  const { selected, solo } = useSelectionStore.getState();
+  return { scale, theme, view: useViewportStore.getState().view, selected, solo };
 };
 
 const allDirty: Dirty = { grid: true, solo: true, response: true, ghost: true, analyzer: true };
@@ -74,7 +74,7 @@ export class GraphScene {
     container.append(...this.canvases);
     this.colors = readGraphColors(themeRoot);
     this.analyzer.setColors(this.analyzerColors());
-    this.resize(settingsStore.get().scale);
+    this.resize(useSettingsStore.getState().scale);
 
     let previousState = sceneState();
     const onStateChange = () => {
@@ -83,10 +83,10 @@ export class GraphScene {
       previousState = state;
     };
     this.unsubscribe = [
-      settingsStore.subscribe(onStateChange),
-      selectionStore.subscribe(onStateChange),
-      viewportStore.subscribe(onStateChange),
-      bandsStore.subscribe(() => this.invalidate({ solo: true, response: true, ghost: true })),
+      useSettingsStore.subscribe(onStateChange),
+      useSelectionStore.subscribe(onStateChange),
+      useViewportStore.subscribe(onStateChange),
+      useBandsStore.subscribe(() => this.invalidate({ solo: true, response: true, ghost: true })),
       onAnalyzerFrame((frame) => {
         for (const [spectrum, levels] of [
           [this.pre, frame.preDb],
@@ -158,7 +158,7 @@ export class GraphScene {
 
     if (this.dirty.solo) {
       this.dirty.solo = false;
-      const band = findBand(bandsStore.get().bands, state.solo);
+      const band = findBand(useBandsStore.getState().bands, state.solo);
       drawSolo(
         this.soloLayer,
         band === undefined
@@ -202,7 +202,7 @@ export class GraphScene {
   };
 
   private drawResponse(state: SceneState): void {
-    const bands = bandsStore.get();
+    const bands = useBandsStore.getState();
     const mapper = createMapper(state.view.range);
     if (this.responseCache?.bands !== bands) {
       const frequencies = withBandFrequencies(plotFrequencies(mapper), bands.bands);
@@ -244,7 +244,7 @@ export class GraphScene {
 
     const { band, sections } = preview;
     const own = cache.bandDb.get(band.slot);
-    const previewDb = responseDb(sections, cache.frequencies, bandsStore.get().sampleRate);
+    const previewDb = responseDb(sections, cache.frequencies, useBandsStore.getState().sampleRate);
     const totalDb = this.totalDb.map((db, i) => (band.on ? db - (own?.[i] ?? 0) + previewDb[i] : db));
     const mapper = createMapper(state.view.range);
     drawGhost(this.ghostLayer, {

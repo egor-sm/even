@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
-import { type Band, bandsStore, selectionStore } from '~/entities/band';
-import { viewportStore } from '~/entities/viewport';
+import { type Band, useBandsStore, useSelectionStore } from '~/entities/band';
+import { useViewportStore } from '~/entities/viewport';
 import { recordingBackend } from '~/shared/testing';
 
 import { TypeButton } from './type-button';
@@ -26,9 +26,9 @@ describe('type strip', () => {
 
   beforeEach(() => {
     backend = recordingBackend();
-    viewportStore.set({ axis: 'hz', range: 18, view: { range: 18, morph: 0 }, hotKey: null });
-    bandsStore.set({ sampleRate: 48000, bands: [bell] });
-    selectionStore.set({ selected: 3, solo: null, typeMenu: null, preview: null, previewUntilResponse: false });
+    useViewportStore.setState({ axis: 'hz', range: 18, view: { range: 18, morph: 0 }, hotKey: null });
+    useBandsStore.setState({ sampleRate: 48000, bands: [bell] });
+    useSelectionStore.setState({ selected: 3, solo: null, typeMenu: null, preview: null, previewUntilResponse: false });
   });
   afterEach(cleanup);
 
@@ -51,7 +51,7 @@ describe('type strip', () => {
   });
 
   it('previews a hovered type by name, also in the dock type button', () => {
-    selectionStore.set({ typeMenu: 'strip' });
+    useSelectionStore.setState({ typeMenu: 'strip' });
     render(
       <>
         <TypeStrip />
@@ -66,11 +66,11 @@ describe('type strip', () => {
   });
 
   it('changes the type in C++ and folds', () => {
-    selectionStore.set({ typeMenu: 'strip' });
+    useSelectionStore.setState({ typeMenu: 'strip' });
     render(<TypeStrip />);
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Notch' }));
 
     expect(backend.named('setBandShape')[0]?.args).toEqual([3, 5]);
-    expect(selectionStore.get().typeMenu).toBeNull();
+    expect(useSelectionStore.getState().typeMenu).toBeNull();
   });
 });

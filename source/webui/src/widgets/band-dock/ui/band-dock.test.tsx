@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
-import { type Band, bandsStore, selectionStore } from '~/entities/band';
-import { graphRootAttribute, viewportStore } from '~/entities/viewport';
+import { type Band, useBandsStore, useSelectionStore } from '~/entities/band';
+import { graphRootAttribute, useViewportStore } from '~/entities/viewport';
 import { endGesture, moveGesture } from '~/shared/lib';
 import { recordingBackend } from '~/shared/testing';
 
@@ -22,8 +22,14 @@ const bell: Band = {
 };
 
 const renderDock = (band: Band = bell) => {
-  bandsStore.set({ sampleRate: 48000, bands: [band] });
-  selectionStore.set({ selected: band.slot, solo: null, typeMenu: null, preview: null, previewUntilResponse: false });
+  useBandsStore.setState({ sampleRate: 48000, bands: [band] });
+  useSelectionStore.setState({
+    selected: band.slot,
+    solo: null,
+    typeMenu: null,
+    preview: null,
+    previewUntilResponse: false,
+  });
   // Controls find the graph root to convert pointer positions.
   return render(
     <div {...{ [graphRootAttribute]: true }}>
@@ -37,7 +43,7 @@ describe('band dock', () => {
 
   beforeEach(() => {
     backend = recordingBackend();
-    viewportStore.set({ axis: 'hz', range: 18, view: { range: 18, morph: 0 }, hotKey: null });
+    useViewportStore.setState({ axis: 'hz', range: 18, view: { range: 18, morph: 0 }, hotKey: null });
   });
   afterEach(cleanup);
 
@@ -69,7 +75,7 @@ describe('band dock', () => {
     expect(backend.named('begin')[0]?.args).toEqual([2, ['frequency']]);
     expect(backend.named('set').at(-1)?.args).toEqual([2, 'frequency', 364]);
     expect(backend.named('end')[0]?.args).toEqual([2, ['frequency']]);
-    expect(selectionStore.get().preview).toEqual({ slot: 2, f: 364 });
+    expect(useSelectionStore.getState().preview).toEqual({ slot: 2, f: 364 });
   });
 
   it('bypasses, solos and deletes the band', () => {
@@ -78,17 +84,17 @@ describe('band dock', () => {
     expect(backend.named('setEnabled')[0]?.args).toEqual([2, false]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Solo band' }));
-    expect(selectionStore.get().solo).toBe(2);
+    expect(useSelectionStore.getState().solo).toBe(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete band' }));
     expect(backend.named('deleteBand')[0]?.args).toEqual([2]);
-    expect(selectionStore.get()).toMatchObject({ selected: null, solo: null });
+    expect(useSelectionStore.getState()).toMatchObject({ selected: null, solo: null });
   });
 
   it('opens the type picker from the type button', () => {
     renderDock();
     fireEvent.click(screen.getByRole('button', { name: 'Filter type' }));
-    expect(selectionStore.get().typeMenu).toBe('picker');
+    expect(useSelectionStore.getState().typeMenu).toBe('picker');
     expect(screen.getAllByRole('menuitemradio')).toHaveLength(8);
   });
 });

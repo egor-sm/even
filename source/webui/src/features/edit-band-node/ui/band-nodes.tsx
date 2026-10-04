@@ -1,8 +1,9 @@
 import { clsx } from 'clsx';
+import { useShallow } from 'zustand/react/shallow';
 
-import { bandColorVar, hasGain, selectionStore, typeNames, useDisplayBands } from '~/entities/band';
-import { eventGraphPoint, nodePoint, viewportStore } from '~/entities/viewport';
-import { formatFrequency, gestureStore, shallowEqual, useStore } from '~/shared/lib';
+import { bandColorVar, hasGain, useSelectionStore, typeNames, useDisplayBands } from '~/entities/band';
+import { eventGraphPoint, nodePoint, useViewportStore } from '~/entities/viewport';
+import { formatFrequency, useGestureStore } from '~/shared/lib';
 
 import { nodeDown, nodeWheel } from '../model/node-gestures';
 
@@ -11,13 +12,9 @@ const nodeSize = 14;
 /** One node per band at (frequency, gain): select, drag, wheel for q. */
 export function BandNodes() {
   const bands = useDisplayBands();
-  const { selected, solo } = useStore(
-    selectionStore,
-    (state) => ({ selected: state.selected, solo: state.solo }),
-    shallowEqual,
-  );
-  const gesture = useStore(gestureStore, (state) => state.active);
-  const range = useStore(viewportStore, (state) => state.view.range);
+  const { selected, solo } = useSelectionStore(useShallow((state) => ({ selected: state.selected, solo: state.solo })));
+  const gesture = useGestureStore((state) => state.active);
+  const range = useViewportStore((state) => state.view.range);
 
   return bands.map((band, index) => {
     const { x, y } = nodePoint(band.f, hasGain(band.type) ? band.g : 0, range);

@@ -34,5 +34,5 @@ export {
   toGraphPoint,
 } from './lib/geometry';
 export { startAnimator } from './model/animator';
-export { defaultRange, viewportStore, type ViewportState } from './model/viewport';
+export { defaultRange, useViewportStore, type ViewportState } from './model/viewport';
 export { DbLabels, FrequencyLabels } from './ui/axis-labels';

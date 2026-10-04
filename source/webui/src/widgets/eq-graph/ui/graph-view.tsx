@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 
-import { selectBand, selectionStore } from '~/entities/band';
+import { selectBand, useSelectionStore } from '~/entities/band';
 import { DbLabels, FrequencyLabels, graphRootAttribute, startAnimator, toGraphPoint } from '~/entities/viewport';
 import { QHandles } from '~/features/adjust-band-q';
 import { TypeStrip } from '~/features/change-band-type';
@@ -9,15 +9,15 @@ import { DbAxis } from '~/features/display-range';
 import { BandNodes, createBandAt } from '~/features/edit-band-node';
 import { FrequencyAxis } from '~/features/frequency-axis';
 import { SoloTag } from '~/features/solo-band';
-import { endGesture, gestureStore, moveGesture } from '~/shared/lib';
+import { endGesture, useGestureStore, moveGesture } from '~/shared/lib';
 
 import { GraphScene } from '../model/scene';
 import styles from './graph-view.module.css';
 
 /** Pointer down on the empty graph: the first click folds the type strip, the next one deselects. */
 const backgroundDown = () => {
-  const { typeMenu, selected } = selectionStore.get();
-  if (typeMenu === 'strip') selectionStore.set({ typeMenu: null });
+  const { typeMenu, selected } = useSelectionStore.getState();
+  if (typeMenu === 'strip') useSelectionStore.setState({ typeMenu: null });
   else if (selected !== null || typeMenu !== null) selectBand(null);
 };
 
@@ -65,7 +65,7 @@ export function GraphView({ overlay, onAnalyzerDraw }: GraphViewProps) {
         }}
         onDoubleClick={(event) => createBandAt(point(event))}
         onPointerMove={(event) => {
-          if (gestureStore.get().active === null) setCursor(point(event));
+          if (useGestureStore.getState().active === null) setCursor(point(event));
         }}
         onPointerLeave={() => setCursor(null)}
       />

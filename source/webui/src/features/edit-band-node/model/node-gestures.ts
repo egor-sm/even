@@ -1,14 +1,14 @@
 import {
   type Band,
-  bandsStore,
+  useBandsStore,
   createBand,
   findBand,
   hasGain,
-  selectionStore,
+  useSelectionStore,
   setPreview,
   withPreview,
 } from '~/entities/band';
-import { createMapper, maxHz, minHz, nodePoint, viewportStore } from '~/entities/viewport';
+import { createMapper, maxHz, minHz, nodePoint, useViewportStore } from '~/entities/viewport';
 import { bandParameters } from '~/shared/api';
 import { clamp, frequencyToMidi, midiToFrequency, type Point, startGesture, updateGesture } from '~/shared/lib';
 
@@ -29,28 +29,28 @@ const editedFields = (band: Band) => (hasGain(band.type) ? (['frequency', 'gain'
  * turns it off. The whole drag is one gesture (one undo step).
  */
 export const nodeDown = (band: Band, start: Point): void => {
-  const { selected, typeMenu } = selectionStore.get();
-  const node = nodePoint(band.f, hasGain(band.type) ? band.g : 0, viewportStore.get().view.range);
+  const { selected, typeMenu } = useSelectionStore.getState();
+  const node = nodePoint(band.f, hasGain(band.type) ? band.g : 0, useViewportStore.getState().view.range);
   const offset = { x: start.x - node.x, y: start.y - node.y };
-  selectionStore.set({ selected: band.slot, typeMenu: selected === band.slot ? typeMenu : null });
+  useSelectionStore.setState({ selected: band.slot, typeMenu: selected === band.slot ? typeMenu : null });
 
   let moved = false;
   startGesture(
     { kind: 'node', slot: band.slot, moved: false },
     {
       move: (point, { shiftKey }) => {
-        const current = findBand(bandsStore.get().bands, band.slot);
+        const current = findBand(useBandsStore.getState().bands, band.slot);
         if (current === undefined) return;
 
         if (!moved) {
           if (Math.hypot(point.x - start.x, point.y - start.y) < dragThreshold) return;
           moved = true;
           updateGesture({ moved: true });
-          selectionStore.set({ typeMenu: null });
+          useSelectionStore.setState({ typeMenu: null });
           bandParameters.begin(band.slot, editedFields(current));
         }
 
-        const { axis, range, view } = viewportStore.get();
+        const { axis, range, view } = useViewportStore.getState();
         const mapper = createMapper(view.range);
         let f = clamp(mapper.frequencyAt(point.x - offset.x), minHz, maxHz);
         let hotKey: number | null = null;
@@ -63,17 +63,17 @@ export const nodeDown = (band: Band, start: Point): void => {
           : current.g;
 
         setPreview({ slot: band.slot, f, g });
-        viewportStore.set({ hotKey });
+        useViewportStore.setState({ hotKey });
         bandParameters.set(band.slot, 'frequency', f);
         if (hasGain(current.type)) bandParameters.set(band.slot, 'gain', g);
       },
       end: () => {
-        viewportStore.set({ hotKey: null });
+        useViewportStore.setState({ hotKey: null });
         if (!moved) return;
-        const current = findBand(bandsStore.get().bands, band.slot);
+        const current = findBand(useBandsStore.getState().bands, band.slot);
         if (current !== undefined) bandParameters.end(band.slot, editedFields(current));
         // Keep showing the dragged values until C++ confirms them.
-        selectionStore.set(({ preview }) => ({ previewUntilResponse: preview !== null }));
+        useSelectionStore.setState(({ preview }) => ({ previewUntilResponse: preview !== null }));
       },
     },
   );
@@ -97,7 +97,7 @@ export const nodeWheel = (band: Band, up: boolean): void => {
     wheelSlot = band.slot;
   }
 
-  const current = withPreview(band, selectionStore.get().preview).q;
+  const current = withPreview(band, useSelectionStore.getState().preview).q;
   const q = clampQ(up ? current * qWheelStep : current / qWheelStep);
   setPreview({ slot: band.slot, q }, true);
   bandParameters.set(band.slot, 'q', q);
@@ -108,7 +108,7 @@ export const nodeWheel = (band: Band, up: boolean): void => {
 
 /** Double click on the empty graph: a new bell at the point. */
 export const createBandAt = (point: Point): void => {
-  const { range, view } = viewportStore.get();
+  const { range, view } = useViewportStore.getState();
   const mapper = createMapper(view.range);
   createBand(
     'bell',

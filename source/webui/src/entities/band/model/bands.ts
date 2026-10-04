@@ -1,8 +1,9 @@
+import { create } from 'zustand';
+
 import type { EqResponse, Section } from '~/shared/api';
-import { createStore } from '~/shared/lib';
 
 import { type FilterType, typeAt } from './filter-types';
-import { selectionStore } from './selection';
+import { useSelectionStore } from './selection';
 
 /** A band as the UI shows it; the values live in C++ (plugin parameters) and arrive with the EQ response. */
 export type Band = {
@@ -30,7 +31,7 @@ export type BandsState = {
   bands: readonly Band[];
 };
 
-export const bandsStore = createStore<BandsState>({ sampleRate: 48000, bands: [] });
+export const useBandsStore = create<BandsState>()(() => ({ sampleRate: 48000, bands: [] }));
 
 export const bandColorVar = (color: number): string => `var(--band-${color})`;
 
@@ -61,11 +62,11 @@ export const findBand = (bands: readonly Band[], slot: number | null): Band | un
  */
 export const receiveResponse = (response: EqResponse): void => {
   const state = bandsFromResponse(response);
-  bandsStore.set(state);
+  useBandsStore.setState(state);
 
-  const { selected, solo, previewUntilResponse } = selectionStore.get();
+  const { selected, solo, previewUntilResponse } = useSelectionStore.getState();
   const exists = (slot: number) => state.bands.some((band) => band.slot === slot);
-  if (selected !== null && !exists(selected)) selectionStore.set({ selected: null, typeMenu: null });
-  if (solo !== null && !exists(solo)) selectionStore.set({ solo: null });
-  if (previewUntilResponse) selectionStore.set({ preview: null, previewUntilResponse: false });
+  if (selected !== null && !exists(selected)) useSelectionStore.setState({ selected: null, typeMenu: null });
+  if (solo !== null && !exists(solo)) useSelectionStore.setState({ solo: null });
+  if (previewUntilResponse) useSelectionStore.setState({ preview: null, previewUntilResponse: false });
 };

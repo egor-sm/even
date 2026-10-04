@@ -1,6 +1,4 @@
-import { useStore } from '~/shared/lib';
-
-import { settingsStore, toggleTheme } from '../model/settings';
+import { useSettingsStore, toggleTheme } from '../model/settings';
 
 function ThemeIcon() {
   return (
@@ -20,7 +18,7 @@ function ThemeIcon() {
 }
 
 export function ThemeButton() {
-  const theme = useStore(settingsStore, (state) => state.theme);
+  const theme = useSettingsStore((state) => state.theme);
   const label = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
   return (
     <button type="button" className="eq-ib" aria-label={label} title={label} onClick={toggleTheme}>

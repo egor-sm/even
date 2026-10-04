@@ -1,14 +1,13 @@
 import { clsx } from 'clsx';
 
-import { useStore } from '~/shared/lib';
 import { UiIcon } from '~/shared/ui';
 
-import { analyzerModes, analyzerModeStore, setAnalyzerMode } from '../model/analyzer-mode';
+import { analyzerModes, useAnalyzerModeStore, setAnalyzerMode } from '../model/analyzer-mode';
 import styles from './analyzer-mode-menu.module.css';
 
 /** The pill in the bottom bar showing the analyzer mode; opens the menu. */
 export function AnalyzerModePill({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  const mode = useStore(analyzerModeStore, (state) => state.mode);
+  const mode = useAnalyzerModeStore((state) => state.mode);
   const name = analyzerModes.find((entry) => entry.mode === mode)?.name ?? '';
 
   return (
@@ -22,7 +21,7 @@ export function AnalyzerModePill({ open, onToggle }: { open: boolean; onToggle: 
 
 /** The analyzer mode menu, opening upwards from its pill; a click outside closes it. */
 export function AnalyzerModeMenu({ onClose }: { onClose: () => void }) {
-  const current = useStore(analyzerModeStore, (state) => state.mode);
+  const current = useAnalyzerModeStore((state) => state.mode);
 
   return (
     <>

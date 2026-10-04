@@ -3,7 +3,7 @@ import { receiveResponse } from '~/entities/band';
 import { syncAnalyzerMode } from '~/features/analyzer-mode';
 import { applySettings } from '~/features/settings';
 import { syncSoloWithBackend } from '~/features/solo-band';
-import { applyHistory, historyStore } from '~/features/undo-redo';
+import { applyHistory, useHistoryStore } from '~/features/undo-redo';
 import { decodeBase64Frame, decodeBase64Response, native } from '~/shared/api';
 
 declare global {
@@ -31,7 +31,7 @@ export const connectBackend = (): (() => void) => {
     if (response !== null) receiveResponse(response);
   };
 
-  window.evenOnHistory = (canUndo, canRedo) => historyStore.set({ canUndo, canRedo });
+  window.evenOnHistory = (canUndo, canRedo) => useHistoryStore.setState({ canUndo, canRedo });
 
   window.evenOnAnalyzerFrame = (sentAtMs, base64) => {
     const frame = decodeBase64Frame(base64);

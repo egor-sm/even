@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
-import { settingsStore } from '~/features/settings';
-import { shallowEqual, useStore } from '~/shared/lib';
+import { useSettingsStore } from '~/features/settings';
 import { BandDock } from '~/widgets/band-dock';
 import { BottomBar } from '~/widgets/bottom-bar';
 import { analyzerStats, DevPanel } from '~/widgets/dev-panel';
@@ -13,7 +13,7 @@ import { connectBackend } from './connect-backend';
 const onAnalyzerDraw = (now: number) => analyzerStats.onRender(now);
 
 export function App() {
-  const { theme, scale } = useStore(settingsStore, (state) => state, shallowEqual);
+  const { theme, scale } = useSettingsStore(useShallow((state) => state));
   const [devPanel, setDevPanel] = useState(import.meta.env.DEV);
 
   useEffect(() => connectBackend(), []);

@@ -5,13 +5,13 @@ import {
   findBand,
   hasQHandles,
   qToOctaves,
-  selectionStore,
+  useSelectionStore,
   useDisplayBands,
   useSampleRate,
 } from '~/entities/band';
-import { createMapper, graph, maxHz, minHz, viewportStore } from '~/entities/viewport';
+import { createMapper, graph, maxHz, minHz, useViewportStore } from '~/entities/viewport';
 import { magnitudeDb } from '~/shared/api';
-import { clamp, gestureStore, useStore } from '~/shared/lib';
+import { clamp, useGestureStore } from '~/shared/lib';
 
 import { qDown } from '../model/q-gesture';
 import styles from './q-handles.module.css';
@@ -20,9 +20,9 @@ import styles from './q-handles.module.css';
 export function QHandles() {
   const bands = useDisplayBands();
   const sampleRate = useSampleRate();
-  const selected = useStore(selectionStore, (state) => state.selected);
-  const gesture = useStore(gestureStore, (state) => state.active);
-  const range = useStore(viewportStore, (state) => state.view.range);
+  const selected = useSelectionStore((state) => state.selected);
+  const gesture = useGestureStore((state) => state.active);
+  const range = useViewportStore((state) => state.view.range);
   const band = findBand(bands, selected);
   const nodeMoving = gesture?.kind === 'node' && gesture.moved === true;
   if (band === undefined || !hasQHandles(band.type) || nodeMoving) return null;

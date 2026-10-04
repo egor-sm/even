@@ -1,4 +1,4 @@
-import { createStore } from './store';
+import { create } from 'zustand';
 
 export type Point = { x: number; y: number };
 
@@ -10,7 +10,7 @@ export type GestureHandlers = {
   end: () => void;
 };
 
-export const gestureStore = createStore<{ active: GestureInfo | null }>({ active: null });
+export const useGestureStore = create<{ active: GestureInfo | null }>()(() => ({ active: null }));
 
 let handlers: GestureHandlers | null = null;
 
@@ -21,17 +21,17 @@ let handlers: GestureHandlers | null = null;
 export const startGesture = (info: GestureInfo, gestureHandlers: GestureHandlers): void => {
   handlers?.end();
   handlers = gestureHandlers;
-  gestureStore.set({ active: info });
+  useGestureStore.setState({ active: info });
 };
 
 export const updateGesture = (patch: Partial<GestureInfo>): void =>
-  gestureStore.set(({ active }) => ({ active: active === null ? null : { ...active, ...patch } }));
+  useGestureStore.setState(({ active }) => ({ active: active === null ? null : { ...active, ...patch } }));
 
 export const moveGesture = (point: Point, modifiers: { shiftKey: boolean }): void => handlers?.move(point, modifiers);
 
 export const endGesture = (): void => {
   const ending = handlers;
   handlers = null;
-  gestureStore.set({ active: null });
+  useGestureStore.setState({ active: null });
   ending?.end();
 };

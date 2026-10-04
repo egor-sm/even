@@ -18,11 +18,10 @@ export {
   endGesture,
   type GestureHandlers,
   type GestureInfo,
-  gestureStore,
+  useGestureStore,
   moveGesture,
   type Point,
   startGesture,
   updateGesture,
 } from './gesture';
 export { clamp } from './math';
-export { createStore, shallowEqual, type Store, useStore } from './store';

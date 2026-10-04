@@ -5,7 +5,7 @@ export {
   bandColorVar,
   bandsFromResponse,
   type BandsState,
-  bandsStore,
+  useBandsStore,
   findBand,
   receiveResponse,
 } from './model/bands';
@@ -27,7 +27,7 @@ export {
   type BandPreview,
   selectBand,
   type SelectionState,
-  selectionStore,
+  useSelectionStore,
   setPreview,
   type TypeMenu,
   withPreview,

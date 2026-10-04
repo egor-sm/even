@@ -1,4 +1,4 @@
-import { viewportStore } from './viewport';
+import { useViewportStore } from './viewport';
 
 const rangeFollow = 0.25; // of the remaining distance per frame
 const morphMs = 420;
@@ -13,11 +13,15 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
  */
 export const startAnimator = (): (() => void) => {
   let frame: number | null = null;
-  let morph = { from: viewportStore.get().view.morph, to: viewportStore.get().view.morph, startedAt: 0 };
+  let morph = {
+    from: useViewportStore.getState().view.morph,
+    to: useViewportStore.getState().view.morph,
+    startedAt: 0,
+  };
 
   const step = (now: number) => {
     frame = null;
-    const { range, axis, view } = viewportStore.get();
+    const { range, axis, view } = useViewportStore.getState();
     const instant = reducedMotion();
 
     let displayedRange = view.range + (range - view.range) * rangeFollow;
@@ -29,13 +33,13 @@ export const startAnimator = (): (() => void) => {
     const displayedMorph = morph.from + (morph.to - morph.from) * easeInOutCubic(progress);
 
     if (displayedRange !== view.range || displayedMorph !== view.morph)
-      viewportStore.set({ view: { range: displayedRange, morph: displayedMorph } });
+      useViewportStore.setState({ view: { range: displayedRange, morph: displayedMorph } });
 
     if (displayedRange !== range || progress < 1) frame = requestAnimationFrame(step);
   };
 
-  const unsubscribe = viewportStore.subscribe(() => {
-    const { range, axis, view } = viewportStore.get();
+  const unsubscribe = useViewportStore.subscribe(() => {
+    const { range, axis, view } = useViewportStore.getState();
     const settled = view.range === range && view.morph === (axis === 'note' ? 1 : 0);
     if (!settled && frame === null) frame = requestAnimationFrame(step);
   });

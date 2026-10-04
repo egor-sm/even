@@ -2,8 +2,8 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 import { type Band, formatSlope, hasGain, isCut } from '~/entities/band';
-import { eventGraphPoint, viewportStore } from '~/entities/viewport';
-import { formatFrequency, formatGain, formatNote, formatQ, gestureStore, useStore } from '~/shared/lib';
+import { eventGraphPoint, useViewportStore } from '~/entities/viewport';
+import { formatFrequency, formatGain, formatNote, formatQ, useGestureStore } from '~/shared/lib';
 
 import { scrubDown, type ScrubField as Field } from '../model/scrub-gesture';
 
@@ -11,8 +11,8 @@ const labels: Record<Field, string> = { f: 'Frequency', g: 'Gain or slope', q: '
 
 /** A value of the selected band in the dock: drag horizontally to change it. */
 export function ScrubField({ band, field }: { band: Band; field: Field }) {
-  const notes = useStore(viewportStore, (state) => state.axis === 'note');
-  const active = useStore(gestureStore, ({ active: gesture }) =>
+  const notes = useViewportStore((state) => state.axis === 'note');
+  const active = useGestureStore(({ active: gesture }) =>
     gesture?.kind === 'scrub' ? gesture.field === field : gesture?.kind === 'q' && field === 'q',
   );
 

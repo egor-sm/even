@@ -1,13 +1,14 @@
 import { clsx } from 'clsx';
 import { useLayoutEffect, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
-import { bandColorVar, findBand, hasGain, selectionStore, useDisplayBands } from '~/entities/band';
-import { graph, nodePoint, viewportStore } from '~/entities/viewport';
+import { bandColorVar, findBand, hasGain, useSelectionStore, useDisplayBands } from '~/entities/band';
+import { graph, nodePoint, useViewportStore } from '~/entities/viewport';
 import { TypeButton, TypePicker } from '~/features/change-band-type';
 import { ScrubField } from '~/features/scrub-band-field';
 import { SoloButton } from '~/features/solo-band';
 import { BypassButton, DeleteButton } from '~/features/toggle-band';
-import { clamp, gestureStore, shallowEqual, useStore } from '~/shared/lib';
+import { clamp, useGestureStore } from '~/shared/lib';
 
 const dockWidth = 540;
 const dockTop = 572;
@@ -22,13 +23,11 @@ const dockX = (nodeX: number) => clamp(nodeX - dockWidth / 2, edge, graph.width 
  */
 export function BandDock() {
   const bands = useDisplayBands();
-  const { selected, picker } = useStore(
-    selectionStore,
-    (state) => ({ selected: state.selected, picker: state.typeMenu === 'picker' }),
-    shallowEqual,
+  const { selected, picker } = useSelectionStore(
+    useShallow((state) => ({ selected: state.selected, picker: state.typeMenu === 'picker' })),
   );
-  const range = useStore(viewportStore, (state) => state.view.range);
-  const scrubbing = useStore(gestureStore, (state) => state.active?.kind === 'scrub');
+  const range = useViewportStore((state) => state.view.range);
+  const scrubbing = useGestureStore((state) => state.active?.kind === 'scrub');
   const band = findBand(bands, selected);
 
   // Position at the last commit: the dock glides from there when the selection moves to another band.

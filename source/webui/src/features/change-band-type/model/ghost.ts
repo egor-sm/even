@@ -1,4 +1,4 @@
-import { type Band, bandsStore, findBand, selectionStore, typeIndex } from '~/entities/band';
+import { type Band, useBandsStore, findBand, useSelectionStore, typeIndex } from '~/entities/band';
 import { native, type Section, toSections } from '~/shared/api';
 
 import { previewedType, subscribePreviewedType } from './type-preview';
@@ -13,7 +13,7 @@ export class GhostPreview {
   private readonly unsubscribe: (() => void)[];
 
   constructor(private readonly onChange: () => void) {
-    this.unsubscribe = [subscribePreviewedType(() => this.update()), bandsStore.subscribe(() => this.update())];
+    this.unsubscribe = [subscribePreviewedType(() => this.update()), useBandsStore.subscribe(() => this.update())];
   }
 
   dispose(): void {
@@ -22,7 +22,7 @@ export class GhostPreview {
 
   /** The band being previewed and its sections with the other type, if any. */
   current(): { band: Band; sections: Section[] } | null {
-    const band = findBand(bandsStore.get().bands, this.preview?.slot ?? null);
+    const band = findBand(useBandsStore.getState().bands, this.preview?.slot ?? null);
     return this.preview === null || band === undefined || previewedType() === null
       ? null
       : { band, sections: this.preview.sections };
@@ -30,7 +30,7 @@ export class GhostPreview {
 
   private update(): void {
     const type = previewedType();
-    const band = findBand(bandsStore.get().bands, selectionStore.get().selected);
+    const band = findBand(useBandsStore.getState().bands, useSelectionStore.getState().selected);
     if (band === undefined || type === null || type === band.type) {
       this.request++;
       if (this.preview !== null) {

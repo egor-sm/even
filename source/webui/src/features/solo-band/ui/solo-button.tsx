@@ -1,13 +1,12 @@
 import { clsx } from 'clsx';
 
-import { selectionStore } from '~/entities/band';
-import { useStore } from '~/shared/lib';
+import { useSelectionStore } from '~/entities/band';
 import { UiIcon } from '~/shared/ui';
 
 import { toggleSolo } from '../model/solo';
 
 export function SoloButton({ slot }: { slot: number }) {
-  const soloed = useStore(selectionStore, (state) => state.solo === slot);
+  const soloed = useSelectionStore((state) => state.solo === slot);
   return (
     <button
       type="button"

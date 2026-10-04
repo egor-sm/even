@@ -1,4 +1,4 @@
-import { createStore } from '~/shared/lib';
+import { create } from 'zustand';
 
 import type { Band } from './bands';
 
@@ -19,21 +19,21 @@ export type SelectionState = {
   previewUntilResponse: boolean;
 };
 
-export const selectionStore = createStore<SelectionState>({
+export const useSelectionStore = create<SelectionState>()(() => ({
   selected: null,
   solo: null,
   typeMenu: null,
   preview: null,
   previewUntilResponse: false,
-});
+}));
 
 /** Selects a band (or nothing); type menus close. */
 export const selectBand = (slot: number | null, typeMenu: TypeMenu = null): void =>
-  selectionStore.set({ selected: slot, typeMenu });
+  useSelectionStore.setState({ selected: slot, typeMenu });
 
 /** Shows edited values at once; C++ confirms them with the next response. */
 export const setPreview = (preview: BandPreview, untilResponse = false): void =>
-  selectionStore.set({ preview, previewUntilResponse: untilResponse });
+  useSelectionStore.setState({ preview, previewUntilResponse: untilResponse });
 
 /** The band with the values being edited applied. */
 export const withPreview = (band: Band, preview: BandPreview | null): Band =>

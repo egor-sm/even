@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { useShallow } from 'zustand/react/shallow';
 
 import {
   bandColorVar,
@@ -6,23 +7,14 @@ import {
   formatSlope,
   hasGain,
   isCut,
-  selectionStore,
+  useSelectionStore,
   stripOrder,
   TypeIcon,
   typeNames,
   useDisplayBands,
 } from '~/entities/band';
-import { graph, nodePoint, viewportStore } from '~/entities/viewport';
-import {
-  clamp,
-  formatFrequency,
-  formatGain,
-  formatNote,
-  formatQ,
-  gestureStore,
-  shallowEqual,
-  useStore,
-} from '~/shared/lib';
+import { graph, nodePoint, useViewportStore } from '~/entities/viewport';
+import { clamp, formatFrequency, formatGain, formatNote, formatQ, useGestureStore } from '~/shared/lib';
 import { UiIcon } from '~/shared/ui';
 
 import { hoverType, openTypeMenu, setBandType, usePreviewedType } from '../model/type-preview';
@@ -39,17 +31,11 @@ const sizes = {
  */
 export function TypeStrip() {
   const bands = useDisplayBands();
-  const { selected, strip } = useStore(
-    selectionStore,
-    (state) => ({ selected: state.selected, strip: state.typeMenu === 'strip' }),
-    shallowEqual,
+  const { selected, strip } = useSelectionStore(
+    useShallow((state) => ({ selected: state.selected, strip: state.typeMenu === 'strip' })),
   );
-  const { range, axis } = useStore(
-    viewportStore,
-    (state) => ({ range: state.view.range, axis: state.axis }),
-    shallowEqual,
-  );
-  const gesture = useStore(gestureStore, (state) => state.active);
+  const { range, axis } = useViewportStore(useShallow((state) => ({ range: state.view.range, axis: state.axis })));
+  const gesture = useGestureStore((state) => state.active);
   const previewed = usePreviewedType();
   const band = findBand(bands, selected);
   if (band === undefined) return null;

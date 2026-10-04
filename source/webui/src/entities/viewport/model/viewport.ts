@@ -1,4 +1,4 @@
-import { createStore } from '~/shared/lib';
+import { create } from 'zustand';
 
 import type { AxisMode } from '../lib/axis-math';
 
@@ -14,9 +14,9 @@ export type ViewportState = {
 
 export const defaultRange = 18;
 
-export const viewportStore = createStore<ViewportState>({
+export const useViewportStore = create<ViewportState>()(() => ({
   axis: 'hz',
   range: defaultRange,
   view: { range: defaultRange, morph: 0 },
   hotKey: null,
-});
+}));

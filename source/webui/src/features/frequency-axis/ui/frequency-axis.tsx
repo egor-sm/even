@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { type PointerEvent, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { bandColorVar, useDisplayBands } from '~/entities/band';
 import {
@@ -9,9 +10,9 @@ import {
   keyDot,
   keyPath,
   eventGraphPoint,
-  viewportStore,
+  useViewportStore,
 } from '~/entities/viewport';
-import { clamp, gestureStore, shallowEqual, useStore } from '~/shared/lib';
+import { clamp, useGestureStore } from '~/shared/lib';
 import { UiIcon } from '~/shared/ui';
 
 import { keyDown, keyUnder } from '../model/key-gestures';
@@ -32,10 +33,8 @@ const keyboardPoint = (event: PointerEvent<SVGSVGElement>) => {
  * Hz | notes switch; the keyboard moves the selected band to a note (Alt + click: a new band).
  */
 export function FrequencyAxis() {
-  const { axis, morph, hotKey } = useStore(
-    viewportStore,
-    (state) => ({ axis: state.axis, morph: state.view.morph, hotKey: state.hotKey }),
-    shallowEqual,
+  const { axis, morph, hotKey } = useViewportStore(
+    useShallow((state) => ({ axis: state.axis, morph: state.view.morph, hotKey: state.hotKey })),
   );
   const bands = useDisplayBands();
   const mapper = useMemo(() => createMapper(1), []);
@@ -85,12 +84,12 @@ export function FrequencyAxis() {
             }}
             onPointerMove={(event) => {
               const at = keyboardPoint(event);
-              if (at === null || gestureStore.get().active !== null) return;
+              if (at === null || useGestureStore.getState().active !== null) return;
               const midi = keyUnder(at.point, at.keyboardY);
-              if (midi !== viewportStore.get().hotKey) viewportStore.set({ hotKey: midi });
+              if (midi !== useViewportStore.getState().hotKey) useViewportStore.setState({ hotKey: midi });
             }}
             onPointerLeave={() => {
-              if (gestureStore.get().active === null) viewportStore.set({ hotKey: null });
+              if (useGestureStore.getState().active === null) useViewportStore.setState({ hotKey: null });
             }}
           >
             <path className="is-white" d={keys.white} />
@@ -124,7 +123,7 @@ export function FrequencyAxis() {
           type="button"
           className="eq-axis__seg"
           aria-pressed={!notes}
-          onClick={() => viewportStore.set({ axis: 'hz' })}
+          onClick={() => useViewportStore.setState({ axis: 'hz' })}
         >
           Hz
         </button>
@@ -133,7 +132,7 @@ export function FrequencyAxis() {
           className="eq-axis__seg"
           aria-pressed={notes}
           aria-label="Notes"
-          onClick={() => viewportStore.set({ axis: 'note' })}
+          onClick={() => useViewportStore.setState({ axis: 'note' })}
         >
           <UiIcon name="note" size={12} />
         </button>

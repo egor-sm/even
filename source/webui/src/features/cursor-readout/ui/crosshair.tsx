@@ -1,29 +1,27 @@
-import { createMapper, graph, maxHz, minHz, viewportStore } from '~/entities/viewport';
+import { useShallow } from 'zustand/react/shallow';
+
+import { createMapper, graph, maxHz, minHz, useViewportStore } from '~/entities/viewport';
 import {
   clamp,
   formatCursorDb,
   formatFrequency,
   formatNote,
-  gestureStore,
+  useGestureStore,
   midiToFrequency,
   noteName,
-  shallowEqual,
-  useStore,
 } from '~/shared/lib';
 
-import { cursorStore } from '../model/cursor';
+import { useCursorStore } from '../model/cursor';
 
 /**
  * Cursor readout over the empty graph: dashed crosshair with the frequency (and note) on the
  * frequency axis and the dB on the dB axis. Over a key, or while snapping to notes, the note's line.
  */
 export function Crosshair() {
-  const cursor = useStore(cursorStore, (state) => state.point);
-  const dragging = useStore(gestureStore, (state) => state.active !== null);
-  const { hotKey, axis, range } = useStore(
-    viewportStore,
-    (state) => ({ hotKey: state.hotKey, axis: state.axis, range: state.view.range }),
-    shallowEqual,
+  const cursor = useCursorStore((state) => state.point);
+  const dragging = useGestureStore((state) => state.active !== null);
+  const { hotKey, axis, range } = useViewportStore(
+    useShallow((state) => ({ hotKey: state.hotKey, axis: state.axis, range: state.view.range })),
   );
   const mapper = createMapper(range);
   const notes = axis === 'note';

@@ -1,5 +1,6 @@
+import { create } from 'zustand';
+
 import { type AnalyzerMode, native } from '~/shared/api';
-import { createStore } from '~/shared/lib';
 
 export const analyzerModes: readonly { mode: AnalyzerMode; name: string }[] = [
   { mode: 'prepost', name: 'Pre + Post' },
@@ -9,12 +10,12 @@ export const analyzerModes: readonly { mode: AnalyzerMode; name: string }[] = [
 ];
 
 /** The analyzer mode lives in C++ without being saved: the page holds it and hands it over. */
-export const analyzerModeStore = createStore<{ mode: AnalyzerMode }>({ mode: 'prepost' });
+export const useAnalyzerModeStore = create<{ mode: AnalyzerMode }>()(() => ({ mode: 'prepost' }));
 
 export const setAnalyzerMode = (mode: AnalyzerMode): void => {
-  analyzerModeStore.set({ mode });
+  useAnalyzerModeStore.setState({ mode });
   void native.setAnalyzerMode(mode);
 };
 
 /** Hands the page's mode to C++ (after the page loads). */
-export const syncAnalyzerMode = (): void => void native.setAnalyzerMode(analyzerModeStore.get().mode);
+export const syncAnalyzerMode = (): void => void native.setAnalyzerMode(useAnalyzerModeStore.getState().mode);

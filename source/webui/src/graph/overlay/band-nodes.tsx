@@ -1,12 +1,11 @@
 import { clsx } from 'clsx';
 
-import { bandColorVar } from '../../model/bands';
-import { typeNames } from '../../model/filter-types';
-import { formatFrequency } from '../../model/format';
-import { uiStore } from '../../model/ui';
-import { shallowEqual, useStore } from '../../store/store';
-import { nodeDown, nodePosition, nodeWheel, toGraphPoint } from '../interactions';
-import { useDisplayBands } from './use-bands';
+import { bandColorVar } from '~/model/bands';
+import { typeNames } from '~/model/filter-types';
+import { formatFrequency, shallowEqual, useStore } from '~/shared/lib';
+import { uiStore } from '~/model/ui';
+import { nodeDown, nodePosition, nodeWheel, toGraphPoint } from '~/graph/interactions';
+import { useDisplayBands } from '~/graph/overlay/use-bands';
 
 const nodeSize = 14;
 

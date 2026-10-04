@@ -1,8 +1,7 @@
-import { uiStore } from '../model/ui';
-import { formatAxisDb } from '../model/format';
-import { useStore } from '../store/store';
-import { dbLines, frequencyLabels } from './axis-math';
-import { createMapper } from './geometry';
+import { uiStore } from '~/model/ui';
+import { formatAxisDb, useStore } from '~/shared/lib';
+import { dbLines, frequencyLabels } from '~/graph/axis-math';
+import { createMapper } from '~/graph/geometry';
 
 /** dB labels of the grid lines, right-aligned in the dB axis. */
 export const DbLabels = () => {

@@ -1,18 +1,4 @@
-/**
- * One filter section as designed in C++ (dsp::Section). Its transfer function, with s normalized so
- * that s = j at the section's cutoff:
- *   order 2: H(s) = (lowpassMix + bandpassMix * s / q + highpassMix * s^2) / (s^2 + s / q + 1)
- *   order 1: H(s) = (lowpassMix + highpassMix * s) / (s + 1)
- * evaluated at s = j * tan(pi * f / sampleRate) / g (the bilinear-warped frequency).
- */
-export type Section = {
-  order: 1 | 2;
-  g: number;
-  q: number;
-  lowpassMix: number;
-  bandpassMix: number;
-  highpassMix: number;
-};
+import type { Section } from '~/shared/api';
 
 /** Floors the result so a notch center (|H| = 0) is a very deep finite value, not -Infinity. */
 const minMagnitudeSquared = 1e-30;

@@ -1,6 +1,6 @@
-import { graph, type Mapper } from './geometry';
-import type { Spectrum } from './spectrum';
-import { parseHexColor, type Rgba } from './theme-colors';
+import { graph, type Mapper } from '~/graph/geometry';
+import type { Spectrum } from '~/graph/spectrum';
+import { parseHexColor, type Rgba } from '~/shared/lib';
 
 const vertexShaderSource = `#version 300 es
 in vec2 a_position; // graph units, origin top-left

@@ -1,8 +1,8 @@
-import type { AnalyzerMode } from '../bridge/native';
-import type { AxisMode } from '../graph/axis-math';
-import { createStore } from '../store/store';
-import type { Band } from './bands';
-import type { FilterType } from './filter-types';
+import type { AnalyzerMode } from '~/shared/api';
+import type { AxisMode } from '~/graph/axis-math';
+import { createStore } from '~/shared/lib';
+import type { Band } from '~/model/bands';
+import type { FilterType } from '~/model/filter-types';
 
 export type ScrubField = 'f' | 'g' | 'q';
 

@@ -1,4 +1,4 @@
-import { uiStore } from '../model/ui';
+import { uiStore } from '~/model/ui';
 
 const rangeFollow = 0.25; // of the remaining distance per frame
 const morphMs = 420;

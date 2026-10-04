@@ -1,6 +1,5 @@
-import { type CanvasLayer } from './canvas-layer';
-import { clamp, graph, type Mapper } from './geometry';
-import { withAlpha } from './theme-colors';
+import { type CanvasLayer, clamp, withAlpha } from '~/shared/lib';
+import { graph, type Mapper } from '~/graph/geometry';
 
 const feather = 22;
 

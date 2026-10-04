@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
 
-import { UiIcon } from '../design/icons';
-import { uiStore } from '../model/ui';
-import { shallowEqual, useStore } from '../store/store';
-import { fitRangeToBands, rangeDown, rangeWheel, toGraphPoint } from '../graph/interactions';
+import { UiIcon } from '~/shared/ui';
+import { uiStore } from '~/model/ui';
+import { shallowEqual, useStore } from '~/shared/lib';
+import { fitRangeToBands, rangeDown, rangeWheel, toGraphPoint } from '~/graph/interactions';
 
 /** The dB axis: drag or scroll to change the display range, double-click to fit it to the bands. */
 export const DbAxis = () => {

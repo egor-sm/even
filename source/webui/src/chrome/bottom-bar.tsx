@@ -1,8 +1,8 @@
-import type { AnalyzerMode } from '../bridge/native';
-import { UiIcon } from '../design/icons';
-import { commands } from '../model/commands';
-import { uiStore } from '../model/ui';
-import { shallowEqual, useStore } from '../store/store';
+import type { AnalyzerMode } from '~/shared/api';
+import { UiIcon } from '~/shared/ui';
+import { commands } from '~/model/commands';
+import { uiStore } from '~/model/ui';
+import { shallowEqual, useStore } from '~/shared/lib';
 
 const modes: readonly { mode: AnalyzerMode; name: string }[] = [
   { mode: 'prepost', name: 'Pre + Post' },

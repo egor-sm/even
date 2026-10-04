@@ -1,7 +1,7 @@
-import { dbLines, type GridMorph } from './axis-math';
-import { type CanvasLayer, clipToPlot } from './canvas-layer';
-import { graph, type Mapper } from './geometry';
-import type { GraphColors } from './theme-colors';
+import { dbLines, type GridMorph } from '~/graph/axis-math';
+import type { CanvasLayer } from '~/shared/lib';
+import { clipToPlot, graph, type Mapper } from '~/graph/geometry';
+import type { GraphColors } from '~/graph/theme-colors';
 
 /**
  * Grid lines, 1 device pixel wide: the frequency grid (morphing from the Hz grid to the note grid

@@ -1,6 +1,6 @@
-import { type FilterType, hasGain } from '../model/filter-types';
-import { formatAxisFrequency, frequencyToMidi, isBlackKey } from '../model/format';
-import { clamp, graph, type Mapper, maxHz, minHz } from './geometry';
+import { type FilterType, hasGain } from '~/model/filter-types';
+import { clamp, formatAxisFrequency, frequencyToMidi, isBlackKey } from '~/shared/lib';
+import { graph, type Mapper, maxHz, minHz } from '~/graph/geometry';
 
 export type AxisMode = 'hz' | 'note';
 

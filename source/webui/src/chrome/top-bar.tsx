@@ -1,9 +1,7 @@
-import logoDark from '../design/assets/even-logo-dark.svg';
-import logoLight from '../design/assets/even-logo-light.svg';
-import { UiIcon } from '../design/icons';
-import { commands } from '../model/commands';
-import { uiStore } from '../model/ui';
-import { shallowEqual, useStore } from '../store/store';
+import { logoDark, logoLight, UiIcon } from '~/shared/ui';
+import { commands } from '~/model/commands';
+import { uiStore } from '~/model/ui';
+import { shallowEqual, useStore } from '~/shared/lib';
 
 const ThemeIcon = () => (
   <svg

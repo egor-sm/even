@@ -1,4 +1,4 @@
-import { midiToFrequency } from '../model/format';
+import { midiToFrequency } from '~/shared/lib';
 
 /** The graph area at 100 % scale, in its own coordinates (the window's top bar is above it). */
 export const graph = {
@@ -54,4 +54,9 @@ export const createMapper = (range: number, lo: number = minHz, hi: number = max
   };
 };
 
-export const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
+/** Restricts drawing to the plot area, so curves never run over the dB axis or the meter space. */
+export const clipToPlot = (context: CanvasRenderingContext2D): void => {
+  context.beginPath();
+  context.rect(graph.left, 0, graph.right - graph.left, graph.height);
+  context.clip();
+};

@@ -1,5 +1,5 @@
-import type { Section } from '../graph/response-math';
-import { type FilterType, slopes } from '../model/filter-types';
+import { type FilterType, slopes } from '~/model/filter-types';
+import type { Section } from '~/shared/api';
 
 // Development only: the band design of dsp/band_design.cpp, so the mock backend can send a response
 // packet without the plugin. The plugin itself always uses the C++ design.

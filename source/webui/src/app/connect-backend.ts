@@ -1,8 +1,6 @@
-import { bandsFromResponse, bandsStore } from '../model/bands';
-import { uiStore } from '../model/ui';
-import { type AnalyzerFrame, decodeBase64Frame } from './frame';
-import { native } from './native';
-import { decodeBase64Response } from './response';
+import { bandsFromResponse, bandsStore } from '~/model/bands';
+import { uiStore } from '~/model/ui';
+import { type AnalyzerFrame, decodeBase64Frame, decodeBase64Response, native } from '~/shared/api';
 
 declare global {
   interface Window {

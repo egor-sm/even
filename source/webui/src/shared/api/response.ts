@@ -1,5 +1,5 @@
 import { decodeBase64 } from './frame';
-import type { Section } from '../graph/response-math';
+import type { Section } from './section';
 
 export type BandResponse = {
   /** 1-based band number (slot). */

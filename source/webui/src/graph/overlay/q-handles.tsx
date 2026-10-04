@@ -1,14 +1,14 @@
 import { clsx } from 'clsx';
 
-import { bandColorVar, findBand } from '../../model/bands';
-import { hasQHandles } from '../../model/filter-types';
-import { uiStore } from '../../model/ui';
-import { shallowEqual, useStore } from '../../store/store';
-import { qToOctaves } from '../axis-math';
-import { clamp, createMapper, graph, maxHz, minHz } from '../geometry';
-import { qDown } from '../interactions';
-import { magnitudeDb } from '../response-math';
-import { useDisplayBands, useSampleRate } from './use-bands';
+import { bandColorVar, findBand } from '~/model/bands';
+import { hasQHandles } from '~/model/filter-types';
+import { uiStore } from '~/model/ui';
+import { clamp, shallowEqual, useStore } from '~/shared/lib';
+import { qToOctaves } from '~/graph/axis-math';
+import { createMapper, graph, maxHz, minHz } from '~/graph/geometry';
+import { qDown } from '~/graph/interactions';
+import { magnitudeDb } from '~/graph/response-math';
+import { useDisplayBands, useSampleRate } from '~/graph/overlay/use-bands';
 
 /** Two handles at the edges of the selected bell, notch or band pass (its width): drag for q. */
 export const QHandles = () => {

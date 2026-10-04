@@ -1,7 +1,7 @@
-import type { EqResponse } from '../bridge/response';
-import type { Section } from '../graph/response-math';
-import { createStore } from '../store/store';
-import { type FilterType, typeAt } from './filter-types';
+import type { EqResponse } from '~/shared/api';
+import { createStore } from '~/shared/lib';
+import { type FilterType, typeAt } from '~/model/filter-types';
+import type { Section } from '~/shared/api';
 
 /** A band as the UI shows it; the values live in C++ (plugin parameters) and arrive with the EQ response. */
 export type Band = {

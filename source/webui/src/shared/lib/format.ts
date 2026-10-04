@@ -1,5 +1,3 @@
-import { slopes } from './filter-types';
-
 /** The typographic minus (U+2212) used for every negative number in the UI. */
 export const minus = '−';
 
@@ -30,8 +28,6 @@ export const formatFrequency = (hz: number): string =>
 /** '+2.5 dB', '−7.5 dB', '0.0 dB' (no sign for zero). */
 export const formatGain = (db: number): string =>
   `${db > 0.04 ? '+' : db < -0.04 ? minus : ''}${Math.abs(db).toFixed(1)} dB`;
-
-export const formatSlope = (slopeIndex: number): string => `${slopes[slopeIndex] ?? slopes[1]} dB/oct`;
 
 export const formatQ = (q: number): string => q.toFixed(2);
 

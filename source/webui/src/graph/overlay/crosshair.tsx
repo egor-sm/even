@@ -1,7 +1,15 @@
-import { formatCursorDb, formatFrequency, formatNote, midiToFrequency, noteName } from '../../model/format';
-import { uiStore } from '../../model/ui';
-import { shallowEqual, useStore } from '../../store/store';
-import { clamp, createMapper, graph, maxHz, minHz } from '../geometry';
+import {
+  clamp,
+  formatCursorDb,
+  formatFrequency,
+  formatNote,
+  midiToFrequency,
+  noteName,
+  shallowEqual,
+  useStore,
+} from '~/shared/lib';
+import { uiStore } from '~/model/ui';
+import { createMapper, graph, maxHz, minHz } from '~/graph/geometry';
 
 /**
  * Cursor readout over the empty graph: dashed crosshair with the frequency (and note) on the

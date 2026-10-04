@@ -1,5 +1,7 @@
-import { magnitudeDb } from '../graph/response-math';
-import { type FilterType, hasGain, isCut, typeAt } from '../model/filter-types';
+import { magnitudeDb } from '~/graph/response-math';
+import { type FilterType, hasGain, isCut, typeAt } from '~/model/filter-types';
+import type { Backend, ParameterWriter } from '~/shared/api';
+
 import { mockDesign } from './mock-design';
 
 /**
@@ -157,7 +159,7 @@ const setAnalyzerActive = (active: boolean) => {
 
 const nextSerial = () => Math.max(0, ...slots.filter((slot) => slot.used).map((slot) => slot.serial)) + 1;
 
-export const mockNative: Record<string, (args: unknown[]) => unknown> = {
+const mockNative: Record<string, (args: unknown[]) => unknown> = {
   getPluginInfo: () => ({ name: 'Even', version: 'mock', juceVersion: '-', wrapper: 'Browser' }),
   setTestSignal: () => undefined,
   setSolo: () => undefined,
@@ -223,21 +225,27 @@ export const mockNative: Record<string, (args: unknown[]) => unknown> = {
 };
 
 /** Parameter writes through the relays, applied to the mock slots. */
-export const mockParameters = {
+const mockParameters: ParameterWriter = {
   begin: () => undefined,
   end: () => commit(),
-  set: (slot: number, field: 'frequency' | 'gain' | 'q', value: number) => {
+  set: (slot, field, value) => {
     slots[slot - 1][field === 'frequency' ? 'f' : field === 'gain' ? 'g' : 'q'] = value;
     sendResponse();
   },
-  setSlope: (slot: number, slopeIndex: number) => {
+  setSlope: (slot, slopeIndex) => {
     slots[slot - 1].slope = slopeIndex;
     sendResponse();
     commit();
   },
-  setEnabled: (slot: number, enabled: boolean) => {
+  setEnabled: (slot, enabled) => {
     slots[slot - 1].on = enabled;
     sendResponse();
     commit();
   },
+  setMute: () => undefined,
+};
+
+export const mockBackend: Backend = {
+  call: (name, args) => Promise.resolve(mockNative[name]?.(args)),
+  parameters: mockParameters,
 };

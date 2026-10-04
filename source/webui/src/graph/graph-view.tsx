@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react';
 
-import { DbAxis } from '../axes/db-axis';
-import { FrequencyAxis } from '../axes/frequency-axis';
-import { uiStore } from '../model/ui';
-import { startAnimator } from './animator';
-import { DbLabels, FrequencyLabels } from './axis-labels';
-import { backgroundDoubleClick, backgroundDown, pointerMove, pointerUp, toGraphPoint } from './interactions';
-import { BandNodes } from './overlay/band-nodes';
-import { Crosshair } from './overlay/crosshair';
-import { Dock } from './overlay/dock';
-import { QHandles } from './overlay/q-handles';
-import { SoloTag } from './overlay/solo-tag';
-import { TypeStrip } from './overlay/type-strip';
-import { GraphScene } from './scene';
+import { DbAxis } from '~/axes/db-axis';
+import { FrequencyAxis } from '~/axes/frequency-axis';
+import { uiStore } from '~/model/ui';
+import { startAnimator } from '~/graph/animator';
+import { DbLabels, FrequencyLabels } from '~/graph/axis-labels';
+import { backgroundDoubleClick, backgroundDown, pointerMove, pointerUp, toGraphPoint } from '~/graph/interactions';
+import { BandNodes } from '~/graph/overlay/band-nodes';
+import { Crosshair } from '~/graph/overlay/crosshair';
+import { Dock } from '~/graph/overlay/dock';
+import { QHandles } from '~/graph/overlay/q-handles';
+import { SoloTag } from '~/graph/overlay/solo-tag';
+import { TypeStrip } from '~/graph/overlay/type-strip';
+import { GraphScene } from '~/graph/scene';
 
 /** The EQ graph: canvas layers (grid, analyzer, curves) with labels and band controls on top. */
 export const GraphView = () => {

@@ -12,8 +12,8 @@ import {
   qToOctaves,
   soloRange,
   wheelRange,
-} from './axis-math';
-import { createMapper, graph } from './geometry';
+} from '~/graph/axis-math';
+import { createMapper, graph } from '~/graph/geometry';
 
 const mapper = createMapper(18);
 

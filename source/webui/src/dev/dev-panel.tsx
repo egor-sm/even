@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 
-import { native } from '../bridge/native';
-import { setMute } from '../bridge/parameters';
-import { commands } from '../model/commands';
-import { uiStore } from '../model/ui';
-import { useStore } from '../store/store';
+import { native, setMute } from '~/shared/api';
+import { commands } from '~/model/commands';
+import { uiStore } from '~/model/ui';
+import { useStore } from '~/shared/lib';
 
 const scales = [75, 100, 125, 150, 175, 200];
 

@@ -1,8 +1,9 @@
-import type { Band } from '../model/bands';
-import { type CanvasLayer, clipToPlot } from './canvas-layer';
-import { graph, type Mapper, maxHz, minHz } from './geometry';
-import { magnitudeDb, type Section } from './response-math';
-import { type GraphColors, withAlpha } from './theme-colors';
+import type { Band } from '~/model/bands';
+import { type CanvasLayer, withAlpha } from '~/shared/lib';
+import { clipToPlot, graph, type Mapper, maxHz, minHz } from '~/graph/geometry';
+import { magnitudeDb } from '~/graph/response-math';
+import type { GraphColors } from '~/graph/theme-colors';
+import type { Section } from '~/shared/api';
 
 /**
  * Frequencies to evaluate curves at: two per graph unit across the plot, plus every band frequency

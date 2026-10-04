@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 
-import { connectBackend } from './bridge/connection';
-import { BottomBar } from './chrome/bottom-bar';
-import { TopBar } from './chrome/top-bar';
-import { DevPanel } from './dev/dev-panel';
-import { analyzerStats } from './dev/stats';
-import { GraphView } from './graph/graph-view';
-import { uiStore } from './model/ui';
-import { shallowEqual, useStore } from './store/store';
+import { connectBackend } from '~/app/connect-backend';
+import { BottomBar } from '~/chrome/bottom-bar';
+import { TopBar } from '~/chrome/top-bar';
+import { DevPanel } from '~/dev/dev-panel';
+import { analyzerStats } from '~/dev/stats';
+import { GraphView } from '~/graph/graph-view';
+import { uiStore } from '~/model/ui';
+import { shallowEqual, useStore } from '~/shared/lib';
 
 const formatStats = () => analyzerStats.format(performance.now());
 

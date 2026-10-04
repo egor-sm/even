@@ -1,9 +1,8 @@
-import { applyHistory, applySettings } from '../bridge/connection';
-import { type AnalyzerMode, native } from '../bridge/native';
-import { bandParameters } from '../bridge/parameters';
-import type { Band } from './bands';
-import { type FilterType, typeIndex } from './filter-types';
-import { uiStore } from './ui';
+import { applyHistory, applySettings } from '~/app/connect-backend';
+import { type AnalyzerMode, bandParameters, native } from '~/shared/api';
+import type { Band } from '~/model/bands';
+import { type FilterType, typeIndex } from '~/model/filter-types';
+import { uiStore } from '~/model/ui';
 
 /** User actions that are more than a field in a store: they talk to C++ and keep the UI state consistent. */
 export const commands = {

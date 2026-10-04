@@ -1,17 +1,17 @@
 import { type ReactNode, useLayoutEffect, useState } from 'react';
 import { clsx } from 'clsx';
 
-import { TypeIcon, UiIcon } from '../../design/icons';
-import { bandColorVar, findBand } from '../../model/bands';
-import { commands } from '../../model/commands';
-import { hasGain, isCut, typeNames } from '../../model/filter-types';
-import { formatFrequency, formatGain, formatNote, formatQ, formatSlope } from '../../model/format';
-import { type ScrubField, uiStore } from '../../model/ui';
-import { shallowEqual, useStore } from '../../store/store';
-import { clamp, graph } from '../geometry';
-import { nodePosition, scrubDown, toGraphPoint } from '../interactions';
-import { TypePicker } from './type-picker';
-import { useDisplayBands } from './use-bands';
+import { UiIcon } from '~/shared/ui';
+import { bandColorVar, findBand } from '~/model/bands';
+import { commands } from '~/model/commands';
+import { formatSlope, hasGain, isCut, typeNames } from '~/model/filter-types';
+import { clamp, formatFrequency, formatGain, formatNote, formatQ, shallowEqual, useStore } from '~/shared/lib';
+import { type ScrubField, uiStore } from '~/model/ui';
+import { graph } from '~/graph/geometry';
+import { nodePosition, scrubDown, toGraphPoint } from '~/graph/interactions';
+import { TypePicker } from '~/graph/overlay/type-picker';
+import { useDisplayBands } from '~/graph/overlay/use-bands';
+import { TypeIcon } from '~/model/type-icons';
 
 const dockWidth = 540;
 const dockTop = 572;

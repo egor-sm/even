@@ -1,20 +1,19 @@
-import { onAnalyzerFrame } from '../bridge/connection';
-import { native, toSections } from '../bridge/native';
-import { analyzerStats } from '../dev/stats';
-import { type BandsState, bandsStore, findBand } from '../model/bands';
-import { typeIndex } from '../model/filter-types';
-import { type UiState, uiStore } from '../model/ui';
-import { AnalyzerLayer } from './analyzer-layer';
-import { gridLines, gridMorph, soloRange } from './axis-math';
-import { CanvasLayer } from './canvas-layer';
-import { drawGhost } from './draw-ghost';
-import { drawGrid } from './draw-grid';
-import { drawSolo } from './draw-solo';
-import { drawResponse, responseDb, sampleFrequencies } from './draw-response';
-import { createMapper } from './geometry';
-import { type Section } from './response-math';
-import { Spectrum } from './spectrum';
-import { type GraphColors, readGraphColors } from './theme-colors';
+import { onAnalyzerFrame } from '~/app/connect-backend';
+import { native, type Section, toSections } from '~/shared/api';
+import { analyzerStats } from '~/dev/stats';
+import { type BandsState, bandsStore, findBand } from '~/model/bands';
+import { typeIndex } from '~/model/filter-types';
+import { type UiState, uiStore } from '~/model/ui';
+import { AnalyzerLayer } from '~/graph/analyzer-layer';
+import { gridLines, gridMorph, soloRange } from '~/graph/axis-math';
+import { CanvasLayer } from '~/shared/lib';
+import { drawGhost } from '~/graph/draw-ghost';
+import { drawGrid } from '~/graph/draw-grid';
+import { drawSolo } from '~/graph/draw-solo';
+import { drawResponse, responseDb, sampleFrequencies } from '~/graph/draw-response';
+import { createMapper, graph } from '~/graph/geometry';
+import { Spectrum } from '~/graph/spectrum';
+import { type GraphColors, readGraphColors } from '~/graph/theme-colors';
 
 const maxAnalyzerFps = 60;
 
@@ -25,11 +24,11 @@ type Dirty = { grid: boolean; solo: boolean; response: boolean; ghost: boolean; 
  * after something it shows changed, and runs the analyzer ballistics while the spectrum moves.
  */
 export class GraphScene {
-  private readonly grid = new CanvasLayer('grid');
+  private readonly grid = new CanvasLayer('graph-canvas grid', graph);
   private readonly analyzer = new AnalyzerLayer();
-  private readonly soloLayer = new CanvasLayer('solo');
-  private readonly response = new CanvasLayer('response');
-  private readonly ghostLayer = new CanvasLayer('ghost');
+  private readonly soloLayer = new CanvasLayer('graph-canvas solo', graph);
+  private readonly response = new CanvasLayer('graph-canvas response', graph);
+  private readonly ghostLayer = new CanvasLayer('graph-canvas ghost', graph);
   private readonly pre = new Spectrum();
   private readonly post = new Spectrum();
   private readonly gridPairs = gridMorph(gridLines(createMapper(1), 'hz'), gridLines(createMapper(1), 'note'));

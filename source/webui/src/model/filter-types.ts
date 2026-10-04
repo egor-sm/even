@@ -31,6 +31,8 @@ export const pickerRows: readonly (readonly FilterType[])[] = [
 /** Cut slopes in dB/oct; a band's slope is an index into this list (dsp::cutSlopesDbPerOctave). */
 export const slopes = [6, 12, 18, 24, 36, 48, 72, 96] as const;
 
+export const formatSlope = (slopeIndex: number): string => `${slopes[slopeIndex] ?? slopes[1]} dB/oct`;
+
 export const hasGain = (type: FilterType): boolean =>
   type === 'bell' || type === 'lshelf' || type === 'hshelf' || type === 'tilt';
 

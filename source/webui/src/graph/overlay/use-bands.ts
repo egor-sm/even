@@ -1,6 +1,6 @@
-import { type Band, bandsStore } from '../../model/bands';
-import { uiStore, withPreview } from '../../model/ui';
-import { useStore } from '../../store/store';
+import { type Band, bandsStore } from '~/model/bands';
+import { uiStore, withPreview } from '~/model/ui';
+import { useStore } from '~/shared/lib';
 
 /** The bands with the values being edited applied (ahead of the response from C++). */
 export const useDisplayBands = (): readonly Band[] => {

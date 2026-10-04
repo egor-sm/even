@@ -1,11 +1,11 @@
-import { bandParameters } from '../bridge/parameters';
-import { type Band, bandsStore, findBand } from '../model/bands';
-import { commands } from '../model/commands';
-import { hasGain, isCut, slopes } from '../model/filter-types';
-import { frequencyToMidi, midiToFrequency } from '../model/format';
-import { type ScrubField, uiStore, withPreview } from '../model/ui';
-import { fitRange, keyAt, maxRange, minRange, octavesToQ, wheelRange } from './axis-math';
-import { clamp, createMapper, graph, maxHz, minHz } from './geometry';
+import { bandParameters } from '~/shared/api';
+import { type Band, bandsStore, findBand } from '~/model/bands';
+import { commands } from '~/model/commands';
+import { hasGain, isCut, slopes } from '~/model/filter-types';
+import { clamp, frequencyToMidi, midiToFrequency } from '~/shared/lib';
+import { type ScrubField, uiStore, withPreview } from '~/model/ui';
+import { fitRange, keyAt, maxRange, minRange, octavesToQ, wheelRange } from '~/graph/axis-math';
+import { createMapper, graph, maxHz, minHz } from '~/graph/geometry';
 
 export type Point = { x: number; y: number };
 

@@ -6,7 +6,6 @@ import {
   formatFrequency,
   formatGain,
   formatNote,
-  formatSlope,
   frequencyToMidi,
   isBlackKey,
   midiToFrequency,
@@ -27,7 +26,6 @@ describe('formatting', () => {
   });
 
   it('formats slopes and axis labels', () => {
-    expect(formatSlope(3)).toBe('24 dB/oct');
     expect(formatAxisFrequency(2000)).toBe('2k');
     expect(formatAxisFrequency(50)).toBe('50');
     expect(formatAxisDb(-6)).toBe('−6');

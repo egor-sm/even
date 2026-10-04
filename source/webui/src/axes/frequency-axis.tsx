@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
-import { UiIcon } from '../design/icons';
-import { bandColorVar } from '../model/bands';
-import { uiStore } from '../model/ui';
-import { shallowEqual, useStore } from '../store/store';
-import { keyboardPaths, keyDot, keyPath } from '../graph/axis-math';
-import { clamp, createMapper, graph } from '../graph/geometry';
-import { keyDown, keyUnder, toGraphPoint } from '../graph/interactions';
-import { useDisplayBands } from '../graph/overlay/use-bands';
+import { UiIcon } from '~/shared/ui';
+import { bandColorVar } from '~/model/bands';
+import { uiStore } from '~/model/ui';
+import { clamp, shallowEqual, useStore } from '~/shared/lib';
+import { keyboardPaths, keyDot, keyPath } from '~/graph/axis-math';
+import { createMapper, graph } from '~/graph/geometry';
+import { keyDown, keyUnder, toGraphPoint } from '~/graph/interactions';
+import { useDisplayBands } from '~/graph/overlay/use-bands';
 
 const axisLeft = graph.left;
 const axisTop = graph.bottom;

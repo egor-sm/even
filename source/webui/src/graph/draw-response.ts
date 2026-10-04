@@ -1,7 +1,7 @@
-import type { Band } from '~/model/bands';
+import type { Band } from '~/entities/band';
 import { type CanvasLayer, withAlpha } from '~/shared/lib';
-import { clipToPlot, graph, type Mapper, maxHz, minHz } from '~/graph/geometry';
-import { magnitudeDb } from '~/graph/response-math';
+import { clipToPlot, graph, type Mapper, maxHz, minHz } from '~/entities/viewport';
+import { magnitudeDb } from '~/entities/band';
 import type { GraphColors } from '~/graph/theme-colors';
 import type { Section } from '~/shared/api';
 

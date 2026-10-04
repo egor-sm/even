@@ -9,22 +9,21 @@ import {
   useStore,
 } from '~/shared/lib';
 import { uiStore } from '~/model/ui';
-import { createMapper, graph, maxHz, minHz } from '~/graph/geometry';
+import { createMapper, graph, maxHz, minHz, viewportStore } from '~/entities/viewport';
 
 /**
  * Cursor readout over the empty graph: dashed crosshair with the frequency (and note) on the
  * frequency axis and the dB on the dB axis. Over a key, or while snapping to notes, the note's line.
  */
 export const Crosshair = () => {
-  const { cursor, hotKey, dragging, axis, range } = useStore(
+  const { cursor, dragging } = useStore(
     uiStore,
-    (state) => ({
-      cursor: state.cursor,
-      hotKey: state.hotKey,
-      dragging: state.drag !== null,
-      axis: state.axis,
-      range: state.view.range,
-    }),
+    (state) => ({ cursor: state.cursor, dragging: state.drag !== null }),
+    shallowEqual,
+  );
+  const { hotKey, axis, range } = useStore(
+    viewportStore,
+    (state) => ({ hotKey: state.hotKey, axis: state.axis, range: state.view.range }),
     shallowEqual,
   );
   const mapper = createMapper(range);

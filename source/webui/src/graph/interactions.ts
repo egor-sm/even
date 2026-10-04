@@ -1,11 +1,21 @@
 import { bandParameters } from '~/shared/api';
-import { type Band, bandsStore, findBand } from '~/model/bands';
+import {
+  type Band,
+  bandsStore,
+  findBand,
+  hasGain,
+  isCut,
+  octavesToQ,
+  selectionStore,
+  setPreview,
+  slopes,
+  withPreview,
+} from '~/entities/band';
 import { commands } from '~/model/commands';
-import { hasGain, isCut, slopes } from '~/model/filter-types';
 import { clamp, frequencyToMidi, midiToFrequency } from '~/shared/lib';
-import { type ScrubField, uiStore, withPreview } from '~/model/ui';
-import { fitRange, keyAt, maxRange, minRange, octavesToQ, wheelRange } from '~/graph/axis-math';
-import { createMapper, graph, maxHz, minHz } from '~/graph/geometry';
+import { type ScrubField, uiStore } from '~/model/ui';
+import { createMapper, graph, keyAt, maxHz, maxRange, minHz, minRange, viewportStore } from '~/entities/viewport';
+import { fitRange, wheelRange } from '~/features/display-range/lib/range';
 
 export type Point = { x: number; y: number };
 
@@ -22,10 +32,10 @@ export const toGraphPoint = (event: { clientX: number; clientY: number }, graphE
   return { x: (event.clientX - rect.left) / unit, y: (event.clientY - rect.top) / unit };
 };
 
-const mapper = () => createMapper(uiStore.get().view.range);
+const mapper = () => createMapper(viewportStore.get().view.range);
 
 const selectedBand = (): Band | undefined => {
-  const { preview, selected } = uiStore.get();
+  const { preview, selected } = selectionStore.get();
   const band = findBand(bandsStore.get().bands, selected);
   return band === undefined ? undefined : withPreview(band, preview);
 };
@@ -44,14 +54,11 @@ const continuousFields = (band: Band) =>
   hasGain(band.type) ? (['frequency', 'gain'] as const) : (['frequency'] as const);
 
 export const nodeDown = (band: Band, point: Point): void => {
-  const { selected, strip, picker, view } = uiStore.get();
-  const node = nodePosition(band, view.range);
-  const same = selected === band.slot;
+  const { selected, typeMenu } = selectionStore.get();
+  const node = nodePosition(band, viewportStore.get().view.range);
+  selectionStore.set({ selected: band.slot, typeMenu: selected === band.slot ? typeMenu : null });
   uiStore.set({
-    selected: band.slot,
     hoverType: null,
-    strip: same && strip,
-    picker: same && picker,
     drag: {
       kind: 'node',
       slot: band.slot,
@@ -65,14 +72,16 @@ export const nodeDown = (band: Band, point: Point): void => {
 };
 
 const moveNode = (point: Point, snapToNotes: boolean): void => {
-  const { drag, axis, range } = uiStore.get();
+  const { drag } = uiStore.get();
+  const { axis, range } = viewportStore.get();
   if (drag?.kind !== 'node') return;
   const band = findBand(bandsStore.get().bands, drag.slot);
   if (band === undefined) return;
 
   if (!drag.moved) {
     if (Math.hypot(point.x - drag.startX, point.y - drag.startY) < dragThreshold) return;
-    uiStore.set({ drag: { ...drag, moved: true }, strip: false, picker: false, hoverType: null });
+    uiStore.set({ drag: { ...drag, moved: true }, hoverType: null });
+    selectionStore.set({ typeMenu: null });
     bandParameters.begin(band.slot, continuousFields(band));
   }
 
@@ -88,13 +97,15 @@ const moveNode = (point: Point, snapToNotes: boolean): void => {
 
   const g = hasGain(band.type) ? roundTo(clamp(map.dbAt(point.y - drag.offsetY), -range, range), 0.1) : band.g;
 
-  uiStore.set({ preview: { slot: band.slot, f, g }, previewUntilResponse: false, hotKey });
+  setPreview({ slot: band.slot, f, g });
+  viewportStore.set({ hotKey });
   bandParameters.set(band.slot, 'frequency', f);
   if (hasGain(band.type)) bandParameters.set(band.slot, 'gain', g);
 };
 
 export const qDown = (band: Band): void => {
-  uiStore.set({ drag: { kind: 'q', slot: band.slot }, picker: false });
+  uiStore.set({ drag: { kind: 'q', slot: band.slot } });
+  selectionStore.set({ typeMenu: null });
   bandParameters.begin(band.slot, ['q']);
 };
 
@@ -103,7 +114,7 @@ const moveQ = (point: Point): void => {
   if (band === undefined) return;
   const octaves = Math.max(0.02, Math.abs(Math.log2(clamp(mapper().frequencyAt(point.x), minHz, maxHz) / band.f)));
   const q = clampQ(octavesToQ(2 * octaves));
-  uiStore.set({ preview: { slot: band.slot, q }, previewUntilResponse: false });
+  setPreview({ slot: band.slot, q });
   bandParameters.set(band.slot, 'q', q);
 };
 
@@ -116,15 +127,16 @@ const scrubValue = (band: Band, field: ScrubField): number => {
 export const scrubDown = (band: Band, field: ScrubField, point: Point): void => {
   uiStore.set({
     drag: { kind: 'scrub', slot: band.slot, field, startX: point.x, startValue: scrubValue(band, field) },
-    picker: false,
   });
+  selectionStore.set({ typeMenu: null });
   if (field === 'f') bandParameters.begin(band.slot, ['frequency']);
   else if (field === 'q') bandParameters.begin(band.slot, ['q']);
   else if (hasGain(band.type)) bandParameters.begin(band.slot, ['gain']);
 };
 
 const moveScrub = (point: Point): void => {
-  const { drag, axis, range } = uiStore.get();
+  const { drag } = uiStore.get();
+  const { axis, range } = viewportStore.get();
   const band = selectedBand();
   if (drag?.kind !== 'scrub' || band === undefined) return;
   const dx = point.x - drag.startX;
@@ -135,46 +147,44 @@ const moveScrub = (point: Point): void => {
       axis === 'note'
         ? clamp(midiToFrequency(Math.round(frequencyToMidi(drag.startValue)) + Math.round(dx / 14)), minHz, maxHz)
         : clamp(drag.startValue * 2 ** (dx / 60), minHz, maxHz);
-    uiStore.set({ preview: { slot: band.slot, f }, previewUntilResponse: false });
+    setPreview({ slot: band.slot, f });
     bandParameters.set(band.slot, 'frequency', f);
   } else if (drag.field === 'q') {
     const q = clampQ(drag.startValue * 2 ** (dx / 90));
-    uiStore.set({ preview: { slot: band.slot, q }, previewUntilResponse: false });
+    setPreview({ slot: band.slot, q });
     bandParameters.set(band.slot, 'q', q);
   } else if (isCut(band.type)) {
     const slope = clamp(Math.round(drag.startValue + dx / 28), 0, slopes.length - 1);
     if (slope !== band.slope) {
-      uiStore.set({ preview: { slot: band.slot, slope }, previewUntilResponse: false });
+      setPreview({ slot: band.slot, slope });
       bandParameters.setSlope(band.slot, slope);
     }
   } else if (hasGain(band.type)) {
     const g = roundTo(clamp(drag.startValue + dx * 0.1, -range, range), 0.1);
-    uiStore.set({ preview: { slot: band.slot, g }, previewUntilResponse: false });
+    setPreview({ slot: band.slot, g });
     bandParameters.set(band.slot, 'gain', g);
   }
 };
 
 // ---- dB axis: the display range ----
 
-export const rangeDown = (point: Point): void =>
-  uiStore.set(({ range }) => ({
-    drag: { kind: 'range', startY: point.y, startRange: range },
-    strip: false,
-    picker: false,
-    hoverType: null,
-  }));
+export const rangeDown = (point: Point): void => {
+  uiStore.set({ drag: { kind: 'range', startY: point.y, startRange: viewportStore.get().range }, hoverType: null });
+  selectionStore.set({ typeMenu: null });
+};
 
 const moveRange = (point: Point): void => {
-  const { drag, range } = uiStore.get();
+  const { drag } = uiStore.get();
+  const { range } = viewportStore.get();
   if (drag?.kind !== 'range') return;
   // Twice the range per 160 px downwards.
   const next = clamp(Math.round(drag.startRange * 2 ** ((point.y - drag.startY) / 160)), minRange, maxRange);
-  if (next !== range) uiStore.set({ range: next });
+  if (next !== range) viewportStore.set({ range: next });
 };
 
-export const rangeWheel = (up: boolean): void => uiStore.set(({ range }) => ({ range: wheelRange(range, up) }));
+export const rangeWheel = (up: boolean): void => viewportStore.set(({ range }) => ({ range: wheelRange(range, up) }));
 
-export const fitRangeToBands = (): void => uiStore.set({ range: fitRange(bandsStore.get().bands) });
+export const fitRangeToBands = (): void => viewportStore.set({ range: fitRange(bandsStore.get().bands) });
 
 // ---- Keyboard (frequency axis in note mode) ----
 
@@ -194,7 +204,7 @@ const glideFrequency = (band: Band, to: number): void => {
     }
     const k = Math.min(1, (performance.now() - startedAt) / 180);
     const f = from * (to / from) ** (1 - (1 - k) ** 3);
-    uiStore.set({ preview: { slot: band.slot, f }, previewUntilResponse: true });
+    setPreview({ slot: band.slot, f }, true);
     bandParameters.set(band.slot, 'frequency', f);
     if (k < 1) requestAnimationFrame(step);
     else bandParameters.end(band.slot, ['frequency']);
@@ -204,18 +214,20 @@ const glideFrequency = (band: Band, to: number): void => {
 
 /** The key under a point of the keyboard (y from the keyboard's top). */
 export const keyUnder = (point: Point, keyboardY: number): number =>
-  keyAt(createMapper(uiStore.get().view.range), point.x, keyboardY);
+  keyAt(createMapper(viewportStore.get().view.range), point.x, keyboardY);
 
 /** Click on a key: the selected band glides to that note; with Alt, or without a selection, a new band. */
 export const keyDown = (midi: number, altKey: boolean): void => {
   const band = selectedBand();
   if (altKey || band === undefined) {
     commands.createBand('bell', midiToFrequency(midi), 0);
-    uiStore.set({ hotKey: midi, strip: false });
+    viewportStore.set({ hotKey: midi });
     return;
   }
   glideFrequency(band, midiToFrequency(midi));
-  uiStore.set({ hotKey: midi, strip: false, picker: false, drag: { kind: 'keys', slot: band.slot, midi } });
+  viewportStore.set({ hotKey: midi });
+  selectionStore.set({ typeMenu: null });
+  uiStore.set({ drag: { kind: 'keys', slot: band.slot, midi } });
 };
 
 const moveKeys = (point: Point): void => {
@@ -227,7 +239,9 @@ const moveKeys = (point: Point): void => {
   tween++;
   const f = midiToFrequency(midi);
   bandParameters.begin(drag.slot, ['frequency']);
-  uiStore.set({ preview: { slot: drag.slot, f }, previewUntilResponse: true, hotKey: midi, drag: { ...drag, midi } });
+  setPreview({ slot: drag.slot, f }, true);
+  viewportStore.set({ hotKey: midi });
+  uiStore.set({ drag: { ...drag, midi } });
   bandParameters.set(drag.slot, 'frequency', f);
   bandParameters.end(drag.slot, ['frequency']);
 };
@@ -259,8 +273,10 @@ export const pointerUp = (): void => {
     }
   }
 
-  const { preview } = uiStore.get();
-  uiStore.set({ drag: null, hotKey: null, previewUntilResponse: preview !== null });
+  const { preview } = selectionStore.get();
+  uiStore.set({ drag: null });
+  viewportStore.set({ hotKey: null });
+  selectionStore.set({ previewUntilResponse: preview !== null });
 };
 
 let wheelSlot: number | null = null;
@@ -281,10 +297,9 @@ export const nodeWheel = (band: Band, up: boolean): void => {
     wheelSlot = band.slot;
   }
 
-  const { preview } = uiStore.get();
-  const current = withPreview(band, preview).q;
+  const current = withPreview(band, selectionStore.get().preview).q;
   const q = clampQ(up ? current * qWheelStep : current / qWheelStep);
-  uiStore.set({ preview: { slot: band.slot, q }, previewUntilResponse: true });
+  setPreview({ slot: band.slot, q }, true);
   bandParameters.set(band.slot, 'q', q);
 
   if (wheelTimer !== null) clearTimeout(wheelTimer);
@@ -293,15 +308,17 @@ export const nodeWheel = (band: Band, up: boolean): void => {
 
 /** Pointer down on the empty graph: the first click folds the type strip, the next one deselects. */
 export const backgroundDown = (): void => {
-  const { strip, selected, picker } = uiStore.get();
-  if (strip) uiStore.set({ strip: false, hoverType: null });
-  else if (selected !== null || picker) commands.select(null);
+  const { typeMenu, selected } = selectionStore.get();
+  if (typeMenu === 'strip') {
+    selectionStore.set({ typeMenu: null });
+    uiStore.set({ hoverType: null });
+  } else if (selected !== null || typeMenu !== null) commands.select(null);
 };
 
 /** Double click on the empty graph: a new bell at the point. */
 export const backgroundDoubleClick = (point: Point): void => {
   const map = mapper();
-  const { range } = uiStore.get();
+  const { range } = viewportStore.get();
   commands.createBand(
     'bell',
     clamp(map.frequencyAt(point.x), minHz, maxHz),

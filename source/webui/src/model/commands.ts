@@ -1,7 +1,6 @@
 import { applyHistory, applySettings } from '~/app/connect-backend';
 import { type AnalyzerMode, bandParameters, native } from '~/shared/api';
-import type { Band } from '~/model/bands';
-import { type FilterType, typeIndex } from '~/model/filter-types';
+import { type Band, type FilterType, selectBand, selectionStore, typeIndex } from '~/entities/band';
 import { uiStore } from '~/model/ui';
 
 /** User actions that are more than a field in a store: they talk to C++ and keep the UI state consistent. */
@@ -22,32 +21,37 @@ export const commands = {
     void native.setAnalyzerMode(mode);
   },
 
-  select: (slot: number | null) => uiStore.set({ selected: slot, strip: false, picker: false, hoverType: null }),
+  select: (slot: number | null) => {
+    selectBand(slot);
+    uiStore.set({ hoverType: null });
+  },
 
   /** A new band, selected, with the type strip expanded over it. */
   createBand: (type: FilterType, frequencyHz: number, gainDb: number) =>
     void native.createBand(typeIndex(type), frequencyHz, gainDb).then((slot) => {
-      if (typeof slot === 'number') uiStore.set({ selected: slot, strip: true, picker: false, hoverType: null });
+      if (typeof slot !== 'number') return;
+      selectBand(slot, 'strip');
+      uiStore.set({ hoverType: null });
     }),
 
   deleteBand: (slot: number) => {
-    const { selected, solo } = uiStore.get();
-    uiStore.set({
+    const { selected, solo } = selectionStore.get();
+    selectionStore.set({
       selected: selected === slot ? null : selected,
       solo: solo === slot ? null : solo,
-      strip: false,
-      picker: false,
-      hoverType: null,
+      typeMenu: null,
     });
+    uiStore.set({ hoverType: null });
     void native.deleteBand(slot);
   },
 
   setType: (slot: number, type: FilterType) => {
-    uiStore.set({ strip: false, picker: false, hoverType: null });
+    selectionStore.set({ typeMenu: null });
+    uiStore.set({ hoverType: null });
     void native.setBandShape(slot, typeIndex(type));
   },
 
   toggleBypass: (band: Band) => bandParameters.setEnabled(band.slot, !band.on),
 
-  toggleSolo: (slot: number) => uiStore.set(({ solo }) => ({ solo: solo === slot ? null : slot })),
+  toggleSolo: (slot: number) => selectionStore.set(({ solo }) => ({ solo: solo === slot ? null : slot })),
 };

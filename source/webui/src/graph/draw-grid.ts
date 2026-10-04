@@ -1,6 +1,5 @@
-import { dbLines, type GridMorph } from '~/graph/axis-math';
+import { clipToPlot, dbLines, graph, type GridMorph, type Mapper } from '~/entities/viewport';
 import type { CanvasLayer } from '~/shared/lib';
-import { clipToPlot, graph, type Mapper } from '~/graph/geometry';
 import type { GraphColors } from '~/graph/theme-colors';
 
 /**

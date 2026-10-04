@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { formatSlope, typeAt, typeIndex } from '~/model/filter-types';
+import { formatSlope, typeAt, typeIndex } from './filter-types';
 
 describe('filter types', () => {
   it('map to the C++ shape indices and back', () => {

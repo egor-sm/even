@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 
 import { UiIcon } from '~/shared/ui';
-import { bandColorVar } from '~/model/bands';
+import { bandColorVar, useDisplayBands } from '~/entities/band';
 import { uiStore } from '~/model/ui';
 import { clamp, shallowEqual, useStore } from '~/shared/lib';
-import { keyboardPaths, keyDot, keyPath } from '~/graph/axis-math';
-import { createMapper, graph } from '~/graph/geometry';
+import { createMapper, graph, keyboardPaths, keyDot, keyPath, viewportStore } from '~/entities/viewport';
 import { keyDown, keyUnder, toGraphPoint } from '~/graph/interactions';
-import { useDisplayBands } from '~/graph/overlay/use-bands';
 
 const axisLeft = graph.left;
 const axisTop = graph.bottom;
@@ -26,7 +24,7 @@ const keyboardPoint = (event: React.PointerEvent<SVGSVGElement>) => {
  */
 export const FrequencyAxis = () => {
   const { axis, morph, hotKey } = useStore(
-    uiStore,
+    viewportStore,
     (state) => ({ axis: state.axis, morph: state.view.morph, hotKey: state.hotKey }),
     shallowEqual,
   );
@@ -80,10 +78,10 @@ export const FrequencyAxis = () => {
               const at = keyboardPoint(event);
               if (at === null || uiStore.get().drag !== null) return;
               const midi = keyUnder(at.point, at.keyboardY);
-              if (midi !== uiStore.get().hotKey) uiStore.set({ hotKey: midi, cursor: null });
+              if (midi !== viewportStore.get().hotKey) viewportStore.set({ hotKey: midi });
             }}
             onPointerLeave={() => {
-              if (uiStore.get().drag === null) uiStore.set({ hotKey: null });
+              if (uiStore.get().drag === null) viewportStore.set({ hotKey: null });
             }}
           >
             <path className="is-white" d={keys.white} />
@@ -117,7 +115,7 @@ export const FrequencyAxis = () => {
           type="button"
           className="eq-axis__seg"
           aria-pressed={!notes}
-          onClick={() => uiStore.set({ axis: 'hz' })}
+          onClick={() => viewportStore.set({ axis: 'hz' })}
         >
           Hz
         </button>
@@ -126,7 +124,7 @@ export const FrequencyAxis = () => {
           className="eq-axis__seg"
           aria-pressed={notes}
           aria-label="Notes"
-          onClick={() => uiStore.set({ axis: 'note' })}
+          onClick={() => viewportStore.set({ axis: 'note' })}
         >
           <UiIcon name="note" size={12} />
         </button>

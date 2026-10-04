@@ -2,16 +2,23 @@ import { type ReactNode, useLayoutEffect, useState } from 'react';
 import { clsx } from 'clsx';
 
 import { UiIcon } from '~/shared/ui';
-import { bandColorVar, findBand } from '~/model/bands';
+import {
+  bandColorVar,
+  findBand,
+  formatSlope,
+  hasGain,
+  isCut,
+  selectionStore,
+  TypeIcon,
+  typeNames,
+  useDisplayBands,
+} from '~/entities/band';
 import { commands } from '~/model/commands';
-import { formatSlope, hasGain, isCut, typeNames } from '~/model/filter-types';
 import { clamp, formatFrequency, formatGain, formatNote, formatQ, shallowEqual, useStore } from '~/shared/lib';
 import { type ScrubField, uiStore } from '~/model/ui';
-import { graph } from '~/graph/geometry';
+import { graph, viewportStore } from '~/entities/viewport';
 import { nodePosition, scrubDown, toGraphPoint } from '~/graph/interactions';
 import { TypePicker } from '~/graph/overlay/type-picker';
-import { useDisplayBands } from '~/graph/overlay/use-bands';
-import { TypeIcon } from '~/model/type-icons';
 
 const dockWidth = 540;
 const dockTop = 572;
@@ -26,19 +33,14 @@ const dockX = (nodeX: number) => clamp(nodeX - dockWidth / 2, edge, graph.width 
  */
 export const Dock = () => {
   const bands = useDisplayBands();
-  const ui = useStore(
-    uiStore,
-    (state) => ({
-      selected: state.selected,
-      solo: state.solo,
-      drag: state.drag,
-      range: state.view.range,
-      axis: state.axis,
-      picker: state.picker,
-      hoverType: state.hoverType,
-    }),
+  const selection = useStore(
+    selectionStore,
+    (state) => ({ selected: state.selected, solo: state.solo, picker: state.typeMenu === 'picker' }),
     shallowEqual,
   );
+  const viewport = useStore(viewportStore, (state) => ({ range: state.view.range, axis: state.axis }), shallowEqual);
+  const local = useStore(uiStore, (state) => ({ drag: state.drag, hoverType: state.hoverType }), shallowEqual);
+  const ui = { ...selection, ...viewport, ...local };
   const band = findBand(bands, ui.selected);
 
   // Position at the last commit: the dock glides from there when the selection moves to another band.
@@ -122,7 +124,10 @@ export const Dock = () => {
         className={clsx('eq-typeb', ui.picker && 'is-hover', previewing && 'is-preview')}
         aria-label="Filter type"
         aria-expanded={ui.picker}
-        onClick={() => uiStore.set(({ picker }) => ({ picker: !picker, strip: false, hoverType: null }))}
+        onClick={() => {
+          selectionStore.set(({ typeMenu }) => ({ typeMenu: typeMenu === 'picker' ? null : 'picker' }));
+          uiStore.set({ hoverType: null });
+        }}
       >
         <TypeIcon type={shownType} style={{ stroke: 'var(--band)' }} />
         <span>{typeNames[shownType]}</span>

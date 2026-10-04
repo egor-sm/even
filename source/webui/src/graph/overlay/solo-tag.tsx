@@ -1,15 +1,14 @@
 import { UiIcon } from '~/shared/ui';
-import { bandColorVar, findBand } from '~/model/bands';
-import { clamp, formatFrequency, formatNote, shallowEqual, useStore } from '~/shared/lib';
-import { uiStore } from '~/model/ui';
-import { soloRange } from '~/graph/axis-math';
-import { createMapper } from '~/graph/geometry';
-import { useDisplayBands } from '~/graph/overlay/use-bands';
+import { bandColorVar, findBand, selectionStore, useDisplayBands } from '~/entities/band';
+import { clamp, formatFrequency, formatNote, useStore } from '~/shared/lib';
+import { createMapper, viewportStore } from '~/entities/viewport';
+import { soloRange } from '~/features/solo-band/lib/solo-range';
 
 /** 'Solo · 158 Hz – 210 Hz' above the lit range of the soloed band. */
 export const SoloTag = () => {
   const bands = useDisplayBands();
-  const { solo, axis } = useStore(uiStore, (state) => ({ solo: state.solo, axis: state.axis }), shallowEqual);
+  const solo = useStore(selectionStore, (state) => state.solo);
+  const axis = useStore(viewportStore, (state) => state.axis);
   const band = findBand(bands, solo);
   if (band === undefined) return null;
 

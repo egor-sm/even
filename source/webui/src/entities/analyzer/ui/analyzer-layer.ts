@@ -1,6 +1,16 @@
-import { graph, type Mapper } from '~/graph/geometry';
-import type { Spectrum } from '~/graph/spectrum';
 import { parseHexColor, type Rgba } from '~/shared/lib';
+
+import type { Spectrum } from '../model/spectrum';
+
+/** Where the spectra go: the canvas size and the plot area in its units, and the mapping to them. */
+export type AnalyzerPlot = {
+  width: number;
+  height: number;
+  left: number;
+  right: number;
+  x: (hz: number) => number;
+  y: (dbfs: number) => number;
+};
 
 const vertexShaderSource = `#version 300 es
 in vec2 a_position; // graph units, origin top-left
@@ -65,7 +75,7 @@ export class AnalyzerLayer {
   private points = new Float32Array(0);
   private vertices = new Float32Array(0);
 
-  constructor() {
+  constructor(private readonly size: { width: number; height: number }) {
     this.canvas.className = 'graph-canvas analyzer';
     const gl = this.canvas.getContext('webgl2', { antialias: true, premultipliedAlpha: true, alpha: true });
     if (gl === null) throw new Error('WebGL2 is not available');
@@ -76,7 +86,7 @@ export class AnalyzerLayer {
     this.colorUniform = gl.getUniformLocation(this.program, 'u_color');
 
     gl.useProgram(this.program);
-    gl.uniform2f(gl.getUniformLocation(this.program, 'u_size'), graph.width, graph.height);
+    gl.uniform2f(gl.getUniformLocation(this.program, 'u_size'), size.width, size.height);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
 
     const position = gl.getAttribLocation(this.program, 'a_position');
@@ -89,8 +99,8 @@ export class AnalyzerLayer {
 
   resize(uiScale: number): void {
     this.pixelsPerUnit = uiScale * devicePixelRatio;
-    this.canvas.width = Math.round(graph.width * this.pixelsPerUnit);
-    this.canvas.height = Math.round(graph.height * this.pixelsPerUnit);
+    this.canvas.width = Math.round(this.size.width * this.pixelsPerUnit);
+    this.canvas.height = Math.round(this.size.height * this.pixelsPerUnit);
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -102,7 +112,7 @@ export class AnalyzerLayer {
     };
   }
 
-  draw(mapper: Mapper, pre: Spectrum, post: Spectrum): void {
+  draw(plot: AnalyzerPlot, pre: Spectrum, post: Spectrum): void {
     const { gl, pixelsPerUnit } = this;
     gl.disable(gl.SCISSOR_TEST);
     gl.clearColor(0, 0, 0, 0);
@@ -111,16 +121,16 @@ export class AnalyzerLayer {
     // Clip to the plot area, like every graph layer.
     gl.enable(gl.SCISSOR_TEST);
     gl.scissor(
-      Math.round(graph.left * pixelsPerUnit),
+      Math.round(plot.left * pixelsPerUnit),
       0,
-      Math.round((graph.right - graph.left) * pixelsPerUnit),
+      Math.round((plot.right - plot.left) * pixelsPerUnit),
       this.canvas.height,
     );
 
     const main = post.frequencies.length >= 2 ? post : pre;
-    if (main.frequencies.length >= 2) this.drawFill(mapper, main);
-    if (pre.frequencies.length >= 2) this.drawLine(mapper, pre, this.colors.pre);
-    if (post.frequencies.length >= 2) this.drawLine(mapper, post, this.colors.post);
+    if (main.frequencies.length >= 2) this.drawFill(plot, main);
+    if (pre.frequencies.length >= 2) this.drawLine(plot, pre, this.colors.pre);
+    if (post.frequencies.length >= 2) this.drawLine(plot, post, this.colors.post);
   }
 
   dispose(): void {
@@ -129,7 +139,7 @@ export class AnalyzerLayer {
     this.gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
-  private project(mapper: Mapper, spectrum: Spectrum): Float32Array {
+  private project(plot: AnalyzerPlot, spectrum: Spectrum): Float32Array {
     const count = spectrum.frequencies.length;
     if (this.points.length !== 2 * count) {
       this.points = new Float32Array(2 * count);
@@ -137,8 +147,8 @@ export class AnalyzerLayer {
     }
 
     for (let i = 0; i < count; i++) {
-      this.points[2 * i] = mapper.x(spectrum.frequencies[i]);
-      this.points[2 * i + 1] = Math.min(mapper.analyzerY(spectrum.display[i]), graph.height);
+      this.points[2 * i] = plot.x(spectrum.frequencies[i]);
+      this.points[2 * i + 1] = Math.min(plot.y(spectrum.display[i]), plot.height);
     }
     return this.points;
   }
@@ -151,21 +161,21 @@ export class AnalyzerLayer {
   }
 
   // A strip between the curve and the bottom edge.
-  private drawFill(mapper: Mapper, spectrum: Spectrum): void {
-    const points = this.project(mapper, spectrum);
+  private drawFill(plot: AnalyzerPlot, spectrum: Spectrum): void {
+    const points = this.project(plot, spectrum);
     const count = points.length / 2;
     for (let i = 0; i < count; i++) {
       this.vertices[4 * i] = points[2 * i];
       this.vertices[4 * i + 1] = points[2 * i + 1];
       this.vertices[4 * i + 2] = points[2 * i];
-      this.vertices[4 * i + 3] = graph.height;
+      this.vertices[4 * i + 3] = plot.height;
     }
     this.drawStrip(this.colors.fill, count);
   }
 
   // A 1 px line: each point offset along the normal of its neighbours' chord.
-  private drawLine(mapper: Mapper, spectrum: Spectrum, color: Rgba): void {
-    const points = this.project(mapper, spectrum);
+  private drawLine(plot: AnalyzerPlot, spectrum: Spectrum, color: Rgba): void {
+    const points = this.project(plot, spectrum);
     const count = points.length / 2;
     const halfWidth = 0.5;
     for (let i = 0; i < count; i++) {

@@ -1,15 +1,23 @@
 import { clsx } from 'clsx';
 
 import { UiIcon } from '~/shared/ui';
-import { bandColorVar, findBand } from '~/model/bands';
+import {
+  bandColorVar,
+  findBand,
+  formatSlope,
+  hasGain,
+  isCut,
+  selectionStore,
+  stripOrder,
+  TypeIcon,
+  typeNames,
+  useDisplayBands,
+} from '~/entities/band';
 import { commands } from '~/model/commands';
-import { formatSlope, hasGain, isCut, stripOrder, typeNames } from '~/model/filter-types';
 import { clamp, formatFrequency, formatGain, formatNote, formatQ, shallowEqual, useStore } from '~/shared/lib';
 import { uiStore } from '~/model/ui';
-import { graph } from '~/graph/geometry';
+import { graph, viewportStore } from '~/entities/viewport';
 import { nodePosition } from '~/graph/interactions';
-import { useDisplayBands } from '~/graph/overlay/use-bands';
-import { TypeIcon } from '~/model/type-icons';
 
 const sizes = {
   pill: { width: 44, height: 28 },
@@ -23,18 +31,14 @@ const sizes = {
  */
 export const TypeStrip = () => {
   const bands = useDisplayBands();
-  const ui = useStore(
-    uiStore,
-    (state) => ({
-      selected: state.selected,
-      drag: state.drag,
-      strip: state.strip,
-      range: state.view.range,
-      axis: state.axis,
-      hoverType: state.hoverType,
-    }),
+  const selection = useStore(
+    selectionStore,
+    (state) => ({ selected: state.selected, strip: state.typeMenu === 'strip' }),
     shallowEqual,
   );
+  const viewport = useStore(viewportStore, (state) => ({ range: state.view.range, axis: state.axis }), shallowEqual);
+  const local = useStore(uiStore, (state) => ({ drag: state.drag, hoverType: state.hoverType }), shallowEqual);
+  const ui = { ...selection, ...viewport, ...local };
   const band = findBand(bands, ui.selected);
   if (band === undefined) return null;
 
@@ -72,7 +76,10 @@ export const TypeStrip = () => {
         aria-label="Change filter type"
         style={position}
         onPointerDown={(event) => event.stopPropagation()}
-        onClick={() => uiStore.set({ strip: true, picker: false, hoverType: null })}
+        onClick={() => {
+          selectionStore.set({ typeMenu: 'strip' });
+          uiStore.set({ hoverType: null });
+        }}
       >
         <TypeIcon type={band.type} size={16} style={{ stroke: bandColorVar(band.color) }} />
         <UiIcon name="chevronDown" size={9} />

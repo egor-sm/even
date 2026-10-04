@@ -1,24 +1,27 @@
 import { clsx } from 'clsx';
 
-import { bandColorVar, findBand } from '~/model/bands';
-import { hasQHandles } from '~/model/filter-types';
+import {
+  bandColorVar,
+  findBand,
+  hasQHandles,
+  magnitudeDb,
+  qToOctaves,
+  useDisplayBands,
+  useSampleRate,
+  selectionStore,
+} from '~/entities/band';
 import { uiStore } from '~/model/ui';
-import { clamp, shallowEqual, useStore } from '~/shared/lib';
-import { qToOctaves } from '~/graph/axis-math';
-import { createMapper, graph, maxHz, minHz } from '~/graph/geometry';
+import { clamp, useStore } from '~/shared/lib';
+import { createMapper, graph, maxHz, minHz, viewportStore } from '~/entities/viewport';
 import { qDown } from '~/graph/interactions';
-import { magnitudeDb } from '~/graph/response-math';
-import { useDisplayBands, useSampleRate } from '~/graph/overlay/use-bands';
 
 /** Two handles at the edges of the selected bell, notch or band pass (its width): drag for q. */
 export const QHandles = () => {
   const bands = useDisplayBands();
   const sampleRate = useSampleRate();
-  const { selected, drag, range } = useStore(
-    uiStore,
-    (state) => ({ selected: state.selected, drag: state.drag, range: state.view.range }),
-    shallowEqual,
-  );
+  const selected = useStore(selectionStore, (state) => state.selected);
+  const drag = useStore(uiStore, (state) => state.drag);
+  const range = useStore(viewportStore, (state) => state.view.range);
   const band = findBand(bands, selected);
   const nodeMoving = drag?.kind === 'node' && drag.moved;
   if (band === undefined || !hasQHandles(band.type) || nodeMoving) return null;

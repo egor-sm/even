@@ -1,4 +1,4 @@
-import { type FilterType, slopes } from '~/model/filter-types';
+import { type FilterType, slopes } from '~/entities/band';
 import type { Section } from '~/shared/api';
 
 // Development only: the band design of dsp/band_design.cpp, so the mock backend can send a response

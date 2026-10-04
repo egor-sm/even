@@ -1,6 +1,5 @@
-import { type FilterType, hasGain } from '~/model/filter-types';
 import { clamp, formatAxisFrequency, frequencyToMidi, isBlackKey } from '~/shared/lib';
-import { graph, type Mapper, maxHz, minHz } from '~/graph/geometry';
+import { graph, type Mapper, maxHz, minHz } from './geometry';
 
 export type AxisMode = 'hz' | 'note';
 
@@ -85,34 +84,6 @@ export const dbLines = (range: number): number[] => {
 
 export const minRange = 3;
 export const maxRange = 36;
-
-/** Range that fits the largest gain of the enabled bands with 20 % headroom, snapped. */
-export const fitRange = (bands: readonly { type: FilterType; g: number; on: boolean }[]): number => {
-  let largest = 0;
-  for (const band of bands) if (band.on && hasGain(band.type)) largest = Math.max(largest, Math.abs(band.g));
-  return [3, 6, 9, 12, 18, 24, 30, 36].find((range) => range >= largest * 1.2 + 0.5) ?? maxRange;
-};
-
-/** One wheel step on the dB axis: by 1 up to ±12, by 3 above. */
-export const wheelRange = (range: number, up: boolean): number => {
-  const step = range < 12 || (range === 12 && up) ? 1 : 3;
-  return clamp(range + (up ? -step : step), minRange, maxRange);
-};
-
-/** Bandwidth in octaves of a q, and back (bandwidth between the half-gain points of a bell). */
-export const qToOctaves = (q: number): number => (2 / Math.LN2) * Math.asinh(1 / (2 * q));
-export const octavesToQ = (octaves: number): number => 1 / (2 * Math.sinh((Math.LN2 / 2) * octaves));
-
-/** The frequency range a band works on: lit while the band is soloed (and what solo lets through). */
-export const soloRange = (band: { type: FilterType; f: number; q: number }): [number, number] => {
-  const { type, f } = band;
-  if (type === 'lcut' || type === 'lshelf') return [minHz, Math.min(maxHz, f * Math.SQRT2)];
-  if (type === 'hcut' || type === 'hshelf') return [Math.max(minHz, f / Math.SQRT2), maxHz];
-  if (type === 'tilt') return [Math.max(minHz, f / 8), Math.min(maxHz, f * 8)];
-
-  const half = clamp(qToOctaves(band.q) * 0.75, 0.2, 3);
-  return [Math.max(minHz, f / 2 ** half), Math.min(maxHz, f * 2 ** half)];
-};
 
 /** Height of the keyboard (the frequency axis in note mode) and of its black keys. */
 export const keyboardHeight = 36;

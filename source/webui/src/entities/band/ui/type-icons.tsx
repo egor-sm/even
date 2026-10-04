@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import type { FilterType } from '~/model/filter-types';
+import type { FilterType } from '../model/filter-types';
 import { Icon } from '~/shared/ui';
 
 /** Filter type icons: 24 grid, stroke 2, round caps and joins, no fills. */

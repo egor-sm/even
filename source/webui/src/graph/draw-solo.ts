@@ -1,5 +1,5 @@
 import { type CanvasLayer, clamp, withAlpha } from '~/shared/lib';
-import { graph, type Mapper } from '~/graph/geometry';
+import { graph, type Mapper } from '~/entities/viewport';
 
 const feather = 22;
 

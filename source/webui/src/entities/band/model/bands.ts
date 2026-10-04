@@ -1,7 +1,8 @@
-import type { EqResponse } from '~/shared/api';
+import type { EqResponse, Section } from '~/shared/api';
 import { createStore } from '~/shared/lib';
-import { type FilterType, typeAt } from '~/model/filter-types';
-import type { Section } from '~/shared/api';
+
+import { type FilterType, typeAt } from './filter-types';
+import { selectionStore } from './selection';
 
 /** A band as the UI shows it; the values live in C++ (plugin parameters) and arrive with the EQ response. */
 export type Band = {
@@ -53,3 +54,18 @@ export const bandsFromResponse = (response: EqResponse): BandsState => ({
 
 export const findBand = (bands: readonly Band[], slot: number | null): Band | undefined =>
   slot === null ? undefined : bands.find((band) => band.slot === slot);
+
+/**
+ * Takes a response from C++: the bands, and a selection or solo of a band that is gone (undo, redo,
+ * the host) is dropped. A preview kept until this response ends.
+ */
+export const receiveResponse = (response: EqResponse): void => {
+  const state = bandsFromResponse(response);
+  bandsStore.set(state);
+
+  const { selected, solo, previewUntilResponse } = selectionStore.get();
+  const exists = (slot: number) => state.bands.some((band) => band.slot === slot);
+  if (selected !== null && !exists(selected)) selectionStore.set({ selected: null, typeMenu: null });
+  if (solo !== null && !exists(solo)) selectionStore.set({ solo: null });
+  if (previewUntilResponse) selectionStore.set({ preview: null, previewUntilResponse: false });
+};

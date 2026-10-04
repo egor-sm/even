@@ -1,7 +1,7 @@
 import { type CanvasLayer, withAlpha } from '~/shared/lib';
 import { toCurve } from '~/graph/draw-response';
-import type { Mapper } from '~/graph/geometry';
-import { clipToPlot } from '~/graph/geometry';
+import type { Mapper } from '~/entities/viewport';
+import { clipToPlot } from '~/entities/viewport';
 
 // Brightness along x around the node: bright close to it, gone 260 px away.
 const ghostStops: [offset: number, alpha: number][] = [

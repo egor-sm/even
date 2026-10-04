@@ -1,12 +1,10 @@
 import type { CSSProperties } from 'react';
 import { clsx } from 'clsx';
 
-import { type Band, bandColorVar } from '~/model/bands';
+import { type Band, bandColorVar, type FilterType, pickerRows, typeIconPaths, typeNames } from '~/entities/band';
 import { commands } from '~/model/commands';
-import { type FilterType, pickerRows, typeNames } from '~/model/filter-types';
 import { uiStore } from '~/model/ui';
 import { useStore } from '~/shared/lib';
-import { typeIconPaths } from '~/model/type-icons';
 
 const Tile = ({ band, type, delay }: { band: Band; type: FilterType; delay: number }) => {
   const hovered = useStore(uiStore, (state) => state.hoverType === type);

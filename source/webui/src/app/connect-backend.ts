@@ -1,6 +1,7 @@
-import { bandsFromResponse, bandsStore } from '~/model/bands';
+import { publishAnalyzerFrame } from '~/entities/analyzer';
+import { receiveResponse, selectionStore } from '~/entities/band';
 import { uiStore } from '~/model/ui';
-import { type AnalyzerFrame, decodeBase64Frame, decodeBase64Response, native } from '~/shared/api';
+import { decodeBase64Frame, decodeBase64Response, native } from '~/shared/api';
 
 declare global {
   interface Window {
@@ -12,16 +13,6 @@ declare global {
     evenOnHistory?: (canUndo: boolean, canRedo: boolean) => void;
   }
 }
-
-export type FrameListener = (frame: AnalyzerFrame, info: { latencyMs: number; bytes: number }) => void;
-
-const frameListeners = new Set<FrameListener>();
-
-/** Analyzer frames go to the graph directly, outside of the stores: they arrive at 60 Hz. */
-export const onAnalyzerFrame = (listener: FrameListener): (() => void) => {
-  frameListeners.add(listener);
-  return () => frameListeners.delete(listener);
-};
 
 const historyState = (value: unknown): { canUndo: boolean; canRedo: boolean } | null => {
   if (typeof value !== 'object' || value === null) return null;
@@ -55,16 +46,7 @@ export const connectBackend = (): (() => void) => {
   window.evenOnResponse = (base64) => {
     const response = decodeBase64Response(base64);
     if (response === null) return;
-    const state = bandsFromResponse(response);
-    bandsStore.set(state);
-
-    // Undo, redo or the host may have removed the selected or soloed band.
-    const { selected, solo, previewUntilResponse } = uiStore.get();
-    const exists = (slot: number | null) => slot !== null && state.bands.some((band) => band.slot === slot);
-    if (selected !== null && !exists(selected))
-      uiStore.set({ selected: null, strip: false, picker: false, hoverType: null });
-    if (solo !== null && !exists(solo)) uiStore.set({ solo: null });
-    if (previewUntilResponse) uiStore.set({ preview: null, previewUntilResponse: false });
+    receiveResponse(response);
   };
 
   window.evenOnHistory = (canUndo, canRedo) => uiStore.set({ canUndo, canRedo });
@@ -73,13 +55,13 @@ export const connectBackend = (): (() => void) => {
     const frame = decodeBase64Frame(base64);
     if (frame === null) return;
     const info = { latencyMs: Date.now() - sentAtMs, bytes: base64.length };
-    for (const listener of frameListeners) listener(frame, info);
+    publishAnalyzerFrame(frame, info);
   };
 
   // Solo lives in the UI state; C++ follows it.
-  let solo = uiStore.get().solo;
-  const unsubscribeSolo = uiStore.subscribe(() => {
-    const next = uiStore.get().solo;
+  let solo = selectionStore.get().solo;
+  const unsubscribeSolo = selectionStore.subscribe(() => {
+    const next = selectionStore.get().solo;
     if (next === solo) return;
     solo = next;
     void native.setSolo(next ?? 0);

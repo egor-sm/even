@@ -1,5 +1,4 @@
-import { magnitudeDb } from '~/graph/response-math';
-import { type FilterType, hasGain, isCut, typeAt } from '~/model/filter-types';
+import { type FilterType, hasGain, isCut, magnitudeDb, typeAt } from '~/entities/band';
 import type { Backend, ParameterWriter } from '~/shared/api';
 
 import { mockDesign } from './mock-design';

@@ -1,22 +1,23 @@
 import { clsx } from 'clsx';
 
-import { bandColorVar } from '~/model/bands';
-import { typeNames } from '~/model/filter-types';
+import { bandColorVar, selectionStore, typeNames, useDisplayBands } from '~/entities/band';
+import { viewportStore } from '~/entities/viewport';
 import { formatFrequency, shallowEqual, useStore } from '~/shared/lib';
 import { uiStore } from '~/model/ui';
 import { nodeDown, nodePosition, nodeWheel, toGraphPoint } from '~/graph/interactions';
-import { useDisplayBands } from '~/graph/overlay/use-bands';
 
 const nodeSize = 14;
 
 /** One node per band at (frequency, gain): select, drag, wheel for q. */
 export const BandNodes = () => {
   const bands = useDisplayBands();
-  const { selected, solo, drag, range } = useStore(
-    uiStore,
-    (state) => ({ selected: state.selected, solo: state.solo, drag: state.drag, range: state.view.range }),
+  const { selected, solo } = useStore(
+    selectionStore,
+    (state) => ({ selected: state.selected, solo: state.solo }),
     shallowEqual,
   );
+  const drag = useStore(uiStore, (state) => state.drag);
+  const range = useStore(viewportStore, (state) => state.view.range);
 
   return bands.map((band, index) => {
     const { x, y } = nodePosition(band, range);

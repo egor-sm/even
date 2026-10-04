@@ -2,16 +2,14 @@ import { clsx } from 'clsx';
 
 import { UiIcon } from '~/shared/ui';
 import { uiStore } from '~/model/ui';
-import { shallowEqual, useStore } from '~/shared/lib';
+import { viewportStore } from '~/entities/viewport';
+import { useStore } from '~/shared/lib';
 import { fitRangeToBands, rangeDown, rangeWheel, toGraphPoint } from '~/graph/interactions';
 
 /** The dB axis: drag or scroll to change the display range, double-click to fit it to the bands. */
 export const DbAxis = () => {
-  const { range, active } = useStore(
-    uiStore,
-    (state) => ({ range: state.range, active: state.drag?.kind === 'range' }),
-    shallowEqual,
-  );
+  const range = useStore(viewportStore, (state) => state.range);
+  const active = useStore(uiStore, (state) => state.drag?.kind === 'range');
 
   return (
     <button

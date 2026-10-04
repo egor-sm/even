@@ -1,8 +1,21 @@
 import * as Juce from '@juce-framework/webview';
 
-// Errors are swallowed: in a plain browser (UI development without the plugin) there is no backend.
-const call = (name: string, ...args: unknown[]): Promise<unknown> =>
-  Juce.getNativeFunction(name)(...args).catch(() => undefined);
+/** Whether the page runs inside the plugin (the JUCE backend announced its native functions). */
+export const hasBackend = (): boolean => {
+  const juce: unknown = Reflect.get(window, '__JUCE__');
+  const functions: unknown =
+    typeof juce === 'object' && juce !== null
+      ? Reflect.get(Reflect.get(juce, 'initialisationData') ?? {}, '__juce__functions')
+      : undefined;
+  return Array.isArray(functions) && functions.includes('getPluginInfo');
+};
+
+// In a plain browser (`vp dev` without the plugin) development builds talk to a mock backend instead.
+const call = (name: string, ...args: unknown[]): Promise<unknown> => {
+  if (hasBackend()) return Juce.getNativeFunction(name)(...args).catch(() => undefined);
+  if (import.meta.env.DEV) return import('../dev/mock-backend').then(({ mockNative }) => mockNative[name]?.(args));
+  return Promise.resolve(undefined);
+};
 
 export type AnalyzerMode = 'prepost' | 'post' | 'pre' | 'off';
 

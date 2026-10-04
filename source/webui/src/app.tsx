@@ -4,11 +4,12 @@ import { connectBackend } from './bridge/connection';
 import { BottomBar } from './chrome/bottom-bar';
 import { TopBar } from './chrome/top-bar';
 import { DevPanel } from './dev/dev-panel';
+import { analyzerStats } from './dev/stats';
 import { GraphView } from './graph/graph-view';
 import { uiStore } from './model/ui';
 import { shallowEqual, useStore } from './store/store';
 
-const noStats = () => '';
+const formatStats = () => analyzerStats.format(performance.now());
 
 export const App = () => {
   const { theme, scale, devPanel } = useStore(
@@ -33,7 +34,7 @@ export const App = () => {
       <TopBar />
       <GraphView />
       <BottomBar />
-      {devPanel && <DevPanel stats={noStats} />}
+      {devPanel && <DevPanel stats={formatStats} />}
     </div>
   );
 };

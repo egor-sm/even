@@ -144,6 +144,41 @@ body,
   height: var(--size-graph-h);
 }
 
+.graph-layers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.graph-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1280px;
+  height: var(--size-graph-h);
+}
+
+.db-label,
+.frequency-label {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--graph-label);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.db-label {
+  left: 36px;
+  translate: -100% -50%;
+  text-align: right;
+}
+
+.frequency-label {
+  top: 640px;
+}
+
 /* Development panel (not part of the design) */
 
 .dev-panel {

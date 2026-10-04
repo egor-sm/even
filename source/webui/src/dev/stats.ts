@@ -61,3 +61,6 @@ export class AnalyzerStats {
     ].join('\n');
   }
 }
+
+/** The analyzer metrics shown in the development panel. */
+export const analyzerStats = new AnalyzerStats();

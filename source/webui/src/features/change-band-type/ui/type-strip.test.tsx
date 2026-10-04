@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
-import { recordingBackend } from '~/dev/test-backend';
 import { type Band, bandsStore, selectionStore } from '~/entities/band';
 import { viewportStore } from '~/entities/viewport';
+import { recordingBackend } from '~/shared/testing';
 
 import { TypeButton } from './type-button';
 import { TypeStrip } from './type-strip';

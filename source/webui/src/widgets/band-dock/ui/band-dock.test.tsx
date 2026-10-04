@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
-import { recordingBackend } from '~/dev/test-backend';
 import { type Band, bandsStore, selectionStore } from '~/entities/band';
 import { graphRootAttribute, viewportStore } from '~/entities/viewport';
 import { endGesture, moveGesture } from '~/shared/lib';
+import { recordingBackend } from '~/shared/testing';
 
 import { BandDock } from './band-dock';
 

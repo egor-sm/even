@@ -1,5 +1,6 @@
-import { type FilterType, slopes } from '~/entities/band';
 import type { Section } from '~/shared/api';
+
+import { type MockType, slopes } from './mock-types';
 
 // Development only: the band design of dsp/band_design.cpp, so the mock backend can send a response
 // packet without the plugin. The plugin itself always uses the C++ design.
@@ -14,7 +15,7 @@ const mix = (g: number, q: number, lowpassMix: number, bandpassMix: number, high
 });
 
 // Butterworth of order slope / 6; the user's q scales the most resonant section.
-const designCut = (band: { type: FilterType; q: number; slope: number }, warped: number): Section[] => {
+const designCut = (band: { type: MockType; q: number; slope: number }, warped: number): Section[] => {
   const order = (slopes[band.slope] ?? 12) / 6;
   const highpass = band.type === 'lcut' ? 1 : 0;
   const sections: Section[] = [];
@@ -31,7 +32,7 @@ const designCut = (band: { type: FilterType; q: number; slope: number }, warped:
 };
 
 export const mockDesign = (
-  band: { type: FilterType; f: number; g: number; q: number; slope: number },
+  band: { type: MockType; f: number; g: number; q: number; slope: number },
   sampleRate: number,
 ): Section[] => {
   const warped = Math.tan((Math.PI * Math.min(band.f, 0.49 * sampleRate)) / sampleRate);
@@ -40,7 +41,7 @@ export const mockDesign = (
   const gain = 10 ** (band.g / 20);
   const sqrtGain = 10 ** (band.g / 40);
   const fourthRoot = 10 ** (band.g / 80);
-  const single: Record<Exclude<FilterType, 'lcut' | 'hcut'>, Section> = {
+  const single: Record<Exclude<MockType, 'lcut' | 'hcut'>, Section> = {
     bell: mix(warped, band.q * sqrtGain, 1, gain, 1),
     lshelf: mix(warped / fourthRoot, band.q, gain, sqrtGain, 1),
     hshelf: mix(warped * fourthRoot, band.q, 1, sqrtGain, gain),

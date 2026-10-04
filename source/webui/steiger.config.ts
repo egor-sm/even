@@ -6,10 +6,6 @@ import { defineConfig } from 'steiger';
 export default defineConfig([
   ...fsd.configs.recommended,
   {
-    // Development tools (mock backend, stats) live outside the layers.
-    ignores: ['**/dev/**'],
-  },
-  {
     rules: {
       // A feature is a user action, even when only one widget shows it (merging it into the widget
       // would put gesture logic back into the composition).

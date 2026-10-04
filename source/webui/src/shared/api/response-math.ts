@@ -1,4 +1,4 @@
-import type { Section } from '~/shared/api';
+import type { Section } from './section';
 
 /** Floors the result so a notch center (|H| = 0) is a very deep finite value, not -Infinity. */
 const minMagnitudeSquared = 1e-30;

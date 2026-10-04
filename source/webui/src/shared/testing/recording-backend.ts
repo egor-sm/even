@@ -1,6 +1,6 @@
 import { type Backend, setBackend } from '~/shared/api';
 
-/** Development only: a backend for component tests that records what the UI asks of C++. */
+/** For component tests: a backend that records what the UI asks of C++. */
 export const recordingBackend = () => {
   const calls: { name: string; args: unknown[] }[] = [];
   const record =

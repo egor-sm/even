@@ -1,7 +1,7 @@
-import { type FilterType, hasGain, isCut, magnitudeDb, typeAt } from '~/entities/band';
-import type { Backend, ParameterWriter } from '~/shared/api';
+import { type Backend, magnitudeDb, type ParameterWriter } from '~/shared/api';
 
 import { mockDesign } from './mock-design';
+import { hasGain, isCut, type MockType, mockTypes, typeAt } from './mock-types';
 
 /**
  * Development only: stands in for the plugin when the UI runs in a plain browser (`vp dev` without
@@ -12,7 +12,7 @@ import { mockDesign } from './mock-design';
 type Slot = {
   used: boolean;
   on: boolean;
-  type: FilterType;
+  type: MockType;
   f: number;
   g: number;
   q: number;
@@ -56,11 +56,7 @@ const sendResponse = () => {
   let offset = 16;
   used.forEach(({ slot, index }, i) => {
     view.setUint32(offset, index + 1, true);
-    view.setUint32(
-      offset + 4,
-      ['bell', 'lshelf', 'hshelf', 'lcut', 'hcut', 'notch', 'bpass', 'tilt'].indexOf(slot.type),
-      true,
-    );
+    view.setUint32(offset + 4, mockTypes.indexOf(slot.type), true);
     view.setUint32(offset + 8, designs[i].length, true);
     view.setUint32(offset + 12, slot.on ? 1 : 0, true);
     view.setUint32(offset + 16, slot.serial, true);

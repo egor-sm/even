@@ -4,13 +4,13 @@ import {
   bandColorVar,
   findBand,
   hasQHandles,
-  magnitudeDb,
   qToOctaves,
   selectionStore,
   useDisplayBands,
   useSampleRate,
 } from '~/entities/band';
 import { createMapper, graph, maxHz, minHz, viewportStore } from '~/entities/viewport';
+import { magnitudeDb } from '~/shared/api';
 import { clamp, gestureStore, useStore } from '~/shared/lib';
 
 import { qDown } from '../model/q-gesture';

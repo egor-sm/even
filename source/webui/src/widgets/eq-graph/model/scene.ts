@@ -1,18 +1,12 @@
 import { clsx } from 'clsx';
 
 import { AnalyzerLayer, onAnalyzerFrame, Spectrum } from '~/entities/analyzer';
-import {
-  type BandsState,
-  bandsStore,
-  findBand,
-  responseDb,
-  selectionStore,
-  withBandFrequencies,
-} from '~/entities/band';
+import { type BandsState, bandsStore, findBand, selectionStore } from '~/entities/band';
 import { createMapper, graph, gridLines, gridMorph, plotFrequencies, viewportStore } from '~/entities/viewport';
 import { drawGhost, GhostPreview, ghostLayerClass } from '~/features/change-band-type';
 import { settingsStore } from '~/features/settings';
 import { drawSolo, soloLayerEnteringClass, soloRange } from '~/features/solo-band';
+import { responseDb, withBandFrequencies } from '~/shared/api';
 import { CanvasLayer } from '~/shared/lib';
 import { type GraphColors, readGraphColors } from '~/shared/ui';
 

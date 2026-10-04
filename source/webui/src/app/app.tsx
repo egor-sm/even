@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 
-import { DevPanel } from '~/dev/dev-panel';
-import { analyzerStats } from '~/dev/stats';
 import { settingsStore } from '~/features/settings';
 import { shallowEqual, useStore } from '~/shared/lib';
 import { BandDock } from '~/widgets/band-dock';
 import { BottomBar } from '~/widgets/bottom-bar';
+import { analyzerStats, DevPanel } from '~/widgets/dev-panel';
 import { GraphView } from '~/widgets/eq-graph';
 import { TopBar } from '~/widgets/top-bar';
 

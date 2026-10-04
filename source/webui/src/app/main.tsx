@@ -10,7 +10,7 @@ import '~/shared/ui';
 import './styles/base.css';
 
 // In a plain browser (`vp dev` without the plugin) a mock stands in for C++. Not part of release builds.
-if (import.meta.env.DEV && !hasPluginBackend()) setBackend((await import('~/dev/mock-backend')).mockBackend);
+if (import.meta.env.DEV && !hasPluginBackend()) setBackend((await import('~/shared/mock')).mockBackend);
 
 const root = document.querySelector('#root');
 if (root === null) throw new Error('Missing #root element');

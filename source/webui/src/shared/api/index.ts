@@ -2,5 +2,6 @@ export { type Backend, type ContinuousField, hasPluginBackend, type ParameterWri
 export { type AnalyzerFrame, decodeBase64Frame } from './frame';
 export { type AnalyzerMode, native } from './native';
 export { bandParameters, setMute } from './parameters';
+export { magnitudeDb, responseDb, withBandFrequencies } from './response-math';
 export { type BandResponse, decodeBase64Response, type EqResponse } from './response';
 export { type Section, toSections } from './section';

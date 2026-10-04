@@ -1,5 +1,4 @@
 export { octavesToQ, qToOctaves } from './lib/bandwidth';
-export { magnitudeDb, responseDb, withBandFrequencies } from './lib/response-math';
 export { createBand } from './model/actions';
 export {
   type Band,

@@ -29,6 +29,15 @@ export const App = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // The web view's own context menu (Reload, …) does not belong in a plugin. Development builds keep
+  // it for Inspect Element.
+  useEffect(() => {
+    if (import.meta.env.DEV) return undefined;
+    const onContextMenu = (event: MouseEvent) => event.preventDefault();
+    window.addEventListener('contextmenu', onContextMenu);
+    return () => window.removeEventListener('contextmenu', onContextMenu);
+  }, []);
+
   return (
     <div className="eq" data-theme={theme} style={{ transform: `scale(${scale / 100})` }}>
       <TopBar />

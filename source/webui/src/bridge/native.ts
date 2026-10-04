@@ -1,5 +1,7 @@
 import * as Juce from '@juce-framework/webview';
 
+import type { Section } from '../graph/response-math';
+
 /** Whether the page runs inside the plugin (the JUCE backend announced its native functions). */
 export const hasBackend = (): boolean => {
   const juce: unknown = Reflect.get(window, '__JUCE__');
@@ -33,6 +35,8 @@ export const native = {
   deleteBand: (slot: number) => call('deleteBand', slot),
   /** Also adjusts q and gain to suit the new type (model::withShape). */
   setBandShape: (slot: number, typeIndex: number) => call('setBandShape', slot, typeIndex),
+  /** Resolves to the sections the band would have with another type (see toSections). */
+  previewBand: (slot: number, typeIndex: number) => call('previewBand', slot, typeIndex),
   /** Each resolves to {canUndo, canRedo}. */
   undo: () => call('undo'),
   redo: () => call('redo'),
@@ -40,4 +44,23 @@ export const native = {
   /** Resolves to {theme, scale}. */
   getSettings: () => call('getSettings'),
   setSetting: (key: 'theme' | 'scale', value: string | number) => call('setSetting', key, value),
+};
+
+/** Sections sent as plain objects (previewBand), or null when the value is not a list of them. */
+export const toSections = (value: unknown): Section[] | null => {
+  if (!Array.isArray(value)) return null;
+  const sections: Section[] = [];
+  for (const item of value) {
+    if (typeof item !== 'object' || item === null) return null;
+    const field = (name: string) => Number(Reflect.get(item, name));
+    sections.push({
+      order: field('order') === 1 ? 1 : 2,
+      g: field('g'),
+      q: field('q'),
+      lowpassMix: field('lowpassMix'),
+      bandpassMix: field('bandpassMix'),
+      highpassMix: field('highpassMix'),
+    });
+  }
+  return sections.every((section) => Number.isFinite(section.g) && Number.isFinite(section.q)) ? sections : null;
 };

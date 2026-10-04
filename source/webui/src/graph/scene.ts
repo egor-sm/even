@@ -1,19 +1,23 @@
 import { onAnalyzerFrame } from '../bridge/connection';
+import { native, toSections } from '../bridge/native';
 import { analyzerStats } from '../dev/stats';
-import { type BandsState, bandsStore } from '../model/bands';
+import { type BandsState, bandsStore, findBand } from '../model/bands';
+import { typeIndex } from '../model/filter-types';
 import { type UiState, uiStore } from '../model/ui';
 import { AnalyzerLayer } from './analyzer-layer';
 import { gridLines, gridMorph } from './axis-math';
 import { CanvasLayer } from './canvas-layer';
+import { drawGhost } from './draw-ghost';
 import { drawGrid } from './draw-grid';
 import { drawResponse, responseDb, sampleFrequencies } from './draw-response';
 import { createMapper } from './geometry';
+import { type Section } from './response-math';
 import { Spectrum } from './spectrum';
 import { type GraphColors, readGraphColors } from './theme-colors';
 
 const maxAnalyzerFps = 60;
 
-type Dirty = { grid: boolean; response: boolean; analyzer: boolean };
+type Dirty = { grid: boolean; response: boolean; ghost: boolean; analyzer: boolean };
 
 /**
  * The canvas layers of the graph, outside of React: redraws a layer in the next animation frame
@@ -23,14 +27,19 @@ export class GraphScene {
   private readonly grid = new CanvasLayer('grid');
   private readonly analyzer = new AnalyzerLayer();
   private readonly response = new CanvasLayer('response');
+  private readonly ghostLayer = new CanvasLayer('ghost');
   private readonly pre = new Spectrum();
   private readonly post = new Spectrum();
   private readonly gridPairs = gridMorph(gridLines(createMapper(1), 'hz'), gridLines(createMapper(1), 'note'));
-  private readonly dirty: Dirty = { grid: true, response: true, analyzer: true };
+  private readonly dirty: Dirty = { grid: true, response: true, ghost: true, analyzer: true };
   private readonly unsubscribe: (() => void)[];
 
   private colors: GraphColors;
   private responseCache: { bands: BandsState; frequencies: number[]; bandDb: Map<number, Float64Array> } | null = null;
+  private totalDb = new Float64Array(0);
+  /** Sections of the selected band with the hovered type, for the ghost curve. */
+  private ghost: { key: string; slot: number; sections: Section[] } | null = null;
+  private ghostRequest = 0;
   private frame: number | null = null;
   private lastAnalyzerDraw = 0;
   private analyzerMoving = false;
@@ -39,7 +48,7 @@ export class GraphScene {
     container: HTMLElement,
     private readonly themeRoot: HTMLElement,
   ) {
-    container.append(this.grid.canvas, this.analyzer.canvas, this.response.canvas);
+    container.append(this.grid.canvas, this.analyzer.canvas, this.response.canvas, this.ghostLayer.canvas);
     this.colors = readGraphColors(themeRoot);
     this.analyzer.setColors(this.analyzerColors());
     this.resize(uiStore.get().scale);
@@ -51,7 +60,10 @@ export class GraphScene {
         this.onUiChange(previousUi, ui);
         previousUi = ui;
       }),
-      bandsStore.subscribe(() => this.invalidate({ response: true })),
+      bandsStore.subscribe(() => {
+        this.updateGhost();
+        this.invalidate({ response: true, ghost: true });
+      }),
       onAnalyzerFrame((frame, info) => {
         const receivedAt = performance.now();
         for (const [spectrum, levels] of [
@@ -72,7 +84,8 @@ export class GraphScene {
     for (const unsubscribe of this.unsubscribe) unsubscribe();
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.analyzer.dispose();
-    for (const canvas of [this.grid.canvas, this.analyzer.canvas, this.response.canvas]) canvas.remove();
+    for (const canvas of [this.grid.canvas, this.analyzer.canvas, this.response.canvas, this.ghostLayer.canvas])
+      canvas.remove();
   }
 
   private analyzerColors() {
@@ -84,23 +97,28 @@ export class GraphScene {
     this.grid.resize(scale);
     this.analyzer.resize(scale);
     this.response.resize(scale);
+    this.ghostLayer.resize(scale);
   }
 
   private onUiChange(previous: UiState, ui: UiState): void {
     if (previous.scale !== ui.scale) {
       this.resize(ui.scale);
-      this.invalidate({ grid: true, response: true, analyzer: true });
+      this.invalidate({ grid: true, response: true, ghost: true, analyzer: true });
     }
     if (previous.theme !== ui.theme) {
       // The theme attribute is applied by React after this store change: read the colors next frame.
       requestAnimationFrame(() => {
         this.colors = readGraphColors(this.themeRoot);
         this.analyzer.setColors(this.analyzerColors());
-        this.invalidate({ grid: true, response: true, analyzer: true });
+        this.invalidate({ grid: true, response: true, ghost: true, analyzer: true });
       });
     }
-    if (previous.view !== ui.view) this.invalidate({ grid: true, response: true, analyzer: false });
+    if (previous.view !== ui.view) this.invalidate({ grid: true, response: true, ghost: true });
     if (previous.selected !== ui.selected || previous.solo !== ui.solo) this.invalidate({ response: true });
+    if (previous.selected !== ui.selected || previous.hoverType !== ui.hoverType) {
+      this.updateGhost();
+      this.invalidate({ ghost: true });
+    }
   }
 
   private invalidate(parts: Partial<Dirty>): void {
@@ -121,6 +139,11 @@ export class GraphScene {
     if (this.dirty.response) {
       this.dirty.response = false;
       this.drawResponse(ui);
+    }
+
+    if (this.dirty.ghost) {
+      this.dirty.ghost = false;
+      this.drawGhost(ui);
     }
 
     if (this.dirty.analyzer) {
@@ -156,6 +179,7 @@ export class GraphScene {
 
     const { frequencies, bandDb } = this.responseCache;
     const totalDb = new Float64Array(frequencies.length);
+    this.totalDb = totalDb;
     for (const band of bands.bands) {
       const db = bandDb.get(band.slot);
       if (!band.on || db === undefined) continue;
@@ -171,6 +195,51 @@ export class GraphScene {
       selected: ui.selected,
       solo: ui.solo,
       colors: this.colors,
+    });
+  }
+
+  // Asks C++ for the selected band's sections with the hovered type; late answers are dropped.
+  private updateGhost(): void {
+    const { selected, hoverType } = uiStore.get();
+    const band = findBand(bandsStore.get().bands, selected);
+    if (band === undefined || hoverType === null || hoverType === band.type) {
+      this.ghostRequest++;
+      this.ghost = null;
+      return;
+    }
+
+    const key = [band.slot, hoverType, band.f, band.g, band.q, band.slope, band.on].join('|');
+    if (this.ghost?.key === key) return;
+
+    const request = ++this.ghostRequest;
+    void native.previewBand(band.slot, typeIndex(hoverType)).then((result) => {
+      if (request !== this.ghostRequest) return;
+      const sections = toSections(result);
+      this.ghost = sections === null ? null : { key, slot: band.slot, sections };
+      this.invalidate({ ghost: true });
+    });
+  }
+
+  private drawGhost(ui: UiState): void {
+    const bands = bandsStore.get();
+    const band = findBand(bands.bands, this.ghost?.slot ?? null);
+    const cache = this.responseCache;
+    if (this.ghost === null || band === undefined || cache === null || ui.hoverType === null) {
+      drawGhost(this.ghostLayer, null);
+      return;
+    }
+
+    // The total with the band's own response swapped for the previewed one (bypassed bands add nothing).
+    const own = cache.bandDb.get(band.slot);
+    const previewDb = responseDb(this.ghost.sections, cache.frequencies, bands.sampleRate);
+    const totalDb = this.totalDb.map((db, i) => (band.on ? db - (own?.[i] ?? 0) + previewDb[i] : db));
+    const mapper = createMapper(ui.view.range);
+    drawGhost(this.ghostLayer, {
+      mapper,
+      frequencies: cache.frequencies,
+      totalDb,
+      nodeX: mapper.x(band.f),
+      color: this.colors.ghost,
     });
   }
 }

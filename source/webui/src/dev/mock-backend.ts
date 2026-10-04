@@ -197,6 +197,13 @@ export const mockNative: Record<string, (args: unknown[]) => unknown> = {
     sendResponse();
     commit();
   },
+  previewBand: ([slot, typeIndex]) => {
+    const band = { ...slots[Number(slot) - 1] };
+    const type = typeAt(Number(typeIndex));
+    if (isCut(type) && !isCut(band.type)) band.q = 0.71;
+    if (hasGain(type) && (!hasGain(band.type) || Math.abs(band.g) < 0.05)) band.g = 4;
+    return mockDesign({ ...band, type }, sampleRate);
+  },
   undo: () => {
     commit();
     if (historyPosition > 0) restore(history[--historyPosition]);

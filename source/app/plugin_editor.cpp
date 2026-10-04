@@ -1,6 +1,7 @@
 #include "plugin_editor.h"
 
 #include "build_config.h"
+#include "dsp/band_design.h"
 #include "web_resources.h"
 
 #include <optional>
@@ -44,6 +45,23 @@ std::optional<AnalyzerMode> analyzerModeArgument(const juce::Array<juce::var> &a
   if (name == "off")
     return AnalyzerMode::off;
   return std::nullopt;
+}
+
+// The designed sections as plain objects for the page (see dsp::Section).
+juce::var sectionsVar(const dsp::BandDesign &design) {
+  juce::Array<juce::var> sections;
+  for (std::size_t i = 0; i < design.count; ++i) {
+    const auto &section = design.sections[i];
+    auto object = std::make_unique<juce::DynamicObject>();
+    object->setProperty("order", section.order);
+    object->setProperty("g", section.g);
+    object->setProperty("q", section.q);
+    object->setProperty("lowpassMix", section.lowpassMix);
+    object->setProperty("bandpassMix", section.bandpassMix);
+    object->setProperty("highpassMix", section.highpassMix);
+    sections.add(juce::var{object.release()});
+  }
+  return sections;
 }
 
 std::optional<juce::String> getDevServerUrl() {
@@ -177,6 +195,22 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                                   applyScale();
                                 }
                                 complete(settingsVar());
+                              })
+          // (band, shape) => the sections the band would have with that shape (with the q and gain
+          // adjustments of setBandShape): the page previews the change as a ghost curve.
+          .withNativeFunction("previewBand",
+                              [this](const juce::Array<juce::var> &args, const auto &complete) {
+                                const auto slot = slotArgument(args, 0);
+                                const auto shape = shapeArgument(args, 1);
+                                if (!slot || !shape) {
+                                  complete({});
+                                  return;
+                                }
+                                const auto sampleRate =
+                                    pluginProcessor.getSampleRate() > 0.0 ? pluginProcessor.getSampleRate() : 48000.0;
+                                const auto band = model::withShape(pluginProcessor.getBandSlots().read(*slot), *shape);
+                                const auto parameters = dsp::sanitize(model::toParameters(band), sampleRate);
+                                complete(sectionsVar(dsp::design(parameters, sampleRate)));
                               })
           .withNativeFunction("setAnalyzerActive",
                               [this](const juce::Array<juce::var> &args, const auto &complete) {

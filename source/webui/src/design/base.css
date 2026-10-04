@@ -50,6 +50,7 @@ body,
   .eq *::before,
   .eq *::after {
     animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
 }
@@ -168,6 +169,20 @@ body,
   top: 0;
   width: 1280px;
   height: var(--size-graph-h);
+}
+
+/* The ghost curve (type preview) pulses. */
+.graph-canvas.ghost {
+  animation: ghost-pulse 1.2s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes ghost-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.55;
+  }
 }
 
 .db-label,

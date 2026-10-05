@@ -56,7 +56,7 @@ The releases have an installer for Windows, but if you want to test the plugin f
 - [Ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages)
 - A C++23 compiler (Xcode 16+, Visual Studio 2022, Clang 17+ or GCC 13+)
 - [Node.js](https://nodejs.org/) 24+ and [pnpm](https://pnpm.io/installation)
-- (Optional) [Vite+](https://viteplus.dev/guide/) global CLI (`vp`); without it use `pnpm exec vp ...` in `source/webui`
+- (Optional) [Vite+](https://viteplus.dev/guide/) global CLI (`vp`); without it use `pnpm exec vp ...` in `source/ui`
 - Windows only: the `Microsoft.Web.WebView2` NuGet package (see the
   [JUCE docs](https://github.com/juce-framework/JUCE/blob/master/docs/CMake%20API.md))
 - Linux only: `libwebkit2gtk-4.1-dev` and the usual [JUCE dependencies](https://github.com/juce-framework/JUCE/blob/master/docs/Linux%20Dependencies.md)
@@ -86,14 +86,14 @@ ctest --preset debug
 ### UI development with hot reload
 
 ```sh
-cd source/webui
+cd source/ui
 vp install
 vp dev                           # terminal 1: Vite dev server on http://localhost:5173
 cmake --preset dev               # terminal 2: Debug build that loads the UI from the dev server
 cmake --build --preset dev
 ```
 
-Then launch the Standalone app; changes in `source/webui/src` are applied without rebuilding the plugin.
+Then launch the Standalone app; changes in `source/ui/src` are applied without rebuilding the plugin.
 
 Opened in a plain browser (`vp dev` only), the UI talks to a development mock backend that sends EQ responses and analyzer frames in the plugin's formats, so the UI can be worked on without the app. Development builds show a panel with a test signal, mute, UI scale and analyzer stats; in any build Ctrl+Shift+D toggles it.
 
@@ -104,7 +104,7 @@ source/
   app/      JUCE app built as VST3 / Standalone (processor, editor hosting the web view, web UI resources)
   dsp/      Plain C++ DSP building blocks (no JUCE), unit-tested
   model/    Plain C++ editing model: band slots, edit rules, undo history (no JUCE), unit-tested
-  webui/    Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview
+  ui/       Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview
 tests/      Catch2 unit tests
 cmake/      CMake helpers (CPM.cmake, compiler warnings)
 scripts/    Formatting and linting helpers
@@ -122,18 +122,18 @@ scripts/format.sh --check    # verify only
 scripts/tidy.sh [preset]     # lint using build/<preset>/compile_commands.json (default: debug)
 ```
 
-Web UI code (`source/webui`) is formatted, linted and type checked by [Vite+](https://viteplus.dev/guide/check)
-(Oxfmt, Oxlint with type-aware rules); configuration lives in `source/webui/vite.config.ts`.
+Web UI code (`source/ui`) is formatted, linted and type checked by [Vite+](https://viteplus.dev/guide/check)
+(Oxfmt, Oxlint with type-aware rules); configuration lives in `source/ui/vite.config.ts`.
 
 ```sh
-cd source/webui
+cd source/ui
 vp check                   # format check + lint + type check
 vp check --fix             # apply formatting and autofixes
 vp test                    # unit and component tests
 pnpm exec steiger src      # Feature-Sliced Design boundaries (steiger.config.ts)
 ```
 
-`source/webui/src` follows [Feature-Sliced Design](https://feature-sliced.design) without pages and processes:
+`source/ui/src` follows [Feature-Sliced Design](https://feature-sliced.design) without pages and processes:
 `app` (entry, wiring to C++) → `widgets` (top bar, graph, band dock, bottom bar) → `features` (one user action
 each: edit a node, change the type, solo, …) → `entities` (bands, viewport, analyzer) → `shared` (JUCE bridge,
 helpers, design system). Layers import only downwards, slices only through their `index.ts` and not from

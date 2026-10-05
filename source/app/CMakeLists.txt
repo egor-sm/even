@@ -42,7 +42,7 @@ target_include_directories(even PRIVATE "${CMAKE_BINARY_DIR}/generated")
 
 target_link_libraries(
   even
-  PRIVATE even_webui_assets
+  PRIVATE even_ui_assets
           even::model
           juce::juce_audio_utils
           juce::juce_dsp

@@ -30,7 +30,7 @@ CPMAddPackage(
 
 add_subdirectory(source/dsp)
 add_subdirectory(source/model)
-add_subdirectory(source/webui)
+add_subdirectory(source/ui)
 add_subdirectory(source/app)
 
 if(EVEN_BUILD_TESTS)

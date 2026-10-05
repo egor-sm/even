@@ -6,7 +6,7 @@
 
 # Web UI
 node_modules/
-/source/webui/dist/
+/source/ui/dist/
 
 # IDE and OS
 /.vscode/

@@ -6,7 +6,7 @@
 
 namespace even {
 
-// Serves files of the bundled web UI (source/webui) to the WebBrowserComponent.
+// Serves files of the bundled web UI (source/ui) to the WebBrowserComponent.
 [[nodiscard]] std::optional<juce::WebBrowserComponent::Resource> findWebUiResource(const juce::String &url);
 
 } // namespace even

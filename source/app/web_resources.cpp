@@ -1,6 +1,6 @@
 #include "web_resources.h"
 
-#include <webui_assets.h>
+#include <ui_assets.h>
 
 #include <string_view>
 #include <unordered_map>
@@ -10,7 +10,7 @@ namespace even {
 namespace {
 
 juce::ZipFile &getWebUiArchive() {
-  static juce::MemoryInputStream stream{WebUiAssets::webui_zip, WebUiAssets::webui_zipSize, false};
+  static juce::MemoryInputStream stream{UiAssets::ui_zip, UiAssets::ui_zipSize, false};
   static juce::ZipFile archive{stream};
   return archive;
 }

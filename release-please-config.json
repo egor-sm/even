@@ -15,7 +15,8 @@
           "path": "source/ui/package.json",
           "jsonpath": "$.version"
         }
-      ]
+      ],
+      "release-as": "0.1.0"
     }
   }
 }

@@ -74,6 +74,18 @@ cmake --build --preset release
 The web UI is built and embedded into the plugin automatically.
 Artefacts end up in `build/release/source/app/even_artefacts/Release`.
 
+### macOS installer
+
+The `dist` preset builds a universal (arm64 + x86_64) release for macOS 12+ without tests; the script packs it into
+an installer with the VST3 plug-in and the Standalone app as optional components:
+
+```sh
+cmake --preset dist
+cmake --build --preset dist
+scripts/macos/build-pkg.sh build/dist/source/app/even_artefacts/Release dist
+```
+
+
 ### Tests
 
 C++ code is covered by [Catch2](https://github.com/catchorg/Catch2) tests kept next to the code, in each module's

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+  <title>Even @VERSION@</title>
+  <license file="LICENSE.txt"/>
+  <options customize="always" require-scripts="false" hostArchitectures="@HOST_ARCHITECTURES@"/>
+  <domains enable_localSystem="true"/>
+  <allowed-os-versions>
+    <os-version min="@MINIMUM_SYSTEM_VERSION@"/>
+  </allowed-os-versions>
+
+  <choices-outline>
+    <line choice="vst3"/>
+    <line choice="standalone"/>
+  </choices-outline>
+
+  <choice id="vst3" title="VST3 plug-in" description="Even.vst3 in /Library/Audio/Plug-Ins/VST3, for every DAW that loads VST3 plug-ins.">
+    <pkg-ref id="com.eveneq.pkg.vst3"/>
+  </choice>
+  <choice id="standalone" title="Standalone app" description="Even.app in /Applications: the equalizer without a DAW.">
+    <pkg-ref id="com.eveneq.pkg.standalone"/>
+  </choice>
+
+  <pkg-ref id="com.eveneq.pkg.vst3" version="@VERSION@">even-vst3.pkg</pkg-ref>
+  <pkg-ref id="com.eveneq.pkg.standalone" version="@VERSION@">even-standalone.pkg</pkg-ref>
+</installer-gui-script>

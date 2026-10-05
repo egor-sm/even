@@ -28,12 +28,13 @@ CPMAddPackage(
   URL https://github.com/juce-framework/JUCE/archive/refs/tags/9.0.3.tar.gz
   URL_HASH SHA256=a81e5508b8a0efa483917794ebeaff56aed3075730c405a947734413f40c1aba)
 
+if(EVEN_BUILD_TESTS)
+  enable_testing()
+  include(cmake/catch2.cmake)
+  add_subdirectory(source/testing)
+endif()
+
 add_subdirectory(source/dsp)
 add_subdirectory(source/model)
 add_subdirectory(source/ui)
 add_subdirectory(source/app)
-
-if(EVEN_BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(tests)
-endif()

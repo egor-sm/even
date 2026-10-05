@@ -1,7 +1,7 @@
 #include "dsp/band_design.h"
 #include "dsp/band_response.h"
 #include "dsp/section_filter.h"
-#include "support/frequency_response.h"
+#include "testing/frequency_response.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>

@@ -1,5 +1,5 @@
 #include "app/plugin/plugin_processor.h"
-#include "support/message_loop.h"
+#include "app/tests/message_loop.h"
 
 #include <catch2/catch_test_macros.hpp>
 

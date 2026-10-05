@@ -1,5 +1,5 @@
 #include "model/solo.h"
-#include "support/frequency_response.h"
+#include "testing/frequency_response.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>

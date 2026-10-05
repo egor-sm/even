@@ -16,7 +16,7 @@ juce_add_plugin(
   MICROPHONE_PERMISSION_TEXT "Even analyses the audio input in the standalone app.")
 
 # The app's own code. Like a JUCE module it is an interface library: the plugin and the app tests
-# (tests/app) each compile it with their own JUCE setup.
+# (tests/) each compile it with their own JUCE setup.
 add_library(even_app_code INTERFACE)
 
 target_sources(
@@ -60,3 +60,7 @@ target_link_libraries(
   PRIVATE even_app_code
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags
          juce::juce_recommended_warning_flags)
+
+if(EVEN_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()

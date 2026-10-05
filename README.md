@@ -76,13 +76,15 @@ Artefacts end up in `build/release/source/app/even_artefacts/Release`.
 
 ### Tests
 
-C++ code is covered by [Catch2](https://github.com/catchorg/Catch2) tests in `tests/`: `even_tests` for the
-JUCE-free `source/dsp` and `source/model`, `even_app_tests` for `source/app` (band slots, undo history, the response
-packet and the page's native functions on a real `PluginProcessor`, without a host or a web view):
+C++ code is covered by [Catch2](https://github.com/catchorg/Catch2) tests kept next to the code, in each module's
+`tests/`: `even_dsp_tests` and `even_model_tests` for the JUCE-free `source/dsp` and `source/model`, `even_app_tests`
+for `source/app` (band slots, undo history, the response packet and the page's native functions on a real
+`PluginProcessor`, without a host or a web view). Helpers shared by several modules live in `source/testing`.
 
 ```sh
-cmake --build --preset debug --target even_tests even_app_tests
-ctest --preset debug
+cmake --build --preset debug --target even_dsp_tests even_model_tests even_app_tests
+ctest --preset debug          # all tests
+ctest --preset debug -L dsp   # one module: dsp, model or app
 ```
 
 ### UI development with hot reload
@@ -103,7 +105,7 @@ Opened in a plain browser (`vp dev` only), the UI talks to a development mock ba
 
 ```
 source/
-  app/      JUCE app built as VST3 / Standalone, unit-tested in tests/app
+  app/      JUCE app built as VST3 / Standalone
     plugin/     processor, editor hosting the web view, parameters
     state/      band slots and undo history on top of the parameters, response state, user settings
     web/        bridge to the page: native functions, parameter relays, response packet, bundled resources
@@ -111,8 +113,8 @@ source/
     debug/      test signal
   dsp/      Plain C++ DSP building blocks (no JUCE), unit-tested
   model/    Plain C++ editing model: band slots, edit rules, undo history (no JUCE), unit-tested
+  testing/  Helpers shared by the module tests (each module keeps its tests in tests/)
   ui/       Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview
-tests/      Catch2 unit tests
 cmake/      CMake helpers (CPM.cmake, compiler warnings)
 scripts/    Formatting and linting helpers
 ```

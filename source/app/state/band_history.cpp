@@ -23,6 +23,7 @@ BandHistory::~BandHistory() {
 }
 
 bool BandHistory::undo() {
+  JUCE_ASSERT_MESSAGE_THREAD
   // Edits whose recording is still pending (or changes made without a gesture) become a step
   // first, so undo goes back to the state before them.
   handleUpdateNowIfNeeded();
@@ -35,6 +36,7 @@ bool BandHistory::undo() {
 }
 
 bool BandHistory::redo() {
+  JUCE_ASSERT_MESSAGE_THREAD
   handleUpdateNowIfNeeded();
 
   const auto next = history.redo();

@@ -63,6 +63,7 @@ model::Bands BandSlots::readAll() const {
 }
 
 void BandSlots::write(std::size_t slot, const model::BandSlot &band) {
+  JUCE_ASSERT_MESSAGE_THREAD
   const auto &p = slotParameters.at(slot);
   set(p[BandField::shape], static_cast<float>(band.shape));
   set(p[BandField::frequency], static_cast<float>(band.frequencyHz));
@@ -77,6 +78,7 @@ void BandSlots::write(std::size_t slot, const model::BandSlot &band) {
 }
 
 std::optional<std::size_t> BandSlots::create(dsp::FilterShape shape, double frequencyHz, double gainDb) {
+  JUCE_ASSERT_MESSAGE_THREAD
   const auto bands = readAll();
   const auto slot = model::firstFreeSlot(bands);
   if (slot)
@@ -85,6 +87,7 @@ std::optional<std::size_t> BandSlots::create(dsp::FilterShape shape, double freq
 }
 
 void BandSlots::remove(std::size_t slot) {
+  JUCE_ASSERT_MESSAGE_THREAD
   auto band = read(slot);
   band.used = false;
   band.serial = 0;
@@ -92,6 +95,7 @@ void BandSlots::remove(std::size_t slot) {
 }
 
 void BandSlots::setShape(std::size_t slot, dsp::FilterShape shape) {
+  JUCE_ASSERT_MESSAGE_THREAD
   write(slot, model::withShape(read(slot), shape));
 }
 

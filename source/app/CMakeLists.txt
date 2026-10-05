@@ -15,6 +15,20 @@ juce_add_plugin(
   MICROPHONE_PERMISSION_ENABLED TRUE
   MICROPHONE_PERMISSION_TEXT "Even analyses the audio input in the standalone app.")
 
+# The linker signs each binary ad hoc before the bundle around it is finished (JUCE then adds
+# moduleinfo.json to the VST3 and resources to both), so the signatures do not match the bundles;
+# macOS on Apple Silicon does not load a bundle whose signature is broken. Sign the finished
+# bundles again (runs after JUCE's own post-build steps).
+if(APPLE)
+  foreach(format VST3 Standalone)
+    add_custom_command(
+      TARGET even_${format}
+      POST_BUILD
+      COMMAND codesign --force --sign - "$<TARGET_BUNDLE_DIR:even_${format}>"
+      VERBATIM)
+  endforeach()
+endif()
+
 # The app's own code. Like a JUCE module it is an interface library: the plugin and the app tests
 # (tests/) each compile it with their own JUCE setup.
 add_library(even_app_code INTERFACE)

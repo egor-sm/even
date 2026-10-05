@@ -20,6 +20,8 @@ vst3="${artefacts}/VST3/Even.vst3"
 app="${artefacts}/Standalone/Even.app"
 for bundle in "$vst3" "$app"; do
   [[ -d "$bundle" ]] || { echo "Missing ${bundle}" >&2; exit 1; }
+  # macOS on Apple Silicon does not load a bundle whose signature is broken.
+  codesign --verify --strict "$bundle" || { echo "Invalid signature: ${bundle}" >&2; exit 1; }
 done
 
 binary="${vst3}/Contents/MacOS/Even"

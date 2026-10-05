@@ -1,29 +1,26 @@
-import { clsx } from 'clsx';
-
 import type { Band } from '~/entities/band';
-import { UiIcon } from '~/shared/ui';
+import { ActionButton, UiIcon } from '~/shared/ui';
 
 import { deleteBand, toggleBypass } from '../model/band-actions';
 
 /** Bypass: the band stays but does not process (its icon turns red, the node hollow). */
 export function BypassButton({ band }: { band: Band }) {
   return (
-    <button
-      type="button"
-      className={clsx('eq-act', !band.on && 'is-danger')}
-      aria-label="Bypass band"
-      aria-pressed={!band.on}
+    <ActionButton
+      label="Bypass band"
+      pressed={!band.on}
+      tone={band.on ? undefined : 'danger'}
       onClick={() => toggleBypass(band)}
     >
       <UiIcon name="power" size={14} />
-    </button>
+    </ActionButton>
   );
 }
 
 export function DeleteButton({ slot }: { slot: number }) {
   return (
-    <button type="button" className="eq-act" aria-label="Delete band" onClick={() => deleteBand(slot)}>
+    <ActionButton label="Delete band" onClick={() => deleteBand(slot)}>
       <UiIcon name="close" size={13} />
-    </button>
+    </ActionButton>
   );
 }

@@ -137,7 +137,7 @@ pnpm exec steiger src      # Feature-Sliced Design boundaries (steiger.config.ts
 `app` (entry, wiring to C++) → `widgets` (top bar, graph, band dock, bottom bar) → `features` (one user action
 each: edit a node, change the type, solo, …) → `entities` (bands, viewport, analyzer) → `shared` (JUCE bridge,
 helpers, design system). Layers import only downwards, slices only through their `index.ts` and not from
-each other; imports across layers use the `~/` alias. `shared/mock` is the development stand-in for C++ (loaded only by development builds in a plain browser), `shared/testing` the recording backend of component tests.
+each other; imports across layers use the `~/` alias. `shared/ui` is a small UI kit (buttons, select menu, segmented control, toggle group, checkbox) on [Ark UI](https://ark-ui.com); Ark is not imported anywhere else (enforced by Oxlint). `shared/mock` is the development stand-in for C++ (loaded only by development builds in a plain browser), `shared/testing` the recording backend of component tests.
 
 ## License
 

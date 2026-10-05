@@ -2,11 +2,11 @@ import { create } from 'zustand';
 
 import { type AnalyzerMode, native } from '~/shared/api';
 
-export const analyzerModes: readonly { mode: AnalyzerMode; name: string }[] = [
-  { mode: 'prepost', name: 'Pre + Post' },
-  { mode: 'post', name: 'Post' },
-  { mode: 'pre', name: 'Pre' },
-  { mode: 'off', name: 'Off' },
+export const analyzerModes: readonly { value: AnalyzerMode; label: string; separated?: boolean }[] = [
+  { value: 'prepost', label: 'Pre + Post' },
+  { value: 'post', label: 'Post' },
+  { value: 'pre', label: 'Pre' },
+  { value: 'off', label: 'Off', separated: true },
 ];
 
 /** The analyzer mode lives in C++ without being saved: the page holds it and hands it over. */

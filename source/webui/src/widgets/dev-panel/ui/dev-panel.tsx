@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 
 import { setScale, useSettingsStore, uiScales } from '~/features/settings';
 import { native, setMute } from '~/shared/api';
+import { Checkbox, SelectMenu } from '~/shared/ui';
 
 import { analyzerStats } from '../model/analyzer-stats';
 import styles from './dev-panel.module.css';
+
+const scaleOptions = uiScales.map((value) => ({ value: String(value), label: `${value}%` }));
 
 /** Development aids, shown in dev builds or with Ctrl+Shift+D: test signal, mute, UI scale, analyzer stats. */
 export function DevPanel() {
@@ -20,38 +23,30 @@ export function DevPanel() {
 
   return (
     <div className={styles.panel}>
-      <label>
-        <input
-          type="checkbox"
-          checked={testSignal}
-          onChange={(event) => {
-            setTestSignal(event.target.checked);
-            void native.setTestSignal(event.target.checked);
-          }}
-        />
+      <Checkbox
+        checked={testSignal}
+        onCheckedChange={(checked) => {
+          setTestSignal(checked);
+          void native.setTestSignal(checked);
+        }}
+      >
         Test signal
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={muted}
-          onChange={(event) => {
-            setMuted(event.target.checked);
-            setMute(event.target.checked);
-          }}
-        />
+      </Checkbox>
+      <Checkbox
+        checked={muted}
+        onCheckedChange={(checked) => {
+          setMuted(checked);
+          setMute(checked);
+        }}
+      >
         Mute
-      </label>
-      <label>
-        Scale
-        <select value={scale} onChange={(event) => setScale(Number(event.target.value))}>
-          {uiScales.map((value) => (
-            <option key={value} value={value}>
-              {value}%
-            </option>
-          ))}
-        </select>
-      </label>
+      </Checkbox>
+      <SelectMenu
+        label="Scale"
+        value={String(scale)}
+        options={scaleOptions}
+        onValueChange={(value) => setScale(Number(value))}
+      />
       <pre>{statsText}</pre>
     </div>
   );

@@ -1,9 +1,9 @@
-import { clsx } from 'clsx';
 import { type PointerEvent, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { bandColorVar, useDisplayBands } from '~/entities/band';
 import {
+  type AxisMode,
   createMapper,
   graph,
   keyboardPaths,
@@ -13,12 +13,16 @@ import {
   useViewportStore,
 } from '~/entities/viewport';
 import { clamp, useGestureStore } from '~/shared/lib';
-import { UiIcon } from '~/shared/ui';
+import { type Segment, SegmentedControl, UiIcon } from '~/shared/ui';
 
 import { keyDown, keyUnder } from '../model/key-gestures';
-import styles from './frequency-axis.module.css';
 
 const axisLeft = graph.left;
+
+const axisSegments: readonly Segment<AxisMode>[] = [
+  { value: 'hz', content: 'Hz' },
+  { value: 'note', content: <UiIcon name="note" size={12} />, label: 'Notes' },
+];
 const axisTop = graph.bottom;
 
 /** Pointer position on the keyboard: graph x, and y from the keyboard's top. */
@@ -118,25 +122,14 @@ export function FrequencyAxis() {
               );
             })}
       </div>
-      <fieldset className={clsx('eq-axis__tag', styles.units)} aria-label="Frequency axis units">
-        <button
-          type="button"
-          className="eq-axis__seg"
-          aria-pressed={!notes}
-          onClick={() => useViewportStore.setState({ axis: 'hz' })}
-        >
-          Hz
-        </button>
-        <button
-          type="button"
-          className="eq-axis__seg"
-          aria-pressed={notes}
-          aria-label="Notes"
-          onClick={() => useViewportStore.setState({ axis: 'note' })}
-        >
-          <UiIcon name="note" size={12} />
-        </button>
-      </fieldset>
+      <SegmentedControl
+        label="Frequency axis units"
+        variant="compact"
+        className="eq-axis__tag"
+        value={axis}
+        segments={axisSegments}
+        onValueChange={(next) => useViewportStore.setState({ axis: next })}
+      />
     </div>
   );
 }

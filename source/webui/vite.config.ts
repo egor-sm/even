@@ -39,7 +39,13 @@ export default defineConfig({
       // Not needed with the automatic JSX runtime (React 17+).
       'react/react-in-jsx-scope': 'off',
       'react/function-component-definition': ['error', { namedComponents: 'function-declaration' }],
+      // Ark UI is how shared/ui builds its kit, not part of the kit's API.
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['@ark-ui/**'], message: 'Use the components of ~/shared/ui instead.' }] },
+      ],
     },
+    overrides: [{ files: ['src/shared/ui/**'], rules: { 'no-restricted-imports': 'off' } }],
     options: {
       typeAware: true,
       typeCheck: true,

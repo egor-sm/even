@@ -1,5 +1,0 @@
-/* The Hz | notes switch is a fieldset: no browser margins or minimum width. */
-.units {
-  margin: 0;
-  min-inline-size: 0;
-}

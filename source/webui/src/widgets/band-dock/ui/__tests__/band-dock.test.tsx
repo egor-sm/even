@@ -95,6 +95,6 @@ describe('band dock', () => {
     renderDock();
     fireEvent.click(screen.getByRole('button', { name: 'Filter type' }));
     expect(useSelectionStore.getState().typeMenu).toBe('picker');
-    expect(screen.getAllByRole('menuitemradio')).toHaveLength(8);
+    expect(screen.getAllByRole('radio')).toHaveLength(8);
   });
 });

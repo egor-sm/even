@@ -15,7 +15,7 @@ import {
 } from '~/entities/band';
 import { graph, nodePoint, useViewportStore } from '~/entities/viewport';
 import { clamp, formatFrequency, formatGain, formatNote, formatQ, useGestureStore } from '~/shared/lib';
-import { UiIcon } from '~/shared/ui';
+import { ToggleGroup, ToggleGroupItem, UiIcon } from '~/shared/ui';
 
 import { hoverType, openTypeMenu, setBandType, usePreviewedType } from '../model/type-preview';
 
@@ -82,40 +82,37 @@ export function TypeStrip() {
     );
 
   return (
-    <div
+    <ToggleGroup
+      label="Filter type"
+      value={band.type}
+      focusOnMount
       className={clsx('eq-strip', !above && 'is-below')}
-      role="menu"
-      aria-label="Filter type"
-      tabIndex={-1}
       style={{
         ...position,
         ['--band' as string]: bandColorVar(band.color),
         width,
         transformOrigin: `${clamp(node.x - left, 0, width)}px 50%`,
       }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') useSelectionStore.setState({ typeMenu: null });
+      }}
       onPointerDown={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
       {previewed !== null && <span className="eq-strip__name">{typeNames[previewed]}</span>}
-      {stripOrder.map((type, i) => {
-        const current = band.type === type;
-        return (
-          <button
-            key={type}
-            type="button"
-            className={clsx('eq-strip__btn', current && 'is-on')}
-            role="menuitemradio"
-            aria-checked={current}
-            aria-label={typeNames[type]}
-            style={{ animationDelay: `${40 + Math.abs(i - 3.5) * 22}ms` }}
-            onClick={() => setBandType(band.slot, type)}
-            onMouseEnter={() => hoverType(type)}
-            onMouseLeave={() => hoverType(null)}
-          >
-            <TypeIcon type={type} />
-          </button>
-        );
-      })}
-    </div>
+      {stripOrder.map((type, i) => (
+        <ToggleGroupItem
+          key={type}
+          value={type}
+          label={typeNames[type]}
+          className="eq-strip__btn"
+          style={{ animationDelay: `${40 + Math.abs(i - 3.5) * 22}ms` }}
+          onSelect={() => setBandType(band.slot, type)}
+          onHighlight={(highlighted) => hoverType(highlighted ? type : null)}
+        >
+          <TypeIcon type={type} />
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }

@@ -1,23 +1,27 @@
 import { clsx } from 'clsx';
 
-import { type Band, bandColorVar, type FilterType, pickerRows, typeIconPaths, typeNames } from '~/entities/band';
+import {
+  type Band,
+  bandColorVar,
+  type FilterType,
+  pickerRows,
+  typeIconPaths,
+  typeNames,
+  useSelectionStore,
+} from '~/entities/band';
+import { ToggleGroup, ToggleGroupItem } from '~/shared/ui';
 
 import { hoverType, setBandType, usePreviewedType } from '../model/type-preview';
 
 function Tile({ band, type, delay }: { band: Band; type: FilterType; delay: number }) {
   const hovered = usePreviewedType() === type;
-  const current = band.type === type;
-
   return (
-    <button
-      type="button"
-      className={clsx('eq-tile', current ? 'is-on' : hovered && 'is-hover')}
-      role="menuitemradio"
-      aria-checked={current}
+    <ToggleGroupItem
+      value={type}
+      className={clsx('eq-tile', band.type !== type && hovered && 'is-hover')}
       style={{ animationDelay: `${delay}ms` }}
-      onClick={() => setBandType(band.slot, type)}
-      onMouseEnter={() => hoverType(type)}
-      onMouseLeave={() => hoverType(null)}
+      onSelect={() => setBandType(band.slot, type)}
+      onHighlight={(highlighted) => hoverType(highlighted ? type : null)}
     >
       <svg
         viewBox="0 0 24 24"
@@ -33,18 +37,22 @@ function Tile({ band, type, delay }: { band: Band; type: FilterType; delay: numb
         <path d={typeIconPaths[type]} vectorEffect="non-scaling-stroke" />
       </svg>
       <span>{typeNames[type]}</span>
-    </button>
+    </ToggleGroupItem>
   );
 }
 
-/** The 4 × 2 type menu opening upwards from the dock's type button. */
+/** The 4 × 2 type menu opening upwards from the dock's type button; arrows move, Escape closes. */
 export function TypePicker({ band }: { band: Band }) {
   return (
-    <div
+    <ToggleGroup
+      label="Filter type"
+      value={band.type}
+      focusOnMount
       className="eq-picker"
-      role="menu"
-      aria-label="Filter type"
       style={{ ['--band' as string]: bandColorVar(band.color), position: 'absolute', left: 0, top: -157 }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') useSelectionStore.setState({ typeMenu: null });
+      }}
     >
       {pickerRows[0].map((type, i) => (
         <Tile key={type} band={band} type={type} delay={30 + i * 18} />
@@ -53,6 +61,6 @@ export function TypePicker({ band }: { band: Band }) {
       {pickerRows[1].map((type, i) => (
         <Tile key={type} band={band} type={type} delay={30 + (i + 4) * 18} />
       ))}
-    </div>
+    </ToggleGroup>
   );
 }

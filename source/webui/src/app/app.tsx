@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useSettingsStore } from '~/features/settings';
+import { UiRoot } from '~/shared/ui';
 import { BandDock } from '~/widgets/band-dock';
 import { BottomBar } from '~/widgets/bottom-bar';
 import { analyzerStats, DevPanel } from '~/widgets/dev-panel';
@@ -37,11 +38,11 @@ export function App() {
   }, []);
 
   return (
-    <div className="eq" data-theme={theme} style={{ transform: `scale(${scale / 100})` }}>
+    <UiRoot theme={theme} scale={scale}>
       <TopBar />
       <GraphView overlay={<BandDock />} onAnalyzerDraw={onAnalyzerDraw} />
       <BottomBar />
       {devPanel && <DevPanel />}
-    </div>
+    </UiRoot>
   );
 }

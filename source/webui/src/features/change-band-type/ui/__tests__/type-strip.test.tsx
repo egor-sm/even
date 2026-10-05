@@ -36,7 +36,7 @@ describe('type strip', () => {
     render(<TypeStrip />);
     fireEvent.click(screen.getByRole('button', { name: 'Change filter type' }));
 
-    const types = screen.getAllByRole('menuitemradio').map((item) => item.getAttribute('aria-label'));
+    const types = screen.getAllByRole('radio').map((item) => item.getAttribute('aria-label'));
     expect(types).toEqual([
       'Low Cut',
       'Low Shelf',
@@ -47,7 +47,7 @@ describe('type strip', () => {
       'High Shelf',
       'High Cut',
     ]);
-    expect(screen.getByRole('menuitemradio', { name: 'Bell' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('radio', { name: 'Bell' }).getAttribute('aria-checked')).toBe('true');
   });
 
   it('previews a hovered type by name, also in the dock type button', () => {
@@ -58,17 +58,17 @@ describe('type strip', () => {
         <TypeButton band={bell} open={false} />
       </>,
     );
-    fireEvent.mouseEnter(screen.getByRole('menuitemradio', { name: 'High Shelf' }));
+    fireEvent.mouseEnter(screen.getByRole('radio', { name: 'High Shelf' }));
 
     expect(screen.getAllByText('High Shelf')).toHaveLength(2); // name over the strip and in the button
-    fireEvent.mouseLeave(screen.getByRole('menuitemradio', { name: 'High Shelf' }));
+    fireEvent.mouseLeave(screen.getByRole('radio', { name: 'High Shelf' }));
     expect(screen.getByRole('button', { name: 'Filter type' }).textContent).toContain('Bell');
   });
 
   it('changes the type in C++ and folds', () => {
     useSelectionStore.setState({ typeMenu: 'strip' });
     render(<TypeStrip />);
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Notch' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Notch' }));
 
     expect(backend.named('setBandShape')[0]?.args).toEqual([3, 5]);
     expect(useSelectionStore.getState().typeMenu).toBeNull();

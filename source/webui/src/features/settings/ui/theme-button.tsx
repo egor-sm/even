@@ -1,3 +1,5 @@
+import { IconButton } from '~/shared/ui';
+
 import { useSettingsStore, toggleTheme } from '../model/settings';
 
 function ThemeIcon() {
@@ -21,8 +23,8 @@ export function ThemeButton() {
   const theme = useSettingsStore((state) => state.theme);
   const label = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
   return (
-    <button type="button" className="eq-ib" aria-label={label} title={label} onClick={toggleTheme}>
+    <IconButton label={label} title={label} onClick={toggleTheme}>
       <ThemeIcon />
-    </button>
+    </IconButton>
   );
 }

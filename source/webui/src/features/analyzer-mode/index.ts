@@ -1,2 +1,2 @@
 export { syncAnalyzerMode } from './model/analyzer-mode';
-export { AnalyzerModeMenu, AnalyzerModePill } from './ui/analyzer-mode-menu';
+export { AnalyzerModeMenu } from './ui/analyzer-mode-menu';

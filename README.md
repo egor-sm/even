@@ -76,10 +76,12 @@ Artefacts end up in `build/release/source/app/even_artefacts/Release`.
 
 ### Tests
 
-DSP and editing model code (`source/dsp`, `source/model`) is covered by [Catch2](https://github.com/catchorg/Catch2) tests in `tests/`:
+C++ code is covered by [Catch2](https://github.com/catchorg/Catch2) tests in `tests/`: `even_tests` for the
+JUCE-free `source/dsp` and `source/model`, `even_app_tests` for `source/app` (band slots, undo history, the response
+packet and the page's native functions on a real `PluginProcessor`, without a host or a web view):
 
 ```sh
-cmake --build --preset debug --target even_tests
+cmake --build --preset debug --target even_tests even_app_tests
 ctest --preset debug
 ```
 
@@ -101,7 +103,7 @@ Opened in a plain browser (`vp dev` only), the UI talks to a development mock ba
 
 ```
 source/
-  app/      JUCE app built as VST3 / Standalone
+  app/      JUCE app built as VST3 / Standalone, unit-tested in tests/app
     plugin/     processor, editor hosting the web view, parameters
     state/      band slots and undo history on top of the parameters, response state, user settings
     web/        bridge to the page: native functions, parameter relays, response packet, bundled resources

@@ -50,8 +50,9 @@ scripts/macos/build-pkg.sh build/dist/source/app/even_artefacts/Release dist
 
 GitHub Actions (`.github/workflows`):
 
-- **Verify**, on every push to any branch: UI checks, tests and Steiger; C++ formatting; on macOS the release
-  build, C++ tests and clang-tidy. The build (VST3, Standalone and an installer) is attached to the run as an
+- **Verify**, on every push to any branch, five jobs in parallel: UI lint (`vp check`, Steiger), UI tests, C++
+  formatting, clang-tidy (on branches only the files changed since `main`, on `main` everything) and the macOS
+  release build with the C++ tests. The build (VST3, Standalone and an installer) is attached to the run as an
   artifact for 14 days.
 - **Release**, on pushes to `main`: [release-please](https://github.com/googleapis/release-please) keeps a release
   PR with the next version and the changelog from Conventional Commits. Merging it tags `v<version>`, creates the
@@ -112,6 +113,7 @@ The scripts run pinned tool versions through [uv](https://docs.astral.sh/uv/), s
 scripts/format.sh            # format in place
 scripts/format.sh --check    # verify only
 scripts/tidy.sh [preset]     # lint using build/<preset>/compile_commands.json (default: debug)
+scripts/tidy.sh debug --since main -j 4   # only files changed since main, 4 processes
 ```
 
 Web UI code (`source/ui`) is formatted, linted and type checked by [Vite+](https://viteplus.dev/guide/check)

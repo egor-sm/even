@@ -1,10 +1,11 @@
 name: Native setup
-description: Ninja, ccache and the CPM source cache (JUCE, Catch2) for CMake builds on macOS
+description: Ninja, the CPM source cache (JUCE, Catch2) and optionally ccache for CMake builds on macOS
 
 inputs:
   ccache-key:
-    description: Key of the ccache cache (one per kind of build)
-    required: true
+    description: Key of the ccache cache (one per kind of build); empty for jobs that compile nothing
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -14,12 +15,14 @@ runs:
       run: brew install ninja
 
     - name: Setup ccache
+      if: inputs.ccache-key != ''
       uses: hendrikmuhs/ccache-action@f09c25b45002a07be2955cbe52e8cee55643f89d # v1.2.24
       with:
         key: ${{ inputs.ccache-key }}
         max-size: 1G
 
     - name: Use ccache for CMake builds
+      if: inputs.ccache-key != ''
       shell: bash
       run: |
         echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"

@@ -11,9 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Five independent jobs that run in parallel.
 jobs:
-  ui:
-    name: UI
+  ui-lint:
+    name: UI lint
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -30,14 +31,27 @@ jobs:
       - name: Check formatting, lint and types
         run: pnpm exec vp check
 
-      - name: Run tests
-        run: pnpm exec vp test
-
       - name: Check the architecture (Steiger)
         run: pnpm exec steiger src
 
+  ui-test:
+    name: UI tests
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run tests
+        working-directory: source/ui
+        run: pnpm exec vp test
+
   cpp-format:
-    name: C++ formatting
+    name: C++ format
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -51,8 +65,45 @@ jobs:
       - name: Check formatting
         run: scripts/format.sh --check
 
-  native:
-    name: Build and test (macOS)
+  # clang-tidy needs the compilation database and the generated headers, not a build: configure
+  # and the embedded UI (ui_assets.h) are enough. Branches check what changed since main; main
+  # checks everything, which also catches files affected only through other headers.
+  cpp-tidy:
+    name: C++ tidy
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Native setup
+        uses: ./.github/actions/native-setup
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Configure
+        run: cmake --preset release
+
+      - name: Generate headers
+        run: cmake --build --preset release --target even_ui_assets
+
+      - name: Run clang-tidy
+        run: |
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            scripts/tidy.sh release -j "$(sysctl -n hw.ncpu)"
+          else
+            scripts/tidy.sh release --since origin/main -j "$(sysctl -n hw.ncpu)"
+          fi
+
+  cpp-build:
+    name: C++ build & tests
     runs-on: macos-15
     permissions:
       contents: read
@@ -69,9 +120,6 @@ jobs:
         with:
           ccache-key: verify-macos
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-
       - name: Configure
         run: cmake --preset release
 
@@ -80,9 +128,6 @@ jobs:
 
       - name: Run tests
         run: ctest --preset release
-
-      - name: Run clang-tidy
-        run: scripts/tidy.sh release
 
       # Zipped with ditto: bundles keep their executable bits, symlinks and signatures.
       - name: Package the build

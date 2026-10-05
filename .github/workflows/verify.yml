@@ -1,0 +1,101 @@
+name: Verify
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui:
+    name: UI
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: source/ui
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Check formatting, lint and types
+        run: pnpm exec vp check
+
+      - name: Run tests
+        run: pnpm exec vp test
+
+      - name: Check the architecture (Steiger)
+        run: pnpm exec steiger src
+
+  cpp-format:
+    name: C++ formatting
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Check formatting
+        run: scripts/format.sh --check
+
+  native:
+    name: Build and test (macOS)
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # CMake builds the UI into the plug-in.
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Native setup
+        uses: ./.github/actions/native-setup
+        with:
+          ccache-key: verify-macos
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Configure
+        run: cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset release
+
+      - name: Run tests
+        run: ctest --preset release
+
+      - name: Run clang-tidy
+        run: scripts/tidy.sh release
+
+      # Zipped with ditto: bundles keep their executable bits, symlinks and signatures.
+      - name: Package the build
+        run: |
+          artefacts=build/release/source/app/even_artefacts/Release
+          mkdir -p dist
+          ditto -c -k --keepParent "${artefacts}/VST3/Even.vst3" dist/Even.vst3.zip
+          ditto -c -k --keepParent "${artefacts}/Standalone/Even.app" dist/Even.app.zip
+          scripts/macos/build-pkg.sh "$artefacts" dist
+
+      - name: Upload the build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: even-macos-${{ github.sha }}
+          path: dist/
+          retention-days: 14

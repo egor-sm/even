@@ -1,0 +1,34 @@
+name: Setup
+description: Node.js, pnpm (the version the UI pins) and the UI's dependencies, with the pnpm store cached
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version-file: .nvmrc
+        package-manager-cache: false
+
+    - name: Install pnpm
+      shell: bash
+      run: npm install --global "pnpm@$(node -p "require('./source/ui/package.json').devEngines.packageManager.version")"
+
+    - name: Get pnpm store path
+      id: pnpm-store
+      shell: bash
+      working-directory: source/ui
+      run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache pnpm store
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('source/ui/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install UI dependencies
+      shell: bash
+      working-directory: source/ui
+      run: pnpm install --frozen-lockfile

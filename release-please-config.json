@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "cb36aeb6f7ff68cd5fa1e051a33820999f657c00",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "even",
+      "include-component-in-tag": false,
+      "bump-minor-pre-major": true,
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        "CMakeLists.txt",
+        {
+          "type": "json",
+          "path": "source/ui/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Keeps a release PR (version bump and changelog from Conventional Commits) up to date; merging
+  # it tags the release and creates the GitHub release.
+  release-please:
+    name: Release PR
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  installer:
+    name: macOS installer
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Native setup
+        uses: ./.github/actions/native-setup
+        with:
+          ccache-key: dist-macos
+
+      - name: Configure
+        run: cmake --preset dist
+
+      - name: Build
+        run: cmake --build --preset dist
+
+      - name: Build the installer
+        run: scripts/macos/build-pkg.sh build/dist/source/app/even_artefacts/Release dist
+
+      - name: Attach the installer to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: gh release upload "$TAG" dist/*.pkg

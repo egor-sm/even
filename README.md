@@ -36,7 +36,9 @@ There are 3 types of IIR-filters available:
 - high pass;
 - peak.
 
-The releases have an installer for Windows, but if you want to test the plugin for other operating systems, try building it.
+Releases have a macOS installer (`Even-<version>.pkg`, macOS 12+, Apple Silicon and Intel) that installs the VST3
+plug-in into `/Library/Audio/Plug-Ins/VST3` and the Standalone app into `/Applications`. The installer is not signed
+yet: macOS blocks it on the first open, then allow it in System Settings → Privacy & Security → Open Anyway.
 
 ### Built With
 
@@ -85,6 +87,16 @@ cmake --build --preset dist
 scripts/macos/build-pkg.sh build/dist/source/app/even_artefacts/Release dist
 ```
 
+### CI and releases
+
+GitHub Actions (`.github/workflows`):
+
+- **Verify**, on every push to any branch: UI checks, tests and Steiger; C++ formatting; on macOS the release
+  build, C++ tests and clang-tidy. The build (VST3, Standalone and an installer) is attached to the run as an
+  artifact for 14 days.
+- **Release**, on pushes to `main`: [release-please](https://github.com/googleapis/release-please) keeps a release
+  PR with the next version and the changelog from Conventional Commits. Merging it tags `v<version>`, creates the
+  GitHub release and attaches the universal macOS installer to it.
 
 ### Tests
 

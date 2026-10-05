@@ -1,9 +1,8 @@
 #include "plugin_processor.h"
 
-#include "model/solo.h"
 #include "plugin_editor.h"
 
-#include <algorithm>
+#include <optional>
 
 namespace even {
 
@@ -21,9 +20,8 @@ void PluginProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) 
   updateBandTargets();
   equalizer.prepare(sampleRate);
 
-  updateSoloTargets();
-  soloLowCut.prepare(sampleRate);
-  soloHighCut.prepare(sampleRate);
+  updateSoloTarget();
+  solo.prepare(sampleRate);
 }
 
 void PluginProcessor::releaseResources() {}
@@ -48,9 +46,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
   updateBandTargets();
   equalizer.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
 
-  updateSoloTargets();
-  soloLowCut.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
-  soloHighCut.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
+  updateSoloTarget();
+  solo.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples());
 
   analyzer.pushOutput(buffer);
 
@@ -63,32 +60,12 @@ void PluginProcessor::updateBandTargets() noexcept {
     equalizer.setBand(i, bandValues[i].parameters(), bandValues[i].active());
 }
 
-void PluginProcessor::updateSoloTargets() noexcept {
-  constexpr auto slopeDbPerOctave = 24;
-  dsp::BandParameters low{.shape = dsp::FilterShape::lowCut,
-                          .frequencyHz = model::soloMinHz,
-                          .q = model::cutQ,
-                          .slopeDbPerOctave = slopeDbPerOctave};
-  dsp::BandParameters high{.shape = dsp::FilterShape::highCut,
-                           .frequencyHz = model::soloMaxHz,
-                           .q = model::cutQ,
-                           .slopeDbPerOctave = slopeDbPerOctave};
-  auto lowOn = false;
-  auto highOn = false;
-
+void PluginProcessor::updateSoloTarget() noexcept {
   const auto slot = soloSlot.load(std::memory_order_relaxed);
-  if (slot >= 0 && slot < parameters::numBands && bandValues[static_cast<std::size_t>(slot)].used()) {
-    const auto band = bandValues[static_cast<std::size_t>(slot)].parameters();
-    const auto range = model::soloRange(band.shape, band.frequencyHz, band.q);
-    // A range reaching an end of the spectrum needs no filter on that side.
-    lowOn = range.lowHz > model::soloMinHz * 1.01;
-    highOn = range.highHz < model::soloMaxHz * 0.99;
-    low.frequencyHz = range.lowHz;
-    high.frequencyHz = range.highHz;
-  }
-
-  soloLowCut.setTarget(low, lowOn);
-  soloHighCut.setTarget(high, highOn);
+  if (slot >= 0 && slot < parameters::numBands && bandValues[static_cast<std::size_t>(slot)].used())
+    solo.setTarget(bandValues[static_cast<std::size_t>(slot)].parameters());
+  else
+    solo.setTarget(std::nullopt);
 }
 
 ResponseState PluginProcessor::getResponseState() const {

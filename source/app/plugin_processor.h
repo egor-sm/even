@@ -3,8 +3,8 @@
 #include "analyzer/spectrum_analyzer.h"
 #include "band_history.h"
 #include "band_slots.h"
-#include "dsp/band.h"
 #include "dsp/equalizer.h"
+#include "model/solo.h"
 #include "parameters.h"
 #include "response_packet.h"
 #include "test_signal.h"
@@ -65,8 +65,8 @@ public:
 private:
   // Reads the band parameters (lock-free) and hands them to the equalizer as targets.
   void updateBandTargets() noexcept;
-  // Points the solo filters at the soloed band's range, or switches them off.
-  void updateSoloTargets() noexcept;
+  // Points the solo filter at the soloed band, or ends solo.
+  void updateSoloTarget() noexcept;
 
   juce::AudioProcessorValueTreeState state;
   BandSlots bandSlots{state};
@@ -75,10 +75,8 @@ private:
   std::array<parameters::BandValues, parameters::numBands> bandValues;
   dsp::Equalizer equalizer;
 
-  // Solo: a low cut and a high cut around the soloed band's range, faded in and out like bands.
   std::atomic<int> soloSlot{-1};
-  dsp::Band soloLowCut;
-  dsp::Band soloHighCut;
+  model::SoloFilter solo;
   static_assert(parameters::numBands <= dsp::Equalizer::maxBands);
 
   SpectrumAnalyzer analyzer;

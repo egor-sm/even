@@ -1,4 +1,4 @@
-# Plain C++ editing model of the EQ (band slots, edit rules, undo history, solo range): no JUCE, unit-tested in tests/model.
+# Plain C++ editing model of the EQ (band slots, edit rules, undo history, solo range and filter): no JUCE, unit-tested in tests/model.
 add_library(even_model STATIC band_slot.cpp edit_history.cpp solo.cpp)
 add_library(even::model ALIAS even_model)
 

@@ -1,10 +1,12 @@
 #include "model/solo.h"
+#include "support/frequency_response.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <cmath>
 #include <numbers>
+#include <optional>
 
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
@@ -40,4 +42,42 @@ TEST_CASE("soloRange: tilt shelves span three octaves each side, clamped to 20 H
 
   const auto clamped = even::model::soloRange(FilterShape::tiltShelf, 50.0, 0.707);
   CHECK(clamped.lowHz == 20.0);
+}
+
+namespace {
+
+constexpr double sampleRate = 48000.0;
+
+// Gain in dB of the solo filter aimed at `band`, measured at `frequency`.
+double soloGainDb(const std::optional<even::dsp::BandParameters> &band, double frequency) {
+  even::model::SoloFilter solo;
+  solo.prepare(sampleRate);
+  solo.setTarget(band);
+  return even::test::measureGainDb(
+      [&](float input) {
+        auto *channel = &input;
+        solo.process(&channel, 1, 1);
+        return input;
+      },
+      frequency, sampleRate);
+}
+
+} // namespace
+
+TEST_CASE("SoloFilter: without a band the signal passes through", "[model][solo]") {
+  CHECK_THAT(soloGainDb(std::nullopt, 50.0), WithinAbs(0.0, 0.01));
+  CHECK_THAT(soloGainDb(std::nullopt, 15000.0), WithinAbs(0.0, 0.01));
+}
+
+TEST_CASE("SoloFilter: a bell keeps its range and cuts the rest", "[model][solo]") {
+  const even::dsp::BandParameters bell{.shape = FilterShape::bell, .frequencyHz = 1000.0, .gainDb = 6.0, .q = 1.0};
+  CHECK(soloGainDb(bell, 1000.0) > -1.0);
+  CHECK(soloGainDb(bell, 100.0) < -30.0);
+  CHECK(soloGainDb(bell, 10000.0) < -30.0);
+}
+
+TEST_CASE("SoloFilter: a range reaching the end of the spectrum leaves that side open", "[model][solo]") {
+  const even::dsp::BandParameters lowCut{.shape = FilterShape::lowCut, .frequencyHz = 200.0, .q = 0.707};
+  CHECK_THAT(soloGainDb(lowCut, 30.0), WithinAbs(0.0, 0.1));
+  CHECK(soloGainDb(lowCut, 5000.0) < -30.0);
 }

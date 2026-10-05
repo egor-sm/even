@@ -78,3 +78,12 @@ TEST_CASE("isSameBands: any change counts, however small", "[model][slots]") {
   changed[3].frequencyHz = std::nextafter(changed[3].frequencyHz, 2000.0);
   CHECK_FALSE(even::model::isSameBands(bands, changed));
 }
+
+TEST_CASE("designBand: sanitizes the parameters for the sample rate before designing", "[model][slots]") {
+  const BandSlot band{.used = true, .shape = FilterShape::highCut, .frequencyHz = 30000.0, .slopeIndex = 3};
+  const auto designed = even::model::designBand(band, 48000.0);
+
+  CHECK(designed.parameters.frequencyHz < 24000.0);
+  CHECK(designed.parameters.slopeDbPerOctave == 24);
+  CHECK(designed.design.count == 2);
+}

@@ -206,11 +206,9 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                                   complete({});
                                   return;
                                 }
-                                const auto sampleRate =
-                                    pluginProcessor.getSampleRate() > 0.0 ? pluginProcessor.getSampleRate() : 48000.0;
-                                const auto band = model::withShape(pluginProcessor.getBandSlots().read(*slot), *shape);
-                                const auto parameters = dsp::sanitize(model::toParameters(band), sampleRate);
-                                complete(sectionsVar(dsp::design(parameters, sampleRate)));
+                                const auto state = pluginProcessor.getResponseState();
+                                const auto band = model::withShape(state.bands[*slot], *shape);
+                                complete(sectionsVar(model::designBand(band, state.drawingSampleRate()).design));
                               })
           // (band) solos it; anything else (0, null) ends solo.
           .withNativeFunction("setSolo",

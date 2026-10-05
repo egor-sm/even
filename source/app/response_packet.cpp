@@ -1,7 +1,5 @@
 #include "response_packet.h"
 
-#include "dsp/band_design.h"
-
 #include <algorithm>
 #include <bit>
 #include <cstdint>
@@ -32,8 +30,7 @@ bool isSameResponse(const ResponseState &a, const ResponseState &b) noexcept {
 }
 
 std::vector<std::byte> serializeResponse(const ResponseState &state) {
-  // Before the host prepares the processor there is no sample rate yet; any typical one draws fine.
-  const auto sampleRate = state.sampleRate > 0.0 ? state.sampleRate : 48000.0;
+  const auto sampleRate = state.drawingSampleRate();
 
   const auto usedBands = static_cast<std::uint32_t>(
       std::ranges::count_if(state.bands, [](const model::BandSlot &band) { return band.used; }));
@@ -48,8 +45,7 @@ std::vector<std::byte> serializeResponse(const ResponseState &state) {
     if (!band.used)
       continue;
 
-    const auto parameters = dsp::sanitize(model::toParameters(band), sampleRate);
-    const auto design = dsp::design(parameters, sampleRate);
+    const auto [parameters, design] = model::designBand(band, sampleRate);
 
     appendBytes(bytes, static_cast<std::uint32_t>(i + 1));
     appendBytes(bytes, static_cast<std::uint32_t>(parameters.shape));

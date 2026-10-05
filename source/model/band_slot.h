@@ -1,5 +1,6 @@
 #pragma once
 
+#include "dsp/band_design.h"
 #include "dsp/filter_shape.h"
 
 #include <array>
@@ -39,6 +40,13 @@ using Bands = std::array<BandSlot, numBands>;
 
 // The DSP parameters of the band (the slope index clamped to the supported slopes).
 [[nodiscard]] dsp::BandParameters toParameters(const BandSlot &band) noexcept;
+
+// The band as it plays at a sample rate: its sanitized parameters and the designed sections.
+struct DesignedBand {
+  dsp::BandParameters parameters;
+  dsp::BandDesign design;
+};
+[[nodiscard]] DesignedBand designBand(const BandSlot &band, double sampleRate) noexcept;
 
 // Exact (bitwise for the numbers) comparison: tells whether an edit changed anything at all.
 [[nodiscard]] bool isSameSlot(const BandSlot &a, const BandSlot &b) noexcept;

@@ -11,6 +11,10 @@ namespace even {
 struct ResponseState {
   double sampleRate = 0.0;
   model::Bands bands{};
+
+  // The sample rate to draw with: before the host prepares the processor there is none yet, and
+  // any typical one draws fine.
+  [[nodiscard]] double drawingSampleRate() const noexcept { return sampleRate > 0.0 ? sampleRate : 48000.0; }
 };
 
 // Exact (bitwise) comparison: any change at all, however small, must redraw the curve.

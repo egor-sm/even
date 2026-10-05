@@ -29,6 +29,11 @@ dsp::BandParameters toParameters(const BandSlot &band) noexcept {
   };
 }
 
+DesignedBand designBand(const BandSlot &band, double sampleRate) noexcept {
+  const auto parameters = dsp::sanitize(toParameters(band), sampleRate);
+  return {.parameters = parameters, .design = dsp::design(parameters, sampleRate)};
+}
+
 bool isSameSlot(const BandSlot &a, const BandSlot &b) noexcept {
   return a.used == b.used && a.enabled == b.enabled && a.shape == b.shape && sameBits(a.frequencyHz, b.frequencyHz) &&
          sameBits(a.gainDb, b.gainDb) && sameBits(a.q, b.q) && a.slopeIndex == b.slopeIndex && a.serial == b.serial;

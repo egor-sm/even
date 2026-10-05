@@ -33,7 +33,9 @@ juce::String getMimeType(const juce::String &path) {
 } // namespace
 
 std::optional<juce::WebBrowserComponent::Resource> findWebUiResource(const juce::String &url) {
-  const auto path = url == "/" ? juce::String{"index.html"} : url.fromFirstOccurrenceOf("/", false, false);
+  // WebView2 passes the query string along; WKWebView does not.
+  const auto file = url.upToFirstOccurrenceOf("?", false, false);
+  const auto path = file == "/" ? juce::String{"index.html"} : file.fromFirstOccurrenceOf("/", false, false);
 
   auto &archive = getWebUiArchive();
   const auto *entry = archive.getEntry(path);

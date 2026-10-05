@@ -27,7 +27,10 @@ target_sources(
           response_packet.cpp
           web_resources.cpp
           test_signal.cpp
-          analyzer/spectrum_analyzer.cpp)
+          analyzer/spectrum_analyzer.cpp
+          web/arguments.cpp
+          web/messages.cpp
+          web/native_functions.cpp)
 
 target_compile_features(even PRIVATE cxx_std_23)
 

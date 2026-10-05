@@ -24,7 +24,6 @@ public:
 
 private:
   [[nodiscard]] juce::WebBrowserComponent::Options createWebViewOptions();
-  [[nodiscard]] std::optional<juce::WebBrowserComponent::Resource> getResource(const juce::String &url) const;
 
   // Runs on the message thread after the analyzer produced a frame and hands it to the page.
   void handleAsyncUpdate() override;
@@ -32,10 +31,9 @@ private:
   void setAnalyzerActive(bool active);
 
   void applyScale();
-  [[nodiscard]] juce::var settingsVar() const;
 
-  // Polls the band parameters on the message thread and sends the EQ response curves to the page
-  // when they change. Polling keeps the audio thread out of it: parameter listeners would be called
+  // Polls the band parameters and the undo history on the message thread and sends them to the
+  // page when they change. Polling keeps the audio thread out of it: parameter listeners would be called
   // there during host automation.
   void timerCallback() override;
 
@@ -47,14 +45,6 @@ private:
   juce::WebBrowserComponent webView;
 
   std::optional<ResponseState> lastSentResponse;
-
-  struct HistoryState {
-    bool canUndo = false;
-    bool canRedo = false;
-    bool operator==(const HistoryState &) const = default;
-  };
-  [[nodiscard]] HistoryState getHistoryState();
-  [[nodiscard]] juce::var historyStateVar();
   std::optional<HistoryState> lastSentHistory;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)

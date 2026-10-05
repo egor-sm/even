@@ -9,6 +9,12 @@
 
 namespace even {
 
+struct HistoryState {
+  bool canUndo = false;
+  bool canRedo = false;
+  bool operator==(const HistoryState &) const = default;
+};
+
 // Undo and redo of band edits. A step is recorded when an edit gesture on a band parameter ends:
 // a drag in the UI, or a band command (create, delete, shape change), whose several parameter
 // gestures are coalesced into one step because recording runs asynchronously on the message
@@ -27,8 +33,7 @@ public:
   bool undo();
   bool redo();
 
-  [[nodiscard]] bool canUndo() const noexcept;
-  [[nodiscard]] bool canRedo() const noexcept;
+  [[nodiscard]] HistoryState state() const noexcept;
 
   // After a project (state) was loaded: starts a new history from it. Any thread.
   void stateReplaced();

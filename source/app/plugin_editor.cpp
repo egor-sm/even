@@ -1,7 +1,7 @@
 #include "plugin_editor.h"
 
 #include "build_config.h"
-#include "dsp/band_design.h"
+#include "web/native_functions.h"
 #include "web_resources.h"
 
 #include <optional>
@@ -11,58 +11,6 @@
 namespace even {
 
 namespace {
-
-// A 1-based band number from the page as a slot index.
-std::optional<std::size_t> slotArgument(const juce::Array<juce::var> &args, int index) {
-  if (index >= args.size())
-    return std::nullopt;
-  const auto band = static_cast<int>(args[index]);
-  if (band < 1 || band > parameters::numBands)
-    return std::nullopt;
-  return static_cast<std::size_t>(band - 1);
-}
-
-std::optional<dsp::FilterShape> shapeArgument(const juce::Array<juce::var> &args, int index) {
-  if (index >= args.size())
-    return std::nullopt;
-  const auto shape = static_cast<int>(args[index]);
-  if (shape < 0 || std::cmp_greater_equal(shape, parameters::shapeNames.size()))
-    return std::nullopt;
-  return static_cast<dsp::FilterShape>(shape);
-}
-
-std::optional<AnalyzerMode> analyzerModeArgument(const juce::Array<juce::var> &args, int index) {
-  if (index >= args.size())
-    return std::nullopt;
-
-  const auto name = args[index].toString();
-  if (name == "prepost")
-    return AnalyzerMode::prePost;
-  if (name == "post")
-    return AnalyzerMode::post;
-  if (name == "pre")
-    return AnalyzerMode::pre;
-  if (name == "off")
-    return AnalyzerMode::off;
-  return std::nullopt;
-}
-
-// The designed sections as plain objects for the page (see dsp::Section).
-juce::var sectionsVar(const dsp::BandDesign &design) {
-  juce::Array<juce::var> sections;
-  for (std::size_t i = 0; i < design.count; ++i) {
-    const auto &section = design.sections[i];
-    auto object = std::make_unique<juce::DynamicObject>();
-    object->setProperty("order", section.order);
-    object->setProperty("g", section.g);
-    object->setProperty("q", section.q);
-    object->setProperty("lowpassMix", section.lowpassMix);
-    object->setProperty("bandpassMix", section.bandpassMix);
-    object->setProperty("highpassMix", section.highpassMix);
-    sections.add(juce::var{object.release()});
-  }
-  return sections;
-}
 
 std::optional<juce::String> getDevServerUrl() {
   constexpr auto url = build_config::webUiDevServerUrl;
@@ -109,138 +57,25 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
   const auto allowedOrigin =
       getDevServerUrl().transform([](const juce::String &url) { return juce::URL{url}.getOrigin(); });
 
-  auto options =
-      Options{}
-          .withBackend(Options::Backend::webview2)
-          .withWinWebView2Options(
-              Options::WinWebView2{}.withUserDataFolder(juce::File::getSpecialLocation(juce::File::tempDirectory)))
-          .withNativeIntegrationEnabled()
-          .withNativeFunction("getPluginInfo",
-                              [this](const juce::Array<juce::var> &, const auto &complete) {
-                                auto info = std::make_unique<juce::DynamicObject>();
-                                info->setProperty("name", pluginProcessor.getName());
-                                info->setProperty("version", JucePlugin_VersionString);
-                                info->setProperty("juceVersion", juce::SystemStats::getJUCEVersion());
-                                info->setProperty("wrapper", juce::AudioProcessor::getWrapperTypeDescription(
-                                                                 pluginProcessor.wrapperType));
-                                complete(juce::var{info.release()});
-                              })
-          .withNativeFunction("setTestSignal",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                pluginProcessor.setTestSignalEnabled(!args.isEmpty() && static_cast<bool>(args[0]));
-                                complete({});
-                              })
-          // "prepost", "post", "pre" or "off".
-          .withNativeFunction("setAnalyzerMode",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                if (const auto mode = analyzerModeArgument(args, 0))
-                                  pluginProcessor.getAnalyzer().setMode(*mode);
-                                complete({});
-                              })
-          .withNativeFunction("requestResponse",
-                              [this](const juce::Array<juce::var> &, const auto &complete) {
-                                lastSentResponse.reset(); // the next timer tick resends it
-                                complete({});
-                              })
-          // Returns the new band's number, or undefined when every band is in use.
-          .withNativeFunction("createBand",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                const auto shape = shapeArgument(args, 0);
-                                if (!shape || args.size() < 3) {
-                                  complete({});
-                                  return;
-                                }
-                                const auto slot = pluginProcessor.getBandSlots().create(
-                                    *shape, static_cast<double>(args[1]), static_cast<double>(args[2]));
-                                complete(slot ? juce::var{static_cast<int>(*slot) + 1} : juce::var{});
-                              })
-          .withNativeFunction("deleteBand",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                if (const auto slot = slotArgument(args, 0))
-                                  pluginProcessor.getBandSlots().remove(*slot);
-                                complete({});
-                              })
-          // Changes the shape together with the q and gain adjustments that go with it (model::withShape).
-          .withNativeFunction("setBandShape",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                const auto slot = slotArgument(args, 0);
-                                const auto shape = shapeArgument(args, 1);
-                                if (slot && shape)
-                                  pluginProcessor.getBandSlots().setShape(*slot, *shape);
-                                complete({});
-                              })
-          // Each returns {canUndo, canRedo}.
-          .withNativeFunction("undo",
-                              [this](const juce::Array<juce::var> &, const auto &complete) {
-                                pluginProcessor.getBandHistory().undo();
-                                complete(historyStateVar());
-                              })
-          .withNativeFunction("redo",
-                              [this](const juce::Array<juce::var> &, const auto &complete) {
-                                pluginProcessor.getBandHistory().redo();
-                                complete(historyStateVar());
-                              })
-          .withNativeFunction("getHistoryState", [this](const juce::Array<juce::var> &,
-                                                        const auto &complete) { complete(historyStateVar()); })
-          // Returns {theme, scale}.
-          .withNativeFunction("getSettings",
-                              [this](const juce::Array<juce::var> &, const auto &complete) { complete(settingsVar()); })
-          // (key, value) with key "theme" ("dark" | "light") or "scale" (percent); returns {theme, scale}.
-          .withNativeFunction("setSetting",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                if (args.size() >= 2 && args[0].toString() == "theme") {
-                                  settings->setTheme(args[1].toString());
-                                } else if (args.size() >= 2 && args[0].toString() == "scale") {
-                                  settings->setScalePercent(static_cast<int>(args[1]));
-                                  applyScale();
-                                }
-                                complete(settingsVar());
-                              })
-          // (band, shape) => the sections the band would have with that shape (with the q and gain
-          // adjustments of setBandShape): the page previews the change as a ghost curve.
-          .withNativeFunction("previewBand",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                const auto slot = slotArgument(args, 0);
-                                const auto shape = shapeArgument(args, 1);
-                                if (!slot || !shape) {
-                                  complete({});
-                                  return;
-                                }
-                                const auto state = pluginProcessor.getResponseState();
-                                const auto band = model::withShape(state.bands[*slot], *shape);
-                                complete(sectionsVar(model::designBand(band, state.drawingSampleRate()).design));
-                              })
-          // (band) solos it; anything else (0, null) ends solo.
-          .withNativeFunction("setSolo",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                pluginProcessor.setSoloBand(slotArgument(args, 0));
-                                complete({});
-                              })
-          .withNativeFunction("setAnalyzerActive",
-                              [this](const juce::Array<juce::var> &args, const auto &complete) {
-                                setAnalyzerActive(!args.isEmpty() && static_cast<bool>(args[0]));
-                                complete({});
-                              })
-          .withResourceProvider([this](const juce::String &url) { return getResource(url); }, allowedOrigin);
+  auto options = Options{}
+                     .withBackend(Options::Backend::webview2)
+                     .withWinWebView2Options(Options::WinWebView2{}.withUserDataFolder(
+                         juce::File::getSpecialLocation(juce::File::tempDirectory)))
+                     .withNativeIntegrationEnabled()
+                     .withResourceProvider(findWebUiResource, allowedOrigin);
 
+  options = web::withNativeFunctions(std::move(options), pluginProcessor, *settings,
+                                     {
+                                         .resendResponse = [this] { lastSentResponse.reset(); },
+                                         .applyScale = [this] { applyScale(); },
+                                         .setAnalyzerActive = [this](bool active) { setAnalyzerActive(active); },
+                                     });
   return parameterRelays.addTo(std::move(options));
-}
-
-std::optional<juce::WebBrowserComponent::Resource> PluginEditor::getResource(const juce::String &url) const {
-  // WebView2 passes the query string along; WKWebView does not.
-  return findWebUiResource(url.upToFirstOccurrenceOf("?", false, false));
 }
 
 void PluginEditor::applyScale() {
   const auto percent = settings->scalePercent();
   setSize(baseWidth * percent / 100, baseHeight * percent / 100);
-}
-
-juce::var PluginEditor::settingsVar() const {
-  auto object = std::make_unique<juce::DynamicObject>();
-  object->setProperty("theme", settings->theme());
-  object->setProperty("scale", settings->scalePercent());
-  return juce::var{object.release()};
 }
 
 void PluginEditor::setAnalyzerActive(bool active) {
@@ -265,24 +100,11 @@ void PluginEditor::handleAsyncUpdate() {
                              juce::Base64::toBase64(bytes.data(), bytes.size()) + "')");
 }
 
-PluginEditor::HistoryState PluginEditor::getHistoryState() {
-  const auto &history = pluginProcessor.getBandHistory();
-  return {.canUndo = history.canUndo(), .canRedo = history.canRedo()};
-}
-
-juce::var PluginEditor::historyStateVar() {
-  const auto state = getHistoryState();
-  auto object = std::make_unique<juce::DynamicObject>();
-  object->setProperty("canUndo", state.canUndo);
-  object->setProperty("canRedo", state.canRedo);
-  return juce::var{object.release()};
-}
-
 void PluginEditor::timerCallback() {
   if (!webView.isShowing())
     return;
 
-  if (const auto history = getHistoryState(); history != lastSentHistory) {
+  if (const auto history = pluginProcessor.getBandHistory().state(); history != lastSentHistory) {
     webView.evaluateJavascript("window.evenOnHistory?.(" + juce::String{history.canUndo ? "true" : "false"} + "," +
                                juce::String{history.canRedo ? "true" : "false"} + ")");
     lastSentHistory = history;

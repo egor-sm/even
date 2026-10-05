@@ -43,12 +43,8 @@ bool BandHistory::redo() {
   return next.has_value();
 }
 
-bool BandHistory::canUndo() const noexcept {
-  return history.canUndo();
-}
-
-bool BandHistory::canRedo() const noexcept {
-  return history.canRedo();
+HistoryState BandHistory::state() const noexcept {
+  return {.canUndo = history.canUndo(), .canRedo = history.canRedo()};
 }
 
 void BandHistory::stateReplaced() {

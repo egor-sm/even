@@ -1,8 +1,8 @@
 #pragma once
 
-#include "parameter_relays.h"
-#include "plugin_processor.h"
-#include "user_settings.h"
+#include "app/plugin/plugin_processor.h"
+#include "app/state/user_settings.h"
+#include "app/web/parameter_relays.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_extra/juce_gui_extra.h>

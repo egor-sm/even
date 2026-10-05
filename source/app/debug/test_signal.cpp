@@ -1,4 +1,4 @@
-#include "test_signal.h"
+#include "app/debug/test_signal.h"
 
 #include <cmath>
 #include <numbers>

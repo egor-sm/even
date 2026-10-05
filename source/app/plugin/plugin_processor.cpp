@@ -1,6 +1,6 @@
-#include "plugin_processor.h"
+#include "app/plugin/plugin_processor.h"
 
-#include "plugin_editor.h"
+#include "app/plugin/plugin_editor.h"
 
 #include <optional>
 

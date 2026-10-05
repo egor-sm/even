@@ -1,7 +1,7 @@
 #pragma once
 
-#include "app/plugin_processor.h"
-#include "app/user_settings.h"
+#include "app/plugin/plugin_processor.h"
+#include "app/state/user_settings.h"
 
 #include <juce_gui_extra/juce_gui_extra.h>
 

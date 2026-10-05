@@ -1,4 +1,4 @@
-#include "parameters.h"
+#include "app/plugin/parameters.h"
 
 #include <cmath>
 #include <utility>

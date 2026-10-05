@@ -101,7 +101,12 @@ Opened in a plain browser (`vp dev` only), the UI talks to a development mock ba
 
 ```
 source/
-  app/      JUCE app built as VST3 / Standalone (processor, editor hosting the web view, web UI resources)
+  app/      JUCE app built as VST3 / Standalone
+    plugin/     processor, editor hosting the web view, parameters
+    state/      band slots and undo history on top of the parameters, response state, user settings
+    web/        bridge to the page: native functions, parameter relays, response packet, bundled resources
+    analyzer/   spectrum analyzer
+    debug/      test signal
   dsp/      Plain C++ DSP building blocks (no JUCE), unit-tested
   model/    Plain C++ editing model: band slots, edit rules, undo history (no JUCE), unit-tested
   ui/       Web UI (Vite+ and TypeScript), talks to C++ via @juce-framework/webview

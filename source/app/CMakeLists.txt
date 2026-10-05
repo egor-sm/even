@@ -17,20 +17,21 @@ juce_add_plugin(
 
 target_sources(
   even
-  PRIVATE plugin_processor.cpp
-          plugin_editor.cpp
-          parameters.cpp
-          parameter_relays.cpp
-          band_slots.cpp
-          band_history.cpp
-          user_settings.cpp
-          response_packet.cpp
-          web_resources.cpp
-          test_signal.cpp
-          analyzer/spectrum_analyzer.cpp
+  PRIVATE plugin/plugin_processor.cpp
+          plugin/plugin_editor.cpp
+          plugin/parameters.cpp
+          state/band_slots.cpp
+          state/band_history.cpp
+          state/response_state.cpp
+          state/user_settings.cpp
+          web/native_functions.cpp
           web/arguments.cpp
           web/messages.cpp
-          web/native_functions.cpp)
+          web/parameter_relays.cpp
+          web/response_packet.cpp
+          web/web_resources.cpp
+          analyzer/spectrum_analyzer.cpp
+          debug/test_signal.cpp)
 
 target_compile_features(even PRIVATE cxx_std_23)
 

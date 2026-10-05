@@ -1,4 +1,4 @@
-#include "spectrum_analyzer.h"
+#include "app/analyzer/spectrum_analyzer.h"
 
 #include <algorithm>
 #include <cmath>

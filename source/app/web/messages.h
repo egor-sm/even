@@ -1,7 +1,7 @@
 #pragma once
 
-#include "app/band_history.h"
-#include "app/user_settings.h"
+#include "app/state/band_history.h"
+#include "app/state/user_settings.h"
 #include "dsp/band_design.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>

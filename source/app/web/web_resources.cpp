@@ -1,4 +1,4 @@
-#include "web_resources.h"
+#include "app/web/web_resources.h"
 
 #include <ui_assets.h>
 

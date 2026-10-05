@@ -1,7 +1,6 @@
-#include "response_packet.h"
+#include "app/web/response_packet.h"
 
 #include <algorithm>
-#include <bit>
 #include <cstdint>
 #include <cstring>
 
@@ -12,10 +11,6 @@ namespace {
 constexpr std::uint32_t formatVersion = 5;
 constexpr std::uint32_t enabledFlag = 1;
 
-bool sameBits(double a, double b) noexcept {
-  return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b);
-}
-
 template <typename T>
 void appendBytes(std::vector<std::byte> &bytes, const T &value) {
   const auto offset = bytes.size();
@@ -24,10 +19,6 @@ void appendBytes(std::vector<std::byte> &bytes, const T &value) {
 }
 
 } // namespace
-
-bool isSameResponse(const ResponseState &a, const ResponseState &b) noexcept {
-  return sameBits(a.sampleRate, b.sampleRate) && model::isSameBands(a.bands, b.bands);
-}
 
 std::vector<std::byte> serializeResponse(const ResponseState &state) {
   const auto sampleRate = state.drawingSampleRate();

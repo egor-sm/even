@@ -1,6 +1,6 @@
 #pragma once
 
-#include "band_slots.h"
+#include "app/state/band_slots.h"
 #include "model/edit_history.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>

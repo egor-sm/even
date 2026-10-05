@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sample_history.h"
+#include "app/analyzer/sample_history.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>

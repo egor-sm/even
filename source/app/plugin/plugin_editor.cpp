@@ -1,8 +1,9 @@
-#include "plugin_editor.h"
+#include "app/plugin/plugin_editor.h"
 
+#include "app/web/native_functions.h"
+#include "app/web/response_packet.h"
+#include "app/web/web_resources.h"
 #include "build_config.h"
-#include "web/native_functions.h"
-#include "web_resources.h"
 
 #include <optional>
 #include <string_view>

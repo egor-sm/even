@@ -1,8 +1,8 @@
 #pragma once
 
+#include "app/plugin/parameters.h"
 #include "dsp/filter_shape.h"
 #include "model/band_slot.h"
-#include "parameters.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "analyzer/spectrum_analyzer.h"
-#include "band_history.h"
-#include "band_slots.h"
+#include "app/analyzer/spectrum_analyzer.h"
+#include "app/debug/test_signal.h"
+#include "app/plugin/parameters.h"
+#include "app/state/band_history.h"
+#include "app/state/band_slots.h"
+#include "app/state/response_state.h"
 #include "dsp/equalizer.h"
 #include "model/solo.h"
-#include "parameters.h"
-#include "response_packet.h"
-#include "test_signal.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 

@@ -1,6 +1,6 @@
-#include "band_history.h"
+#include "app/state/band_history.h"
 
-#include "parameters.h"
+#include "app/plugin/parameters.h"
 
 namespace even {
 

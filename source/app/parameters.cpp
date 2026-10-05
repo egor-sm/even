@@ -22,35 +22,67 @@ juce::String formatFrequency(float hz) {
   return hz >= 1000.0f ? juce::String{hz / 1000.0f, 2} + " kHz" : juce::String{hz, 1} + " Hz";
 }
 
-std::atomic<float> &rawValue(juce::AudioProcessorValueTreeState &state, const juce::String &id) {
-  auto *value = state.getRawParameterValue(id);
-  jassert(value != nullptr);
-  return *value;
+// Display name of a band field; without spaces it is the end of the parameter ID.
+juce::String fieldName(BandField field) {
+  switch (field) {
+  case BandField::used:
+    return "Used";
+  case BandField::enabled:
+    return "Enabled";
+  case BandField::shape:
+    return "Shape";
+  case BandField::frequency:
+    return "Frequency";
+  case BandField::gain:
+    return "Gain";
+  case BandField::q:
+    return "Q";
+  case BandField::slope:
+    return "Slope";
+  }
+  return {};
+}
+
+juce::StringArray choices(const auto &names) {
+  juce::StringArray result;
+  for (const auto *name : names)
+    result.add(name);
+  return result;
+}
+
+std::unique_ptr<juce::RangedAudioParameter> createBandParameter(int band, BandField field) {
+  const juce::ParameterID id{bandId(band, field), 1};
+  const auto name = "Band " + juce::String{band} + " " + fieldName(field);
+
+  switch (field) {
+  case BandField::used:
+    return std::make_unique<juce::AudioParameterBool>(id, name, false);
+  case BandField::enabled:
+    return std::make_unique<juce::AudioParameterBool>(id, name, true);
+  case BandField::shape:
+    return std::make_unique<juce::AudioParameterChoice>(id, name, choices(shapeNames), 0);
+  case BandField::frequency:
+    return std::make_unique<juce::AudioParameterFloat>(
+        id, name, logarithmicRange(minFrequencyHz, maxFrequencyHz), defaultFrequencyHz(band),
+        juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
+            [](float value, int) { return formatFrequency(value); }));
+  case BandField::gain:
+    return std::make_unique<juce::AudioParameterFloat>(id, name,
+                                                       juce::NormalisableRange<float>{-maxGainDb, maxGainDb, 0.01f},
+                                                       0.0f, juce::AudioParameterFloatAttributes{}.withLabel("dB"));
+  case BandField::q:
+    return std::make_unique<juce::AudioParameterFloat>(id, name, logarithmicRange(minQ, maxQ),
+                                                       static_cast<float>(model::newBandQ));
+  case BandField::slope:
+    return std::make_unique<juce::AudioParameterChoice>(id, name, choices(slopeNames), defaultSlopeIndex);
+  }
+  return {};
 }
 
 } // namespace
 
 juce::String bandId(int band, BandField field) {
-  auto prefix = "band" + juce::String{band};
-
-  switch (field) {
-  case BandField::used:
-    return prefix + "Used";
-  case BandField::enabled:
-    return prefix + "Enabled";
-  case BandField::shape:
-    return prefix + "Shape";
-  case BandField::frequency:
-    return prefix + "Frequency";
-  case BandField::gain:
-    return prefix + "Gain";
-  case BandField::q:
-    return prefix + "Q";
-  case BandField::slope:
-    return prefix + "Slope";
-  }
-
-  return prefix;
+  return "band" + juce::String{band} + fieldName(field).removeCharacters(" ");
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
@@ -58,34 +90,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
 
   layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{mute, 1}, "Mute", false));
 
-  juce::StringArray shapes;
-  for (const auto *name : shapeNames)
-    shapes.add(name);
-
-  juce::StringArray slopes;
-  for (const auto *name : slopeNames)
-    slopes.add(name);
-
-  for (int band = 1; band <= numBands; ++band) {
-    const auto name = [band](const char *field) { return "Band " + juce::String{band} + " " + field; };
-    const auto id = [band](BandField field) { return juce::ParameterID{bandId(band, field), 1}; };
-
-    layout.add(std::make_unique<juce::AudioParameterBool>(id(BandField::used), name("Used"), false));
-    layout.add(std::make_unique<juce::AudioParameterBool>(id(BandField::enabled), name("Enabled"), true));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(id(BandField::shape), name("Shape"), shapes, 0));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
-        id(BandField::frequency), name("Frequency"), logarithmicRange(minFrequencyHz, maxFrequencyHz),
-        defaultFrequencyHz(band),
-        juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
-            [](float value, int) { return formatFrequency(value); })));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
-        id(BandField::gain), name("Gain"), juce::NormalisableRange<float>{-maxGainDb, maxGainDb, 0.01f}, 0.0f,
-        juce::AudioParameterFloatAttributes{}.withLabel("dB")));
-    layout.add(
-        std::make_unique<juce::AudioParameterFloat>(id(BandField::q), name("Q"), logarithmicRange(minQ, maxQ), 1.0f));
-    layout.add(
-        std::make_unique<juce::AudioParameterChoice>(id(BandField::slope), name("Slope"), slopes, defaultSlopeIndex));
-  }
+  for (int band = 1; band <= numBands; ++band)
+    for (const auto field : bandFields)
+      layout.add(createBandParameter(band, field));
 
   return layout;
 }
@@ -102,36 +109,35 @@ std::array<BandValues, numBands> BandValues::all(juce::AudioProcessorValueTreeSt
   }(std::make_index_sequence<numBands>{});
 }
 
-BandValues::BandValues(juce::AudioProcessorValueTreeState &state, int band)
-    : usedValue(rawValue(state, bandId(band, BandField::used))),
-      enabledValue(rawValue(state, bandId(band, BandField::enabled))),
-      shapeValue(rawValue(state, bandId(band, BandField::shape))),
-      frequencyValue(rawValue(state, bandId(band, BandField::frequency))),
-      gainValue(rawValue(state, bandId(band, BandField::gain))), qValue(rawValue(state, bandId(band, BandField::q))),
-      slopeValue(rawValue(state, bandId(band, BandField::slope))) {}
+BandValues::BandValues(juce::AudioProcessorValueTreeState &state, int band) {
+  for (const auto field : bandFields) {
+    values[field] = state.getRawParameterValue(bandId(band, field));
+    jassert(values[field] != nullptr);
+  }
+}
 
 bool BandValues::active() const noexcept {
   return used() && enabled();
 }
 
 bool BandValues::used() const noexcept {
-  return usedValue.load(std::memory_order_relaxed) >= 0.5f;
+  return load(BandField::used) >= 0.5f;
 }
 
 bool BandValues::enabled() const noexcept {
-  return enabledValue.load(std::memory_order_relaxed) >= 0.5f;
+  return load(BandField::enabled) >= 0.5f;
 }
 
 dsp::BandParameters BandValues::parameters() const noexcept {
-  const auto shapeIndex = static_cast<int>(shapeValue.load(std::memory_order_relaxed));
-  const auto slopeIndex = juce::jlimit(0, static_cast<int>(dsp::cutSlopesDbPerOctave.size()) - 1,
-                                       static_cast<int>(slopeValue.load(std::memory_order_relaxed)));
+  const auto shapeIndex = static_cast<int>(load(BandField::shape));
+  const auto slopeIndex =
+      juce::jlimit(0, static_cast<int>(dsp::cutSlopesDbPerOctave.size()) - 1, static_cast<int>(load(BandField::slope)));
 
   return {
       .shape = static_cast<dsp::FilterShape>(juce::jlimit(0, static_cast<int>(shapeNames.size()) - 1, shapeIndex)),
-      .frequencyHz = static_cast<double>(frequencyValue.load(std::memory_order_relaxed)),
-      .gainDb = static_cast<double>(gainValue.load(std::memory_order_relaxed)),
-      .q = static_cast<double>(qValue.load(std::memory_order_relaxed)),
+      .frequencyHz = static_cast<double>(load(BandField::frequency)),
+      .gainDb = static_cast<double>(load(BandField::gain)),
+      .q = static_cast<double>(load(BandField::q)),
       .slopeDbPerOctave = dsp::cutSlopesDbPerOctave[static_cast<std::size_t>(slopeIndex)],
   };
 }

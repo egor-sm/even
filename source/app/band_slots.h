@@ -32,15 +32,7 @@ public:
   void setShape(std::size_t slot, dsp::FilterShape shape);
 
 private:
-  struct Parameters {
-    juce::RangedAudioParameter *used;
-    juce::RangedAudioParameter *enabled;
-    juce::RangedAudioParameter *shape;
-    juce::RangedAudioParameter *frequency;
-    juce::RangedAudioParameter *gain;
-    juce::RangedAudioParameter *q;
-    juce::RangedAudioParameter *slope;
-  };
+  using Parameters = parameters::PerBandField<juce::RangedAudioParameter *>;
 
   [[nodiscard]] juce::ValueTree slotTree(std::size_t slot);
   [[nodiscard]] std::uint32_t serial(std::size_t slot) const;

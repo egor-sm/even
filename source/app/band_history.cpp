@@ -6,9 +6,7 @@ namespace even {
 
 BandHistory::BandHistory(juce::AudioProcessorValueTreeState &state, BandSlots &slotsToUse) : slots(slotsToUse) {
   for (int band = 1; band <= parameters::numBands; ++band)
-    for (const auto field : {parameters::BandField::used, parameters::BandField::enabled, parameters::BandField::shape,
-                             parameters::BandField::frequency, parameters::BandField::gain, parameters::BandField::q,
-                             parameters::BandField::slope}) {
+    for (const auto field : parameters::bandFields) {
       auto *parameter = state.getParameter(parameters::bandId(band, field));
       jassert(parameter != nullptr);
       parameter->addListener(this);

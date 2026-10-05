@@ -10,13 +10,6 @@ constexpr auto slotsType = "slots";
 constexpr auto slotType = "slot";
 constexpr auto serialProperty = "serial";
 
-juce::RangedAudioParameter &parameter(juce::AudioProcessorValueTreeState &state, int band,
-                                      parameters::BandField field) {
-  auto *result = state.getParameter(parameters::bandId(band, field));
-  jassert(result != nullptr);
-  return *result;
-}
-
 float valueOf(const juce::RangedAudioParameter *parameter) {
   return parameter->convertFrom0to1(parameter->getValue());
 }
@@ -39,31 +32,25 @@ float boolValue(bool value) {
 } // namespace
 
 BandSlots::BandSlots(juce::AudioProcessorValueTreeState &stateToUse) : state(stateToUse) {
-  for (std::size_t i = 0; i < slotParameters.size(); ++i) {
-    const auto band = static_cast<int>(i) + 1;
-    using enum parameters::BandField;
-    slotParameters[i] = {
-        .used = &parameter(state, band, used),
-        .enabled = &parameter(state, band, enabled),
-        .shape = &parameter(state, band, shape),
-        .frequency = &parameter(state, band, frequency),
-        .gain = &parameter(state, band, gain),
-        .q = &parameter(state, band, q),
-        .slope = &parameter(state, band, slope),
-    };
-  }
+  for (std::size_t i = 0; i < slotParameters.size(); ++i)
+    for (const auto field : parameters::bandFields) {
+      slotParameters[i][field] = state.getParameter(parameters::bandId(static_cast<int>(i) + 1, field));
+      jassert(slotParameters[i][field] != nullptr);
+    }
 }
+
+using parameters::BandField;
 
 model::BandSlot BandSlots::read(std::size_t slot) const {
   const auto &p = slotParameters.at(slot);
   return {
-      .used = valueOf(p.used) >= 0.5f,
-      .enabled = valueOf(p.enabled) >= 0.5f,
-      .shape = static_cast<dsp::FilterShape>(juce::roundToInt(valueOf(p.shape))),
-      .frequencyHz = static_cast<double>(valueOf(p.frequency)),
-      .gainDb = static_cast<double>(valueOf(p.gain)),
-      .q = static_cast<double>(valueOf(p.q)),
-      .slopeIndex = juce::roundToInt(valueOf(p.slope)),
+      .used = valueOf(p[BandField::used]) >= 0.5f,
+      .enabled = valueOf(p[BandField::enabled]) >= 0.5f,
+      .shape = static_cast<dsp::FilterShape>(juce::roundToInt(valueOf(p[BandField::shape]))),
+      .frequencyHz = static_cast<double>(valueOf(p[BandField::frequency])),
+      .gainDb = static_cast<double>(valueOf(p[BandField::gain])),
+      .q = static_cast<double>(valueOf(p[BandField::q])),
+      .slopeIndex = juce::roundToInt(valueOf(p[BandField::slope])),
       .serial = serial(slot),
   };
 }
@@ -77,14 +64,14 @@ model::Bands BandSlots::readAll() const {
 
 void BandSlots::write(std::size_t slot, const model::BandSlot &band) {
   const auto &p = slotParameters.at(slot);
-  set(p.shape, static_cast<float>(band.shape));
-  set(p.frequency, static_cast<float>(band.frequencyHz));
-  set(p.gain, static_cast<float>(band.gainDb));
-  set(p.q, static_cast<float>(band.q));
-  set(p.slope, static_cast<float>(band.slopeIndex));
-  set(p.enabled, boolValue(band.enabled));
+  set(p[BandField::shape], static_cast<float>(band.shape));
+  set(p[BandField::frequency], static_cast<float>(band.frequencyHz));
+  set(p[BandField::gain], static_cast<float>(band.gainDb));
+  set(p[BandField::q], static_cast<float>(band.q));
+  set(p[BandField::slope], static_cast<float>(band.slopeIndex));
+  set(p[BandField::enabled], boolValue(band.enabled));
   // Last, so the band appears (or disappears) with its final settings.
-  set(p.used, boolValue(band.used));
+  set(p[BandField::used], boolValue(band.used));
 
   slotTree(slot).setProperty(serialProperty, static_cast<juce::int64>(band.serial), nullptr);
 }

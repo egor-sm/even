@@ -7,6 +7,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 
 namespace even::parameters {
@@ -15,9 +16,32 @@ inline constexpr auto mute = "mute";
 
 inline constexpr int numBands = static_cast<int>(model::numBands);
 
-// Per-band parameter IDs: "band1Frequency" etc., bands numbered from 1. "Used" tells whether the
-// slot holds a band at all, "Enabled" whether that band is not bypassed (see model::BandSlot).
+// The parameters of a band. "Used" tells whether the slot holds a band at all, "Enabled" whether
+// that band is not bypassed (see model::BandSlot).
 enum class BandField : std::uint8_t { used, enabled, shape, frequency, gain, q, slope };
+
+// Every band field, in enum order.
+inline constexpr std::array bandFields{BandField::used, BandField::enabled, BandField::shape, BandField::frequency,
+                                       BandField::gain, BandField::q,       BandField::slope};
+static_assert([] {
+  for (std::size_t i = 0; i < bandFields.size(); ++i)
+    if (static_cast<std::size_t>(bandFields[i]) != i)
+      return false;
+  return true;
+}());
+
+// One value per band field.
+template <typename T>
+class PerBandField {
+public:
+  [[nodiscard]] T &operator[](BandField field) noexcept { return values[static_cast<std::size_t>(field)]; }
+  [[nodiscard]] const T &operator[](BandField field) const noexcept { return values[static_cast<std::size_t>(field)]; }
+
+private:
+  std::array<T, bandFields.size()> values{};
+};
+
+// Parameter ID of a band field: "band1Frequency" etc., bands numbered from 1.
 [[nodiscard]] juce::String bandId(int band, BandField field);
 
 // Choice order of the shape parameter; matches dsp::FilterShape.
@@ -59,13 +83,9 @@ public:
   [[nodiscard]] dsp::BandParameters parameters() const noexcept;
 
 private:
-  std::atomic<float> &usedValue;
-  std::atomic<float> &enabledValue;
-  std::atomic<float> &shapeValue;
-  std::atomic<float> &frequencyValue;
-  std::atomic<float> &gainValue;
-  std::atomic<float> &qValue;
-  std::atomic<float> &slopeValue;
+  [[nodiscard]] float load(BandField field) const noexcept { return values[field]->load(std::memory_order_relaxed); }
+
+  PerBandField<std::atomic<float> *> values;
 };
 
 } // namespace even::parameters

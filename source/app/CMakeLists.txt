@@ -20,6 +20,7 @@ target_sources(
   PRIVATE plugin_processor.cpp
           plugin_editor.cpp
           parameters.cpp
+          parameter_relays.cpp
           band_slots.cpp
           band_history.cpp
           user_settings.cpp

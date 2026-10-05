@@ -76,9 +76,8 @@ std::optional<juce::String> getDevServerUrl() {
 } // namespace
 
 PluginEditor::PluginEditor(PluginProcessor &processorToUse)
-    : AudioProcessorEditor(processorToUse), pluginProcessor(processorToUse), webView(createWebViewOptions()),
-      muteAttachment(*pluginProcessor.getState().getParameter(parameters::mute), muteRelay, nullptr),
-      bandAttachments(createBandAttachments()) {
+    : AudioProcessorEditor(processorToUse), pluginProcessor(processorToUse), webView(createWebViewOptions()) {
+  parameterRelays.attach();
   addAndMakeVisible(webView);
 
   webView.goToURL(getDevServerUrl().value_or(juce::WebBrowserComponent::getResourceProviderRoot()));
@@ -116,7 +115,6 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
           .withWinWebView2Options(
               Options::WinWebView2{}.withUserDataFolder(juce::File::getSpecialLocation(juce::File::tempDirectory)))
           .withNativeIntegrationEnabled()
-          .withOptionsFrom(muteRelay)
           .withNativeFunction("getPluginInfo",
                               [this](const juce::Array<juce::var> &, const auto &complete) {
                                 auto info = std::make_unique<juce::DynamicObject>();
@@ -227,50 +225,7 @@ juce::WebBrowserComponent::Options PluginEditor::createWebViewOptions() {
                               })
           .withResourceProvider([this](const juce::String &url) { return getResource(url); }, allowedOrigin);
 
-  for (const auto &relays : bandRelays)
-    options = options.withOptionsFrom(relays->used)
-                  .withOptionsFrom(relays->enabled)
-                  .withOptionsFrom(relays->shape)
-                  .withOptionsFrom(relays->frequency)
-                  .withOptionsFrom(relays->gain)
-                  .withOptionsFrom(relays->q)
-                  .withOptionsFrom(relays->slope);
-
-  return options;
-}
-
-PluginEditor::BandRelays::BandRelays(int band)
-    : used(parameters::bandId(band, parameters::BandField::used)),
-      enabled(parameters::bandId(band, parameters::BandField::enabled)),
-      shape(parameters::bandId(band, parameters::BandField::shape)),
-      frequency(parameters::bandId(band, parameters::BandField::frequency)),
-      gain(parameters::bandId(band, parameters::BandField::gain)),
-      q(parameters::bandId(band, parameters::BandField::q)),
-      slope(parameters::bandId(band, parameters::BandField::slope)) {}
-
-PluginEditor::BandAttachments::BandAttachments(juce::AudioProcessorValueTreeState &state, int band, BandRelays &relays)
-    : used(*state.getParameter(parameters::bandId(band, parameters::BandField::used)), relays.used, nullptr),
-      enabled(*state.getParameter(parameters::bandId(band, parameters::BandField::enabled)), relays.enabled, nullptr),
-      shape(*state.getParameter(parameters::bandId(band, parameters::BandField::shape)), relays.shape, nullptr),
-      frequency(*state.getParameter(parameters::bandId(band, parameters::BandField::frequency)), relays.frequency,
-                nullptr),
-      gain(*state.getParameter(parameters::bandId(band, parameters::BandField::gain)), relays.gain, nullptr),
-      q(*state.getParameter(parameters::bandId(band, parameters::BandField::q)), relays.q, nullptr),
-      slope(*state.getParameter(parameters::bandId(band, parameters::BandField::slope)), relays.slope, nullptr) {}
-
-PluginEditor::BandRelayArray PluginEditor::createBandRelays() {
-  BandRelayArray relays;
-  for (std::size_t i = 0; i < relays.size(); ++i)
-    relays[i] = std::make_unique<BandRelays>(static_cast<int>(i) + 1);
-  return relays;
-}
-
-PluginEditor::BandAttachmentArray PluginEditor::createBandAttachments() {
-  BandAttachmentArray attachments;
-  for (std::size_t i = 0; i < attachments.size(); ++i)
-    attachments[i] =
-        std::make_unique<BandAttachments>(pluginProcessor.getState(), static_cast<int>(i) + 1, *bandRelays[i]);
-  return attachments;
+  return parameterRelays.addTo(std::move(options));
 }
 
 std::optional<juce::WebBrowserComponent::Resource> PluginEditor::getResource(const juce::String &url) const {

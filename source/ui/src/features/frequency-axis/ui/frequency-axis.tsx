@@ -7,7 +7,6 @@ import {
   createMapper,
   graph,
   keyboardPaths,
-  keyDot,
   keyPath,
   eventGraphPoint,
   useViewportStore,
@@ -15,7 +14,8 @@ import {
 import { clamp, useGestureStore } from '~/shared/lib';
 import { type Segment, SegmentedControl, UiIcon } from '~/shared/ui';
 
-import { keyDown, keyUnder } from '../model/key-gestures';
+import { bandKeyDot } from '../lib/band-key-dot';
+import { keyDown, keyUnder, useGlideTargetStore } from '../model/key-gestures';
 
 const axisLeft = graph.left;
 
@@ -41,6 +41,7 @@ export function FrequencyAxis() {
     useShallow((state) => ({ axis: state.axis, morph: state.view.morph, hotKey: state.hotKey })),
   );
   const bands = useDisplayBands();
+  const glide = useGlideTargetStore((state) => state.target);
   const mapper = useMemo(() => createMapper(1), []);
   const keys = useMemo(() => keyboardPaths(mapper), [mapper]);
   const notes = axis === 'note';
@@ -106,7 +107,7 @@ export function FrequencyAxis() {
           bands
             .filter((band) => band.on && mapper.x(band.f) >= graph.left && mapper.x(band.f) <= graph.right)
             .map((band) => {
-              const dot = keyDot(mapper, band.f);
+              const dot = bandKeyDot(mapper, band.f, glide?.slot === band.slot ? glide : null);
               return (
                 <span
                   key={band.slot}

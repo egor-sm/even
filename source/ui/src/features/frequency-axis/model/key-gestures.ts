@@ -17,11 +17,13 @@ const dragThreshold = 3;
 const glideMs = 180;
 let glide = 0;
 
+type KeyGlide = { slot: number; from: number; f: number };
+
 /**
- * The frequency a band glides to after a click on a key, while it glides: the band's values show the
- * note at once, without the cents of the frequencies on the way.
+ * A band's glide to a clicked key while it runs, from and to: the band's values show the note at once,
+ * without the cents of the frequencies on the way, and its dot moves straight to the key.
  */
-export const useGlideTargetStore = create<{ target: { slot: number; f: number } | null }>()(() => ({ target: null }));
+export const useGlideTargetStore = create<{ target: KeyGlide | null }>()(() => ({ target: null }));
 
 /** Moves a band to a frequency in 180 ms (one gesture), easing out; a newer move cancels it. */
 const glideFrequency = (band: Band, to: number): void => {
@@ -29,7 +31,7 @@ const glideFrequency = (band: Band, to: number): void => {
   const from = band.f;
   const startedAt = performance.now();
   bandParameters.begin(band.slot, ['frequency']);
-  useGlideTargetStore.setState({ target: { slot: band.slot, f: to } });
+  useGlideTargetStore.setState({ target: { slot: band.slot, from, f: to } });
 
   const step = () => {
     if (token !== glide) {

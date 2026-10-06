@@ -36,7 +36,7 @@ describe('key gestures', () => {
 
   it('keeps the note a click glides the band to until the glide ends', async () => {
     keyDown(57, false, onKey(57));
-    expect(useGlideTargetStore.getState().target).toEqual({ slot: 1, f: midiToFrequency(57) });
+    expect(useGlideTargetStore.getState().target).toEqual({ slot: 1, from: bell.f, f: midiToFrequency(57) });
 
     // The click ends before the glide does.
     endGesture();
@@ -50,7 +50,7 @@ describe('key gestures', () => {
     const start = onKey(58);
     keyDown(58, false, start);
     moveGesture({ x: start.x + 2, y: start.y + 1 }, { shiftKey: false });
-    expect(useGlideTargetStore.getState().target).toEqual({ slot: 1, f: midiToFrequency(58) });
+    expect(useGlideTargetStore.getState().target).toEqual({ slot: 1, from: bell.f, f: midiToFrequency(58) });
 
     endGesture();
     await waitFor(() => expect(useGlideTargetStore.getState().target).toBeNull());

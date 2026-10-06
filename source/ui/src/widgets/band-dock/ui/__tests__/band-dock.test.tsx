@@ -124,7 +124,7 @@ describe('band dock', () => {
 
     // On the way from G3 to A3: the node is between the notes, the field already shows A3.
     act(() => {
-      useGlideTargetStore.setState({ target: { slot: bell.slot, f: midiToFrequency(57) } });
+      useGlideTargetStore.setState({ target: { slot: bell.slot, from: midiToFrequency(55), f: midiToFrequency(57) } });
       setPreview({ slot: bell.slot, f: 207 }, true);
     });
     expect(frequencyField()).toEqual({ value: 'A3', caption: '220 Hz' });

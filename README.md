@@ -12,7 +12,7 @@ band does with solo, and step back through every edit with undo.
 It runs as a VST3 plug-in in your DAW and as a standalone app.
 
 Even is in early development. If you try it, feedback is welcome: please
-[open an issue](https://github.com/egor-sm/equalize_it/issues).
+[open an issue](https://github.com/egor-sm/even/issues).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="media/screenshot-dark.png">
@@ -36,7 +36,7 @@ Even is in early development. If you try it, feedback is welcome: please
 
 ## Install
 
-1. Download `Even-<version>.pkg` from the [latest release](https://github.com/egor-sm/equalize_it/releases/latest).
+1. Download `Even-<version>.pkg` from the [latest release](https://github.com/egor-sm/even/releases/latest).
 2. Open it. The installer is not signed yet, so macOS stops it the first time: open
    **System Settings → Privacy & Security** and click **Open Anyway** next to the message about Even.
 3. Choose what to install: the **VST3 plug-in** (into `/Library/Audio/Plug-Ins/VST3`), the **standalone app**

@@ -36,8 +36,9 @@ export function SegmentedControl<Value extends string>({
     >
       {segments.map((segment) => (
         <SegmentGroup.Item key={segment.value} className={item} value={segment.value}>
-          <SegmentGroup.ItemText aria-label={segment.label}>{segment.content}</SegmentGroup.ItemText>
-          <SegmentGroup.ItemControl />
+          <SegmentGroup.ItemText className="kit-seg__content" aria-label={segment.label}>
+            {segment.content}
+          </SegmentGroup.ItemText>
           <SegmentGroup.ItemHiddenInput />
         </SegmentGroup.Item>
       ))}

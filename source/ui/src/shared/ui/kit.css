@@ -1,5 +1,11 @@
 /* The kit: states of the headless components mapped onto the design system's classes. */
 
+/* Ark hides closed or unchecked parts (each part has a data-part) with the hidden attribute, which loses to any
+   class that sets display (.eq-menu, .kit-check): a closed menu would stay on screen. */
+[data-part][hidden] {
+  display: none;
+}
+
 .kit-positioner {
   z-index: 51;
 }
@@ -42,10 +48,6 @@
 .kit-check {
   display: grid;
   stroke: var(--state-focus);
-}
-
-.kit-check[hidden] {
-  display: none;
 }
 
 /* Segments: Ark marks the chosen one as checked. */

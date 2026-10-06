@@ -14,9 +14,15 @@ describe('gain edits', () => {
     expect(clampGain(-14.2, 12)).toBe(-12);
   });
 
-  it('stay within the ±30 dB of the gain parameter when the display range is wider', () => {
-    expect(clampGain(33.3, 36)).toBe(30);
-    expect(clampGain(-36, 36)).toBe(-30);
+  it('reach the ±36 dB of the gain parameter at the widest display range', () => {
+    expect(clampGain(40, 36)).toBe(36);
+    expect(clampGain(-40, 36)).toBe(-36);
+  });
+
+  it('stay within the gain parameter when its range is narrower than the display range', () => {
+    recordingBackend({ gain: { min: -24, max: 24 } });
+    expect(clampGain(33.3, 36)).toBe(24);
+    expect(clampGain(-36, 36)).toBe(-24);
   });
 
   it('go in 0.1 dB steps', () => {

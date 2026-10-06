@@ -11,16 +11,16 @@ describe('plugin backend', () => {
       '__juce__sliderband1Gain',
       JSON.stringify({
         eventType: 'propertiesChanged',
-        start: -30,
-        end: 30,
+        start: -36,
+        end: 36,
         skew: 1,
         name: 'Band 1 Gain',
         label: 'dB',
-        numSteps: 6001,
+        numSteps: 7201,
         interval: 0.01,
         parameterIndex: 5,
       }),
     );
-    expect(bandParameterRange('gain')).toEqual({ min: -30, max: 30 });
+    expect(bandParameterRange('gain')).toEqual({ min: -36, max: 36 });
   });
 });

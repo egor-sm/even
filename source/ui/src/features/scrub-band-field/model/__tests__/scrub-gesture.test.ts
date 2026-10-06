@@ -21,7 +21,7 @@ const bell: Band = {
   sections: [],
 };
 
-// What C++ sends back after the scrub: the gain held at the +30 dB of the parameter.
+// What C++ sends back after the scrub: the gain at the +36 dB top of the parameter.
 const response: EqResponse = {
   sampleRate: 48000,
   bands: [
@@ -32,7 +32,7 @@ const response: EqResponse = {
       slope: 1,
       shape: 0,
       frequencyHz: 182,
-      gainDb: 30,
+      gainDb: 36,
       q: 5.2,
       sections: [],
     },
@@ -51,7 +51,7 @@ describe('gain scrub', () => {
 
   beforeEach(() => {
     backend = recordingBackend();
-    // The display range is ±36 dB, wider than the ±30 dB of the gain parameter.
+    // The widest display range, ±36 dB, as wide as the gain parameter.
     useViewportStore.setState({ axis: 'hz', range: 36, view: { range: 36, morph: 0 }, hotKey: null });
     useBandsStore.setState({ sampleRate: 48000, bands: [bell] });
     useSelectionStore.setState({ selected: 2, solo: null, typeMenu: null, preview: null, previewUntilResponse: false });
@@ -60,16 +60,16 @@ describe('gain scrub', () => {
     vi.restoreAllMocks();
   });
 
-  it('stops at the +30 dB of the gain parameter', () => {
+  it('goes up to +36 dB, the top of the scale and of the gain parameter', () => {
     scrubGain(500); // −7.5 dB + 50 dB
-    expect(backend.named('set').at(-1)?.args).toEqual([2, 'gain', 30]);
-    expect(useSelectionStore.getState().preview).toEqual({ slot: 2, g: 30 });
+    expect(backend.named('set').at(-1)?.args).toEqual([2, 'gain', 36]);
+    expect(useSelectionStore.getState().preview).toEqual({ slot: 2, g: 36 });
   });
 
-  it('stops at −30 dB', () => {
+  it('goes down to −36 dB', () => {
     scrubGain(-300); // −7.5 dB − 30 dB
-    expect(backend.named('set').at(-1)?.args).toEqual([2, 'gain', -30]);
-    expect(useSelectionStore.getState().preview).toEqual({ slot: 2, g: -30 });
+    expect(backend.named('set').at(-1)?.args).toEqual([2, 'gain', -36]);
+    expect(useSelectionStore.getState().preview).toEqual({ slot: 2, g: -36 });
   });
 
   it('keeps the preview until C++ sends the response, and asks for it', () => {
@@ -85,6 +85,6 @@ describe('gain scrub', () => {
     });
     scrubGain(500);
     expect(useSelectionStore.getState().preview).toBeNull();
-    expect(useBandsStore.getState().bands[0]?.g).toBe(30);
+    expect(useBandsStore.getState().bands[0]?.g).toBe(36);
   });
 });

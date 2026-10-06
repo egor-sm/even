@@ -21,7 +21,7 @@ const bell: Band = {
   sections: [],
 };
 
-// What C++ sends back after the drag: the gain held at the +30 dB of the parameter.
+// What C++ sends back after the drag: the gain at the +36 dB top of the parameter.
 const response: EqResponse = {
   sampleRate: 48000,
   bands: [
@@ -32,14 +32,14 @@ const response: EqResponse = {
       slope: 1,
       shape: 0,
       frequencyHz: 1000,
-      gainDb: 30,
+      gainDb: 36,
       q: 1,
       sections: [],
     },
   ],
 };
 
-// The display range is ±36 dB, wider than the ±30 dB of the gain parameter.
+// The widest display range, ±36 dB, as wide as the gain parameter.
 const mapper = createMapper(36);
 const node = { x: mapper.x(bell.f), y: mapper.y(bell.g) };
 
@@ -62,16 +62,16 @@ describe('node gestures', () => {
     vi.restoreAllMocks();
   });
 
-  it('stop a dragged bell at the +30 dB of the gain parameter', () => {
-    dragNode({ x: node.x, y: mapper.y(36) });
-    expect(backend.named('set').map((call) => call.args)).toContainEqual([3, 'gain', 30]);
-    expect(useSelectionStore.getState().preview).toMatchObject({ slot: 3, g: 30 });
+  it('take a dragged bell up to +36 dB, the top of the scale and of the gain parameter', () => {
+    dragNode({ x: node.x, y: mapper.y(40) });
+    expect(backend.named('set').map((call) => call.args)).toContainEqual([3, 'gain', 36]);
+    expect(useSelectionStore.getState().preview).toMatchObject({ slot: 3, g: 36 });
   });
 
-  it('stop a dragged bell at −30 dB', () => {
-    dragNode({ x: node.x, y: mapper.y(-36) });
-    expect(backend.named('set').map((call) => call.args)).toContainEqual([3, 'gain', -30]);
-    expect(useSelectionStore.getState().preview).toMatchObject({ slot: 3, g: -30 });
+  it('take a dragged bell down to −36 dB', () => {
+    dragNode({ x: node.x, y: mapper.y(-40) });
+    expect(backend.named('set').map((call) => call.args)).toContainEqual([3, 'gain', -36]);
+    expect(useSelectionStore.getState().preview).toMatchObject({ slot: 3, g: -36 });
   });
 
   it('keep the preview after a drag until C++ sends the response, and ask for it', () => {
@@ -87,12 +87,12 @@ describe('node gestures', () => {
     });
     dragNode({ x: node.x, y: mapper.y(36) });
     expect(useSelectionStore.getState().preview).toBeNull();
-    expect(useBandsStore.getState().bands[0]?.g).toBe(30);
+    expect(useBandsStore.getState().bands[0]?.g).toBe(36);
   });
 
-  it('create a bell with +30 dB from a double click at +36 dB', () => {
+  it('create a bell with +36 dB from a double click at the top of the scale', () => {
     createBandAt({ x: node.x, y: mapper.y(36) });
     // A bell (type 0) at 1 kHz.
-    expect(backend.named('createBand')[0]?.args).toEqual([0, expect.closeTo(1000, 6), 30]);
+    expect(backend.named('createBand')[0]?.args).toEqual([0, expect.closeTo(1000, 6), 36]);
   });
 });

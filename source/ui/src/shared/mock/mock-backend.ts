@@ -34,7 +34,7 @@ const pointCount = 512;
 // parameter, so the mock does too.
 const parameterRanges: Record<ContinuousField, ParameterRange> = {
   frequency: { min: 20, max: 20000 },
-  gain: { min: -30, max: 30 },
+  gain: { min: -36, max: 36 },
   q: { min: 0.1, max: 30 },
 };
 

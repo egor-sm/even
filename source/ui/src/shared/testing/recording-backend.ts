@@ -3,7 +3,7 @@ import { type Backend, type ContinuousField, type ParameterRange, setBackend } f
 // The ranges of the band parameters in C++ (parameters.h).
 const parameterRanges: Record<ContinuousField, ParameterRange> = {
   frequency: { min: 20, max: 20000 },
-  gain: { min: -30, max: 30 },
+  gain: { min: -36, max: 36 },
   q: { min: 0.1, max: 30 },
 };
 

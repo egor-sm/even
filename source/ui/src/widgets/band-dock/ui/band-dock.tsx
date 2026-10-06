@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { bandColorVar, findBand, hasGain, useSelectionStore, useDisplayBands } from '~/entities/band';
 import { graph, nodePoint, useViewportStore } from '~/entities/viewport';
 import { TypeButton, TypePicker } from '~/features/change-band-type';
+import { useGlideTargetStore } from '~/features/frequency-axis';
 import { ScrubField } from '~/features/scrub-band-field';
 import { SoloButton } from '~/features/solo-band';
 import { BypassButton, DeleteButton } from '~/features/toggle-band';
@@ -28,6 +29,7 @@ export function BandDock() {
   );
   const range = useViewportStore((state) => state.view.range);
   const scrubbing = useGestureStore((state) => state.active?.kind === 'scrub');
+  const glideTarget = useGlideTargetStore((state) => state.target);
   const band = findBand(bands, selected);
 
   // Position at the last commit: the dock glides from there when the selection moves to another band.
@@ -66,6 +68,9 @@ export function BandDock() {
 
   if (band === undefined || node === null) return null;
 
+  // While the band glides to a clicked key, its frequency shows the note it is going to.
+  const frequencyBand = glideTarget?.slot === band.slot ? { ...band, f: glideTarget.f } : band;
+
   // A node down in the dock's lane stays on top; the dock turns translucent until hovered.
   const underDock = node.y + 13 > dockTop - 8 && node.x > x - edge && node.x < x + dockWidth + edge;
 
@@ -88,7 +93,7 @@ export function BandDock() {
     >
       <TypeButton band={band} open={picker} />
       <div className="eq-divider" />
-      <ScrubField band={band} field="f" />
+      <ScrubField band={frequencyBand} field="f" />
       <ScrubField band={band} field="g" />
       <ScrubField band={band} field="q" />
       <div className="eq-divider" />

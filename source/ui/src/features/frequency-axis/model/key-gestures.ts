@@ -1,3 +1,5 @@
+import { create } from 'zustand';
+
 import {
   type Band,
   useBandsStore,
@@ -14,12 +16,19 @@ import { midiToFrequency, type Point, startGesture } from '~/shared/lib';
 const glideMs = 180;
 let glide = 0;
 
+/**
+ * The frequency a band glides to after a click on a key, while it glides: the band's values show the
+ * note at once, without the cents of the frequencies on the way.
+ */
+export const useGlideTargetStore = create<{ target: { slot: number; f: number } | null }>()(() => ({ target: null }));
+
 /** Moves a band to a frequency in 180 ms (one gesture), easing out; a newer move cancels it. */
 const glideFrequency = (band: Band, to: number): void => {
   const token = ++glide;
   const from = band.f;
   const startedAt = performance.now();
   bandParameters.begin(band.slot, ['frequency']);
+  useGlideTargetStore.setState({ target: { slot: band.slot, f: to } });
 
   const step = () => {
     if (token !== glide) {
@@ -30,8 +39,12 @@ const glideFrequency = (band: Band, to: number): void => {
     const f = from * (to / from) ** (1 - (1 - k) ** 3);
     setPreview({ slot: band.slot, f }, true);
     bandParameters.set(band.slot, 'frequency', f);
-    if (k < 1) requestAnimationFrame(step);
-    else bandParameters.end(band.slot, ['frequency']);
+    if (k < 1) {
+      requestAnimationFrame(step);
+      return;
+    }
+    bandParameters.end(band.slot, ['frequency']);
+    useGlideTargetStore.setState({ target: null });
   };
   requestAnimationFrame(step);
 };
@@ -68,6 +81,7 @@ export const keyDown = (midi: number, altKey: boolean): void => {
         if (next === current) return;
         current = next;
         glide++;
+        useGlideTargetStore.setState({ target: null });
         const f = midiToFrequency(next);
         setPreview({ slot: band.slot, f }, true);
         useViewportStore.setState({ hotKey: next });

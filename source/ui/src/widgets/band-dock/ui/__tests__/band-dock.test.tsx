@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 import { type Band, receiveResponse, setPreview, typeIndex, useBandsStore, useSelectionStore } from '~/entities/band';
 import { graphRootAttribute, useViewportStore } from '~/entities/viewport';
+import { useGlideTargetStore } from '~/features/frequency-axis';
 import type { EqResponse } from '~/shared/api';
 import { endGesture, midiToFrequency, moveGesture } from '~/shared/lib';
 import { recordingBackend } from '~/shared/testing';
@@ -72,6 +73,7 @@ describe('band dock', () => {
   beforeEach(() => {
     backend = recordingBackend();
     useViewportStore.setState({ axis: 'hz', range: 18, view: { range: 18, morph: 0 }, hotKey: null });
+    useGlideTargetStore.setState({ target: null });
   });
   afterEach(cleanup);
 
@@ -114,6 +116,21 @@ describe('band dock', () => {
     expect(frequencyField()).toEqual({ value: 'D#4', caption: '311 Hz' });
     act(() => setPreview({ slot: bell.slot, f: 330 }));
     expect(frequencyField()).toEqual({ value: 'E4 +2c', caption: '330 Hz' });
+  });
+
+  it('shows the note a clicked key glides the band to, without the cents on the way', () => {
+    useViewportStore.setState({ axis: 'note' });
+    renderDock({ ...bell, f: midiToFrequency(55) });
+
+    // On the way from G3 to A3: the node is between the notes, the field already shows A3.
+    act(() => {
+      useGlideTargetStore.setState({ target: { slot: bell.slot, f: midiToFrequency(57) } });
+      setPreview({ slot: bell.slot, f: 207 }, true);
+    });
+    expect(frequencyField()).toEqual({ value: 'A3', caption: '220 Hz' });
+
+    act(() => useGlideTargetStore.setState({ target: null }));
+    expect(frequencyField()).toEqual({ value: 'G#3 −5c', caption: '207 Hz' });
   });
 
   it('follows its node with translate, keeping left at 0', () => {

@@ -52,8 +52,8 @@ GitHub Actions (`.github/workflows`):
 
 - **Verify**, on every push to any branch, five jobs in parallel: UI lint (`vp check`, Steiger), UI tests, C++
   formatting, clang-tidy (on branches only the files changed since `main`, on `main` everything) and the macOS
-  release build with the C++ tests. The build (VST3, Standalone and an installer) is attached to the run as an
-  artifact for 14 days.
+  release build with the C++ tests and pluginval. The build (VST3, Standalone and an installer) is attached to the
+  run as an artifact for 14 days.
 - **Release**, on pushes to `main`: [release-please](https://github.com/googleapis/release-please) keeps a release
   PR with the next version and the changelog from Conventional Commits. Merging it tags `v<version>`, creates the
   GitHub release and attaches the universal macOS installer to it.
@@ -70,6 +70,21 @@ cmake --build --preset debug --target even_dsp_tests even_model_tests even_app_t
 ctest --preset debug          # all tests
 ctest --preset debug -L dsp   # one module: dsp, model or app
 ```
+
+### Plug-in validation
+
+[pluginval](https://github.com/Tracktion/pluginval) loads the VST3 the way hosts do and checks it at strictness
+level 10, the highest: audio processing at several sample rates and block sizes, state save and restore,
+parameters and automation, calls from several threads, the editor. CI runs it on the release build. Locally (macOS),
+the script downloads the same pinned pluginval into `.cache/pluginval`:
+
+```sh
+cmake --build --preset release
+scripts/pluginval.sh                                      # the release build
+scripts/pluginval.sh path/to/Even.vst3 --skip-gui-tests   # another build, without opening the editor
+```
+
+A failure prints the random seed of the run; `--random-seed <seed>` repeats it.
 
 ### UI development with hot reload
 

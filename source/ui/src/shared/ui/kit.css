@@ -62,6 +62,11 @@
   cursor: pointer;
 }
 
+/* A segment's text or icon as one box, centred in the segment: inline, an icon sits on the text's baseline. */
+.kit-seg__content {
+  display: grid;
+}
+
 /* Toggle groups: the item that is on. */
 .eq-strip__btn[data-state='on'] {
   background: color-mix(in srgb, var(--band) 18%, transparent);

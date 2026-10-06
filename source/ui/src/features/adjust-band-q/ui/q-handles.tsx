@@ -1,25 +1,16 @@
 import { clsx } from 'clsx';
 
-import {
-  bandColorVar,
-  findBand,
-  hasQHandles,
-  qToOctaves,
-  useSelectionStore,
-  useDisplayBands,
-  useSampleRate,
-} from '~/entities/band';
-import { createMapper, graph, maxHz, minHz, useViewportStore } from '~/entities/viewport';
-import { magnitudeDb } from '~/shared/api';
-import { clamp, useGestureStore } from '~/shared/lib';
+import { bandColorVar, findBand, hasQHandles, useSelectionStore, useDisplayBands } from '~/entities/band';
+import { createMapper, useViewportStore } from '~/entities/viewport';
+import { useGestureStore } from '~/shared/lib';
 
+import { qHandlePoint } from '../lib/q-handle-point';
 import { qDown } from '../model/q-gesture';
 import styles from './q-handles.module.css';
 
-/** Two handles at the edges of the selected bell, notch or band pass (its width): drag for q. */
+/** Two handles on the 0 dB line at the edges of the selected bell, notch or band pass (its width): drag for q. */
 export function QHandles() {
   const bands = useDisplayBands();
-  const sampleRate = useSampleRate();
   const selected = useSelectionStore((state) => state.selected);
   const gesture = useGestureStore((state) => state.active);
   const range = useViewportStore((state) => state.view.range);
@@ -28,15 +19,9 @@ export function QHandles() {
   if (band === undefined || !hasQHandles(band.type) || nodeMoving) return null;
 
   const mapper = createMapper(range);
-  const nodeX = mapper.x(band.f);
-  const half = qToOctaves(band.q) / 2;
 
   return ([-1, 1] as const).map((side) => {
-    const hz = clamp(band.f * 2 ** (side * half), minHz, maxHz);
-    let x = mapper.x(hz);
-    if (Math.abs(x - nodeX) < 18) x = nodeX + side * 18;
-    // On the band's own curve (the sections lag behind a q drag by a frame, which is not visible).
-    const y = clamp(mapper.y(band.on ? magnitudeDb(band.sections, hz, sampleRate) : 0), -2, graph.height + 2);
+    const { x, y } = qHandlePoint(band, side, mapper);
     const active = gesture?.kind === 'q';
 
     return (

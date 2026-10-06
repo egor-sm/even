@@ -84,7 +84,7 @@ export function FrequencyAxis() {
               if (event.button !== 0 || at === null) return;
               event.stopPropagation();
               event.currentTarget.setPointerCapture(event.pointerId);
-              keyDown(keyUnder(at.point, at.keyboardY), event.altKey);
+              keyDown(keyUnder(at.point, at.keyboardY), event.altKey, at.point);
             }}
             onPointerMove={(event) => {
               const at = keyboardPoint(event);

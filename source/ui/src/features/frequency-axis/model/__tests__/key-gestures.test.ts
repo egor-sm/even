@@ -21,6 +21,9 @@ const bell: Band = {
   sections: [],
 };
 
+/** A point on a key, in graph units. */
+const onKey = (midi: number) => ({ x: createMapper(18).noteX(midi), y: 640 });
+
 describe('key gestures', () => {
   beforeEach(() => {
     recordingBackend();
@@ -32,7 +35,7 @@ describe('key gestures', () => {
   afterEach(endGesture);
 
   it('keeps the note a click glides the band to until the glide ends', async () => {
-    keyDown(57, false);
+    keyDown(57, false, onKey(57));
     expect(useGlideTargetStore.getState().target).toEqual({ slot: 1, f: midiToFrequency(57) });
 
     // The click ends before the glide does.
@@ -43,9 +46,20 @@ describe('key gestures', () => {
     expect(useSelectionStore.getState().preview?.f).toBeCloseTo(midiToFrequency(57), 9);
   });
 
+  it('keeps a click on a black key there when the pointer moves a little', async () => {
+    const start = onKey(58);
+    keyDown(58, false, start);
+    moveGesture({ x: start.x + 2, y: start.y + 1 }, { shiftKey: false });
+    expect(useGlideTargetStore.getState().target).toEqual({ slot: 1, f: midiToFrequency(58) });
+
+    endGesture();
+    await waitFor(() => expect(useGlideTargetStore.getState().target).toBeNull());
+    expect(useSelectionStore.getState().preview?.f).toBeCloseTo(midiToFrequency(58), 9);
+  });
+
   it('drops the glide when a drag along the keys takes over', () => {
-    keyDown(57, false);
-    moveGesture({ x: createMapper(18).noteX(60), y: 0 }, { shiftKey: false });
+    keyDown(57, false, onKey(57));
+    moveGesture(onKey(60), { shiftKey: false });
 
     expect(useGlideTargetStore.getState().target).toBeNull();
     expect(useSelectionStore.getState().preview).toEqual({ slot: 1, f: midiToFrequency(60) });

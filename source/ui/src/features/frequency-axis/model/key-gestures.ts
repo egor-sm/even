@@ -13,6 +13,7 @@ import { createMapper, keyAt, useViewportStore } from '~/entities/viewport';
 import { bandParameters } from '~/shared/api';
 import { midiToFrequency, type Point, startGesture } from '~/shared/lib';
 
+const dragThreshold = 3;
 const glideMs = 180;
 let glide = 0;
 
@@ -54,10 +55,10 @@ export const keyUnder = (point: Point, keyboardY: number): number =>
   keyAt(createMapper(useViewportStore.getState().view.range), point.x, keyboardY);
 
 /**
- * Click on a key: the selected band glides to that note, and dragging along the keys moves it by
- * semitones; with Alt, or without a selection, a new band on that note.
+ * Click on a key: the selected band glides to that note, and dragging along the keys (past 3 px) moves
+ * it by semitones; with Alt, or without a selection, a new band on that note.
  */
-export const keyDown = (midi: number, altKey: boolean): void => {
+export const keyDown = (midi: number, altKey: boolean, start: Point): void => {
   const { selected, preview } = useSelectionStore.getState();
   const found = findBand(useBandsStore.getState().bands, selected);
   useViewportStore.setState({ hotKey: midi });
@@ -72,10 +73,14 @@ export const keyDown = (midi: number, altKey: boolean): void => {
   glideFrequency(band, midiToFrequency(midi));
 
   let current = midi;
+  let dragging = false;
   startGesture(
     { kind: 'keys', slot: band.slot },
     {
       move: (point) => {
+        // Short of the threshold it is still a click: on a black key, the row below would find a white one.
+        if (!dragging && Math.hypot(point.x - start.x, point.y - start.y) < dragThreshold) return;
+        dragging = true;
         // Along the white keys' row, so the pointer's height does not matter.
         const next = keyUnder(point, 32);
         if (next === current) return;

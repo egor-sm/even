@@ -75,8 +75,11 @@ export function BandDock() {
       style={{
         ['--band' as string]: bandColorVar(band.color),
         position: 'absolute',
-        left: x,
+        left: 0,
         top: dockTop,
+        // Moved with translate, not left: WebKit does not repaint what changes inside a composited box in the
+        // frame it moves with left, and the old value stays on screen. Whole pixels keep the text sharp.
+        translate: `${Math.round(x)}px 0`,
         width: dockWidth,
         zIndex: picker ? 'var(--z-strip)' : 'var(--z-dock)',
       }}

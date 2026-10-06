@@ -24,7 +24,7 @@ Even is in early development. If you try it, feedback is welcome: please
 - **Up to 12 bands** of eight shapes: bell, low and high shelf, tilt shelf, low and high cut, notch and
   band pass.
 - **Steep cuts**: low and high cuts from 6 to 96 dB/oct.
-- **Wide ranges**: gain up to ±30 dB, Q from 0.1 to 30.
+- **Wide ranges**: gain up to ±36 dB, Q from 0.1 to 30.
 - **Spectrum analyzer** of the input, the output or both, drawn behind the EQ curve.
 - **Solo** a band to hear only the frequency range it works on; **bypass** any band to compare.
 - **Notes as well as hertz**: the frequency axis turns into a piano keyboard, and bands snap to notes.

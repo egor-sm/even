@@ -4,6 +4,9 @@ import { setSliderValue } from './slider-values';
 
 export type ContinuousField = 'frequency' | 'gain' | 'q';
 
+/** The values a band parameter can take, in parameter units. */
+export type ParameterRange = { min: number; max: number };
+
 /** Writes of band parameters (values in parameter units). */
 export type ParameterWriter = {
   begin: (slot: number, fields: readonly ContinuousField[]) => void;
@@ -18,6 +21,8 @@ export type ParameterWriter = {
 export type Backend = {
   call: (name: string, args: unknown[]) => Promise<unknown>;
   parameters: ParameterWriter;
+  /** The range of a band parameter (every band has the same ranges), or null while it is not known. */
+  parameterRange: (field: ContinuousField) => ParameterRange | null;
 };
 
 /** Whether the page runs inside the plugin (the JUCE backend announced its native functions). */
@@ -56,6 +61,12 @@ const pluginBackend: Backend = {
     setSlope: (slot, slopeIndex) => relays(slot).slope.setChoiceIndex(slopeIndex),
     setEnabled: (slot, enabled) => relays(slot).enabled.setValue(enabled),
     setMute: (muted) => Juce.getToggleState('mute').setValue(muted),
+  },
+  // Band 1's relays will do: every band has the same ranges. JUCE sends a relay its parameter's range
+  // when the page asks for the relay's state; until then it holds placeholders (0…1, parameter index −1).
+  parameterRange: (field) => {
+    const { start, end, parameterIndex } = relays(1)[field].properties;
+    return parameterIndex < 0 ? null : { min: start, max: end };
   },
 };
 

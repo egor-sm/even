@@ -1,6 +1,7 @@
 import {
   type Band,
   useBandsStore,
+  clampGain,
   createBand,
   findBand,
   hasGain,
@@ -9,7 +10,7 @@ import {
   withPreview,
 } from '~/entities/band';
 import { createMapper, maxHz, minHz, nodePoint, useViewportStore } from '~/entities/viewport';
-import { bandParameters } from '~/shared/api';
+import { bandParameters, native } from '~/shared/api';
 import { clamp, frequencyToMidi, midiToFrequency, type Point, startGesture, updateGesture } from '~/shared/lib';
 
 const dragThreshold = 3;
@@ -18,7 +19,6 @@ const wheelGestureEndMs = 300;
 const minQ = 0.1;
 const maxQ = 30;
 
-const roundTo = (value: number, step: number) => Math.round(value / step) * step;
 const clampQ = (q: number) => clamp(Math.round(q * 100) / 100, minQ, maxQ);
 
 const editedFields = (band: Band) => (hasGain(band.type) ? (['frequency', 'gain'] as const) : (['frequency'] as const));
@@ -58,9 +58,7 @@ export const nodeDown = (band: Band, start: Point): void => {
           hotKey = Math.round(frequencyToMidi(f));
           f = clamp(midiToFrequency(hotKey), minHz, maxHz);
         }
-        const g = hasGain(current.type)
-          ? roundTo(clamp(mapper.dbAt(point.y - offset.y), -range, range), 0.1)
-          : current.g;
+        const g = hasGain(current.type) ? clampGain(mapper.dbAt(point.y - offset.y), range) : current.g;
 
         setPreview({ slot: band.slot, f, g });
         useViewportStore.setState({ hotKey });
@@ -72,8 +70,10 @@ export const nodeDown = (band: Band, start: Point): void => {
         if (!moved) return;
         const current = findBand(useBandsStore.getState().bands, band.slot);
         if (current !== undefined) bandParameters.end(band.slot, editedFields(current));
-        // Keep showing the dragged values until C++ confirms them.
+        // Keep showing the dragged values until C++ confirms them. C++ sends a response only when
+        // something changed (not for a gain held at its limit), so ask for one once the preview waits.
         useSelectionStore.setState(({ preview }) => ({ previewUntilResponse: preview !== null }));
+        void native.requestResponse();
       },
     },
   );
@@ -110,9 +110,5 @@ export const nodeWheel = (band: Band, up: boolean): void => {
 export const createBandAt = (point: Point): void => {
   const { range, view } = useViewportStore.getState();
   const mapper = createMapper(view.range);
-  createBand(
-    'bell',
-    clamp(mapper.frequencyAt(point.x), minHz, maxHz),
-    roundTo(clamp(mapper.dbAt(point.y), -range, range), 0.1),
-  );
+  createBand('bell', clamp(mapper.frequencyAt(point.x), minHz, maxHz), clampGain(mapper.dbAt(point.y), range));
 };

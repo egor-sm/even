@@ -55,10 +55,11 @@ static_assert(slopeNames.size() == dsp::cutSlopesDbPerOctave.size());
 inline constexpr int defaultSlopeIndex = model::defaultSlopeIndex;
 
 // Ranges. Frequency and q use a true logarithmic mapping (each octave/ratio gets the same slider
-// travel); the web UI mirrors it in source/ui/src/shared/api/slider-values.ts.
+// travel); the web UI mirrors it in source/ui/src/shared/api/slider-values.ts. The gain spans the
+// web UI's widest display range (maxRange in source/ui/src/entities/viewport/lib/axis-math.ts).
 inline constexpr float minFrequencyHz = 20.0f;
 inline constexpr float maxFrequencyHz = 20000.0f;
-inline constexpr float maxGainDb = 30.0f;
+inline constexpr float maxGainDb = 36.0f;
 inline constexpr float minQ = 0.1f;
 inline constexpr float maxQ = 30.0f;
 

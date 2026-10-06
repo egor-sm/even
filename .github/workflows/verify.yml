@@ -129,6 +129,10 @@ jobs:
       - name: Run tests
         run: ctest --preset release
 
+      # Loads the VST3 as hosts do and checks it at the highest strictness, the editor included.
+      - name: Validate the plug-in (pluginval)
+        run: scripts/pluginval.sh
+
       # Zipped with ditto: bundles keep their executable bits, symlinks and signatures.
       - name: Package the build
         run: |

@@ -23,6 +23,7 @@ export {
   typeIndex,
   typeNames,
 } from './model/filter-types';
+export { clampGain } from './model/limits';
 export {
   type BandPreview,
   selectBand,

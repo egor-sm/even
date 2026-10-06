@@ -1,4 +1,4 @@
-import { type ContinuousField, currentBackend } from './backend';
+import { type ContinuousField, currentBackend, type ParameterRange } from './backend';
 
 /**
  * Writes band parameters through the JUCE relays (values in parameter units). A continuous edit
@@ -11,5 +11,9 @@ export const bandParameters = {
   setSlope: (slot: number, slopeIndex: number) => currentBackend().parameters.setSlope(slot, slopeIndex),
   setEnabled: (slot: number, enabled: boolean) => currentBackend().parameters.setEnabled(slot, enabled),
 };
+
+/** The range of a band parameter in C++, or null until the plugin has sent it. */
+export const bandParameterRange = (field: ContinuousField): ParameterRange | null =>
+  currentBackend().parameterRange(field);
 
 export const setMute = (muted: boolean): void => currentBackend().parameters.setMute(muted);

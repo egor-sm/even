@@ -1,6 +1,7 @@
 import {
   type Band,
   useBandsStore,
+  clampGain,
   findBand,
   hasGain,
   isCut,
@@ -9,12 +10,10 @@ import {
   slopes,
 } from '~/entities/band';
 import { maxHz, minHz, useViewportStore } from '~/entities/viewport';
-import { bandParameters, type ContinuousField } from '~/shared/api';
+import { bandParameters, type ContinuousField, native } from '~/shared/api';
 import { clamp, frequencyToMidi, midiToFrequency, type Point, startGesture } from '~/shared/lib';
 
 export type ScrubField = 'f' | 'g' | 'q';
-
-const roundTo = (value: number, step: number) => Math.round(value / step) * step;
 
 const startValue = (band: Band, field: ScrubField): number => {
   if (field === 'f') return band.f;
@@ -31,7 +30,8 @@ const gestureField = (band: Band, field: ScrubField): ContinuousField | null => 
 
 /**
  * Horizontal drag on a dock field. Frequency: twice per 60 px (in note mode a semitone per 14 px);
- * q: twice per 90 px; gain: 0.1 dB per px within the display range; slope: a step per 28 px.
+ * q: twice per 90 px; gain: 0.1 dB per px within the display and parameter ranges; slope: a step
+ * per 28 px.
  */
 export const scrubDown = (band: Band, field: ScrubField, start: Point): void => {
   const from = startValue(band, field);
@@ -65,14 +65,17 @@ export const scrubDown = (band: Band, field: ScrubField, start: Point): void => 
           setPreview({ slot: band.slot, slope });
           bandParameters.setSlope(band.slot, slope);
         } else if (hasGain(current.type)) {
-          const g = roundTo(clamp(from + dx * 0.1, -range, range), 0.1);
+          const g = clampGain(from + dx * 0.1, range);
           setPreview({ slot: band.slot, g });
           bandParameters.set(band.slot, 'gain', g);
         }
       },
       end: () => {
         if (edited !== null) bandParameters.end(band.slot, [edited]);
+        // Keep showing the scrubbed value until C++ confirms it. C++ sends a response only when
+        // something changed (not for a gain held at its limit), so ask for one once the preview waits.
         useSelectionStore.setState(({ preview }) => ({ previewUntilResponse: preview !== null }));
+        void native.requestResponse();
       },
     },
   );

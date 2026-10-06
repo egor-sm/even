@@ -1,4 +1,11 @@
-import { type Backend, magnitudeDb, type ParameterWriter } from '~/shared/api';
+import {
+  type Backend,
+  type ContinuousField,
+  magnitudeDb,
+  type ParameterRange,
+  type ParameterWriter,
+} from '~/shared/api';
+import { clamp } from '~/shared/lib';
 
 import { mockDesign } from './mock-design';
 import { hasGain, isCut, type MockType, mockTypes, typeAt } from './mock-types';
@@ -22,6 +29,17 @@ type Slot = {
 
 const sampleRate = 48000;
 const pointCount = 512;
+
+// The ranges of the band parameters in C++ (parameters.h). C++ clamps every value written to a
+// parameter, so the mock does too.
+const parameterRanges: Record<ContinuousField, ParameterRange> = {
+  frequency: { min: 20, max: 20000 },
+  gain: { min: -30, max: 30 },
+  q: { min: 0.1, max: 30 },
+};
+
+const clampParameter = (field: ContinuousField, value: number) =>
+  clamp(value, parameterRanges[field].min, parameterRanges[field].max);
 
 const emptySlot = (): Slot => ({ used: false, on: true, type: 'bell', f: 1000, g: 0, q: 1, slope: 1, serial: 0 });
 
@@ -171,8 +189,8 @@ const mockNative: Record<string, (args: unknown[]) => unknown> = {
       used: true,
       on: true,
       type,
-      f: Number(f),
-      g: hasGain(type) ? Number(g) : 0,
+      f: clampParameter('frequency', Number(f)),
+      g: hasGain(type) ? clampParameter('gain', Number(g)) : 0,
       q: isCut(type) ? 0.71 : 1,
       slope: 1,
       serial: nextSerial(),
@@ -224,7 +242,7 @@ const mockParameters: ParameterWriter = {
   begin: () => undefined,
   end: () => commit(),
   set: (slot, field, value) => {
-    slots[slot - 1][field === 'frequency' ? 'f' : field === 'gain' ? 'g' : 'q'] = value;
+    slots[slot - 1][field === 'frequency' ? 'f' : field === 'gain' ? 'g' : 'q'] = clampParameter(field, value);
     sendResponse();
   },
   setSlope: (slot, slopeIndex) => {
@@ -243,4 +261,5 @@ const mockParameters: ParameterWriter = {
 export const mockBackend: Backend = {
   call: (name, args) => Promise.resolve(mockNative[name]?.(args)),
   parameters: mockParameters,
+  parameterRange: (field) => parameterRanges[field],
 };

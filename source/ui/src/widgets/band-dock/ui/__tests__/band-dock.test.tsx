@@ -1,9 +1,11 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
-import { type Band, useBandsStore, useSelectionStore } from '~/entities/band';
+import { type Band, receiveResponse, setPreview, typeIndex, useBandsStore, useSelectionStore } from '~/entities/band';
 import { graphRootAttribute, useViewportStore } from '~/entities/viewport';
-import { endGesture, moveGesture } from '~/shared/lib';
+import { useGlideTargetStore } from '~/features/frequency-axis';
+import type { EqResponse } from '~/shared/api';
+import { endGesture, midiToFrequency, moveGesture } from '~/shared/lib';
 import { recordingBackend } from '~/shared/testing';
 
 import { BandDock } from '../band-dock';
@@ -38,12 +40,40 @@ const renderDock = (band: Band = bell) => {
   );
 };
 
+/** A response from C++ with the bell at another frequency. */
+const responseAt = (frequencyHz: number): EqResponse => ({
+  sampleRate: 48000,
+  bands: [
+    {
+      band: bell.slot,
+      enabled: bell.on,
+      serial: bell.serial,
+      slope: bell.slope,
+      shape: typeIndex(bell.type),
+      frequencyHz,
+      gainDb: bell.g,
+      q: bell.q,
+      sections: [],
+    },
+  ],
+});
+
+/** The frequency field's value and the caption after its label: in note mode the note and the Hz. */
+const frequencyField = () => {
+  const field = screen.getByRole('button', { name: 'Frequency, drag to change' });
+  return {
+    value: field.querySelector('.eq-field__v')?.textContent,
+    caption: field.querySelector('.eq-field__note')?.textContent,
+  };
+};
+
 describe('band dock', () => {
   let backend: ReturnType<typeof recordingBackend>;
 
   beforeEach(() => {
     backend = recordingBackend();
     useViewportStore.setState({ axis: 'hz', range: 18, view: { range: 18, morph: 0 }, hotKey: null });
+    useGlideTargetStore.setState({ target: null });
   });
   afterEach(cleanup);
 
@@ -60,6 +90,58 @@ describe('band dock', () => {
     unmount();
     renderDock({ ...bell, type: 'notch' });
     expect(screen.getByRole('button', { name: 'Gain or slope, drag to change' }).textContent).toBe('Gain—');
+  });
+
+  it('shows the note of the frequency in note mode as responses from C++ change it', () => {
+    useViewportStore.setState({ axis: 'note' });
+    renderDock({ ...bell, f: midiToFrequency(62) });
+    expect(frequencyField()).toEqual({ value: 'D4', caption: '294 Hz' });
+
+    // D4 → E4 as reported: the plug-in kept showing D4 next to 330 Hz.
+    act(() => receiveResponse(responseAt(midiToFrequency(64))));
+    expect(frequencyField()).toEqual({ value: 'E4', caption: '330 Hz' });
+    act(() => receiveResponse(responseAt(midiToFrequency(63))));
+    expect(frequencyField()).toEqual({ value: 'D#4', caption: '311 Hz' });
+    act(() => receiveResponse(responseAt(330)));
+    expect(frequencyField()).toEqual({ value: 'E4 +2c', caption: '330 Hz' });
+  });
+
+  it('shows the note of the frequency in note mode while a drag previews it', () => {
+    useViewportStore.setState({ axis: 'note' });
+    renderDock({ ...bell, f: midiToFrequency(62) });
+
+    act(() => setPreview({ slot: bell.slot, f: midiToFrequency(64) }));
+    expect(frequencyField()).toEqual({ value: 'E4', caption: '330 Hz' });
+    act(() => setPreview({ slot: bell.slot, f: midiToFrequency(63) }));
+    expect(frequencyField()).toEqual({ value: 'D#4', caption: '311 Hz' });
+    act(() => setPreview({ slot: bell.slot, f: 330 }));
+    expect(frequencyField()).toEqual({ value: 'E4 +2c', caption: '330 Hz' });
+  });
+
+  it('shows the note a clicked key glides the band to, without the cents on the way', () => {
+    useViewportStore.setState({ axis: 'note' });
+    renderDock({ ...bell, f: midiToFrequency(55) });
+
+    // On the way from G3 to A3: the node is between the notes, the field already shows A3.
+    act(() => {
+      useGlideTargetStore.setState({ target: { slot: bell.slot, from: midiToFrequency(55), f: midiToFrequency(57) } });
+      setPreview({ slot: bell.slot, f: 207 }, true);
+    });
+    expect(frequencyField()).toEqual({ value: 'A3', caption: '220 Hz' });
+
+    act(() => useGlideTargetStore.setState({ target: null }));
+    expect(frequencyField()).toEqual({ value: 'G#3 −5c', caption: '207 Hz' });
+  });
+
+  it('follows its node with translate, keeping left at 0', () => {
+    // WebKit does not repaint a field that changes in the frame the dock moves with left.
+    const { container } = renderDock({ ...bell, f: midiToFrequency(62) });
+    const dock = container.querySelector<HTMLElement>('.eq-dock');
+    expect(dock?.style.translate).toBe('248px 0'); // centred under D4 at x 517.7
+
+    act(() => receiveResponse(responseAt(midiToFrequency(64))));
+    expect(dock?.style.translate).toBe('268px 0');
+    expect(dock?.style.left).toBe('0px');
   });
 
   it('scrubs the frequency as one gesture: twice the frequency per 60 px', () => {

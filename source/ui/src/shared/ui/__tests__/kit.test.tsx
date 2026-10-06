@@ -68,7 +68,9 @@ describe('select menu', () => {
       <UiRoot theme="dark" scale={100}>
         <SelectMenu label="Analyzer" value="post" options={modes} onValueChange={vi.fn()} />
         {/* Keeps its pointer downs to itself, like the graph's nodes and the dock. */}
-        <button type="button" onPointerDown={(event) => event.stopPropagation()}>Node</button>
+        <button type="button" onPointerDown={(event) => event.stopPropagation()}>
+          Node
+        </button>
       </UiRoot>,
     );
     fireEvent.click(screen.getByRole('button', { name: /Analyzer/ }));

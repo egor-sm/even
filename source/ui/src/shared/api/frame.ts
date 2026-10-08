@@ -3,6 +3,7 @@ export type AnalyzerFrame = {
   sampleRate: number;
   /** Input sample count at the end of the analysed window: the frame's audio timestamp. */
   samplePosition: number;
+  /** Window length of the analysis (the FFT is longer when zero-padded). */
   fftSize: number;
   /** Display points are log-spaced between minHz and maxHz. */
   minHz: number;

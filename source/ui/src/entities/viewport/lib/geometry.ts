@@ -14,9 +14,14 @@ export const graph = {
 export const minHz = 20;
 export const maxHz = 20000;
 
-/** The analyzer's dBFS span drawn over the plot height. */
+/** The analyzer's level at the top of the plot, in dBFS. */
 export const analyzerTopDb = -6;
-export const analyzerBottomDb = -84;
+
+/** y of an analyzer level in dBFS when the plot height spans rangeDb below analyzerTopDb. */
+export const analyzerYFor =
+  (rangeDb: number) =>
+  (dbfs: number): number =>
+    graph.top + ((analyzerTopDb - dbfs) / rangeDb) * (graph.bottom - graph.top);
 
 /** Maps frequency and gain to graph coordinates for a display range of ±range dB and a visible span lo…hi Hz. */
 export type Mapper = {
@@ -26,8 +31,6 @@ export type Mapper = {
   noteX: (midi: number) => number;
   y: (db: number) => number;
   dbAt: (y: number) => number;
-  /** y of an analyzer level in dBFS. */
-  analyzerY: (dbfs: number) => number;
   zeroY: number;
   range: number;
 };
@@ -47,8 +50,6 @@ export const createMapper = (range: number, lo: number = minHz, hi: number = max
     noteX: (midi) => x(midiToFrequency(midi)),
     y: (db) => zeroY - (db / range) * half,
     dbAt: (py) => ((zeroY - py) / half) * range,
-    analyzerY: (dbfs) =>
-      graph.top + ((analyzerTopDb - dbfs) / (analyzerTopDb - analyzerBottomDb)) * (graph.bottom - graph.top),
     zeroY,
     range,
   };

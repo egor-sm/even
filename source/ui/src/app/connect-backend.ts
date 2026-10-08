@@ -1,4 +1,4 @@
-import { publishAnalyzerFrame } from '~/entities/analyzer';
+import { publishAnalyzerFrame, syncAnalyzerOptions } from '~/entities/analyzer';
 import { receiveResponse } from '~/entities/band';
 import { syncAnalyzerMode } from '~/features/analyzer-mode';
 import { applySettings } from '~/features/settings';
@@ -45,6 +45,7 @@ export const connectBackend = (): (() => void) => {
   void native.getSettings().then(applySettings);
   void native.getHistoryState().then(applyHistory);
   syncAnalyzerMode();
+  syncAnalyzerOptions();
 
   return () => {
     stopSoloSync();

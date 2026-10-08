@@ -1,8 +1,22 @@
 import { clsx } from 'clsx';
 
-import { AnalyzerLayer, onAnalyzerFrame, Spectrum } from '~/entities/analyzer';
+import {
+  AnalyzerLayer,
+  type DisplayTuning,
+  onAnalyzerFrame,
+  Spectrum,
+  useAnalyzerTuningStore,
+} from '~/entities/analyzer';
 import { type BandsState, useBandsStore, findBand, useSelectionStore } from '~/entities/band';
-import { createMapper, graph, gridLines, gridMorph, plotFrequencies, useViewportStore } from '~/entities/viewport';
+import {
+  analyzerYFor,
+  createMapper,
+  graph,
+  gridLines,
+  gridMorph,
+  plotFrequencies,
+  useViewportStore,
+} from '~/entities/viewport';
 import { drawGhost, GhostPreview, ghostLayerClass } from '~/features/change-band-type';
 import { useSettingsStore } from '~/features/settings';
 import { drawSolo, soloLayerEnteringClass, soloRange } from '~/features/solo-band';
@@ -74,6 +88,7 @@ export class GraphScene {
     container.append(...this.canvases);
     this.colors = readGraphColors(themeRoot);
     this.analyzer.setColors(this.analyzerColors());
+    this.applyDisplayTuning(useAnalyzerTuningStore.getState().display);
     this.resize(useSettingsStore.getState().scale);
 
     let previousState = sceneState();
@@ -87,6 +102,9 @@ export class GraphScene {
       useSelectionStore.subscribe(onStateChange),
       useViewportStore.subscribe(onStateChange),
       useBandsStore.subscribe(() => this.invalidate({ solo: true, response: true, ghost: true })),
+      useAnalyzerTuningStore.subscribe((state, previous) => {
+        if (state.display !== previous.display) this.applyDisplayTuning(state.display);
+      }),
       onAnalyzerFrame((frame) => {
         for (const [spectrum, levels] of [
           [this.pre, frame.preDb],
@@ -110,6 +128,18 @@ export class GraphScene {
 
   private analyzerColors() {
     return { fill: this.colors.analyzerFill, pre: this.colors.analyzerPre, post: this.colors.analyzerPost };
+  }
+
+  private applyDisplayTuning(display: DisplayTuning): void {
+    const options = {
+      slopeDbPerOctave: display.slopeDbPerOctave,
+      attackSeconds: display.attackMs / 1000,
+      decayDbPerSecond: display.decayDbPerSecond,
+    };
+    this.pre.setOptions(options);
+    this.post.setOptions(options);
+    this.analyzer.setStyle({ curve: display.curve, line: display.line });
+    this.invalidate({ analyzer: true });
   }
 
   private resize(scalePercent: number): void {
@@ -193,7 +223,8 @@ export class GraphScene {
 
       const preMoving = this.pre.tick(dt);
       const postMoving = this.post.tick(dt);
-      this.analyzer.draw({ ...graph, x: mapper.x, y: mapper.analyzerY }, this.pre, this.post);
+      const { rangeDb } = useAnalyzerTuningStore.getState().display;
+      this.analyzer.draw({ ...graph, x: mapper.x, y: analyzerYFor(rangeDb) }, this.pre, this.post);
       this.onAnalyzerDraw?.(now);
 
       this.dirty.analyzer = preMoving || postMoving;

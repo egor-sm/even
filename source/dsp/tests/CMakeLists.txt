@@ -6,7 +6,8 @@ add_executable(
   smoothed_value_test.cpp
   band_test.cpp
   band_response_test.cpp
-  equalizer_test.cpp)
+  equalizer_test.cpp
+  spectrum_smoother_test.cpp)
 
 target_link_libraries(even_dsp_tests PRIVATE even::dsp even::testing even_warnings)
 

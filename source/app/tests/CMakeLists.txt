@@ -7,7 +7,8 @@ target_sources(
           band_slots_test.cpp
           band_history_test.cpp
           response_packet_test.cpp
-          native_functions_test.cpp)
+          native_functions_test.cpp
+          arguments_test.cpp)
 
 # JucePlugin_* come from juce_add_plugin for the plugin itself. Modal loops let tests run the
 # message loop (settleMessages) so that async work happens between edits, as in the plugin.

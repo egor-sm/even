@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <numbers>
+#include <numeric>
 #include <span>
 
 namespace even {
@@ -46,14 +48,32 @@ void pushMonoSum(SampleHistory &history, const juce::AudioBuffer<float> &buffer)
   history.write(buffer.getNumSamples(), [left, right](int i) { return 0.5f * (left[i] + right[i]); });
 }
 
+std::vector<float> windowTable(AnalyzerWindow window, int length) {
+  using Windowing = juce::dsp::WindowingFunction<float>;
+  std::vector<float> table(static_cast<std::size_t>(length));
+  Windowing::fillWindowingTables(table.data(), table.size(),
+                                 window == AnalyzerWindow::hann ? Windowing::hann : Windowing::blackmanHarris, false);
+  return table;
+}
+
 } // namespace
 
 SpectrumAnalyzer::SpectrumAnalyzer() : juce::Thread("Spectrum analyzer") {
   pointFrequencies.resize(pointCount);
+  lowWeights.resize(pointCount);
 
-  for (int i = 0; i < pointCount; ++i)
-    pointFrequencies[static_cast<std::size_t>(i)] =
-        minHz * std::pow(maxHz / minHz, static_cast<float>(i) / static_cast<float>(pointCount - 1));
+  for (std::size_t i = 0; i < pointFrequencies.size(); ++i) {
+    const auto frequency = minHz * std::pow(maxHz / minHz, static_cast<float>(i) / static_cast<float>(pointCount - 1));
+    pointFrequencies[i] = frequency;
+
+    // Raised cosine over the crossover octave in log frequency.
+    const auto t = std::clamp(
+        std::log2(frequency / lowCrossoverStartHz) / std::log2(lowCrossoverEndHz / lowCrossoverStartHz), 0.0f, 1.0f);
+    lowWeights[i] = 0.5f * (1.0f + std::cos(std::numbers::pi_v<float> * t));
+  }
+
+  pointPower.resize(pointCount);
+  lowPointPower.resize(pointCount);
 }
 
 SpectrumAnalyzer::~SpectrumAnalyzer() {
@@ -62,6 +82,12 @@ SpectrumAnalyzer::~SpectrumAnalyzer() {
 
 void SpectrumAnalyzer::prepare(double newSampleRate) {
   sampleRate.store(newSampleRate);
+}
+
+void SpectrumAnalyzer::setOptions(const AnalyzerOptions &newOptions) {
+  const std::scoped_lock lock{optionsMutex};
+  pendingOptions = newOptions;
+  optionsChanged.store(true);
 }
 
 void SpectrumAnalyzer::pushInput(const juce::AudioBuffer<float> &buffer) noexcept {
@@ -99,7 +125,7 @@ std::vector<std::byte> SpectrumAnalyzer::serializeLatestFrame() const {
 
   appendBytes(bytes, formatVersion);
   appendBytes(bytes, latestFrame.index);
-  appendBytes(bytes, static_cast<std::uint32_t>(fftSize));
+  appendBytes(bytes, latestFrame.windowLength);
   appendBytes(bytes, static_cast<std::uint32_t>(pointCount));
   appendBytes(bytes, minHz);
   appendBytes(bytes, maxHz);
@@ -126,24 +152,38 @@ void SpectrumAnalyzer::analyze() {
   if (rate <= 0.0)
     return;
 
+  // New options or sample rate: rebuild the transforms and show the result even without new audio.
+  auto rebuilt = false;
+  if (optionsChanged.exchange(false) || !juce::exactlyEqual(rate, preparedRate)) {
+    applyOptions(rate);
+    rebuilt = true;
+  }
+
   const auto currentMode = mode.load();
   // Input and output are written in the same audio blocks: either position tells the time.
   const auto position = output.history.position();
 
   // Nothing new since the last frame (e.g. audio is stopped, or the analyzer is off and the page
   // has already been told so).
-  if (currentMode == lastAnalyzedMode && (position == lastAnalyzedPosition || currentMode == AnalyzerMode::off))
+  if (!rebuilt && currentMode == lastAnalyzedMode &&
+      (position == lastAnalyzedPosition || currentMode == AnalyzerMode::off))
     return;
 
+  const auto secondsSinceLast =
+      position > lastAnalyzedPosition ? static_cast<double>(position - lastAnalyzedPosition) / rate : 0.0;
   lastAnalyzedMode = currentMode;
   lastAnalyzedPosition = position;
 
   const auto pre = includesPre(currentMode);
   const auto post = includesPost(currentMode);
   if (pre)
-    analyzeChannel(input, rate);
+    analyzeChannel(input, secondsSinceLast);
+  else
+    input.averageValid = false;
   if (post)
-    analyzeChannel(output, rate);
+    analyzeChannel(output, secondsSinceLast);
+  else
+    output.averageValid = false;
 
   {
     const std::scoped_lock lock{frameMutex};
@@ -160,6 +200,7 @@ void SpectrumAnalyzer::analyze() {
 
     ++latestFrame.index;
     latestFrame.sampleRate = rate;
+    latestFrame.windowLength = static_cast<std::uint32_t>(options.windowLength);
     latestFrame.samplePosition = position;
   }
 
@@ -167,57 +208,78 @@ void SpectrumAnalyzer::analyze() {
     frameReadyCallback();
 }
 
-void SpectrumAnalyzer::analyzeChannel(Channel &channel, double rate) {
-  const std::span samples{fftBuffer};
-  channel.history.readLatest(samples.first(fftSize));
+void SpectrumAnalyzer::applyOptions(double rate) {
+  {
+    const std::scoped_lock lock{optionsMutex};
+    options = pendingOptions;
+  }
+  preparedRate = rate;
 
-  std::ranges::fill(samples.subspan(fftSize), 0.0f);
-  window.multiplyWithWindowingTable(fftBuffer.data(), static_cast<std::size_t>(fftSize));
-  fft.performFrequencyOnlyForwardTransform(fftBuffer.data(), true);
+  prepareTransform(mainTransform, options.windowLength, options.windowLength * options.zeroPadding, rate);
+  if (options.lowFft)
+    prepareTransform(lowTransform, lowFftSize, lowFftSize, rate);
 
-  reduceToDisplayPoints(rate, channel.levels);
+  input.averageValid = false;
+  output.averageValid = false;
 }
 
-void SpectrumAnalyzer::reduceToDisplayPoints(double rate, std::vector<float> &levels) {
-  // The window is normalised to unit mean, so 2 / N maps a full-scale sine to amplitude 1.0.
-  constexpr auto scale = 2.0f / static_cast<float>(fftSize);
+void SpectrumAnalyzer::prepareTransform(Transform &transform, int windowLength, int fftLength, double rate) const {
+  const auto order = juce::roundToInt(std::log2(fftLength));
+  const auto numBins = static_cast<std::size_t>(fftLength) / 2 + 1;
 
-  const std::span magnitudes = std::span{fftBuffer}.first(numBins);
-  std::ranges::transform(magnitudes, magnitudes.begin(), [](float magnitude) { return magnitude * scale; });
+  transform.windowLength = windowLength;
+  transform.fft = std::make_unique<juce::dsp::FFT>(order);
+  transform.window = windowTable(options.window, windowLength);
+  transform.buffer.assign(2 * static_cast<std::size_t>(fftLength), 0.0f);
 
-  for (std::size_t k = 0; k < magnitudes.size(); ++k)
-    powerPrefix[k + 1] = powerPrefix[k] + static_cast<double>(magnitudes[k]) * magnitudes[k];
+  // The window's sum is its gain for a sine: 2 / sum maps a full-scale sine to magnitude 1.
+  const auto sum = std::accumulate(transform.window.begin(), transform.window.end(), 0.0);
+  transform.powerScale = static_cast<float>(4.0 / (sum * sum));
 
-  const auto binHz = rate / fftSize;
-  const auto halfBand = std::pow(2.0, 1.0 / (2.0 * octaveFraction));
-  const auto lastBin = static_cast<double>(numBins - 1);
+  transform.smoother.prepare(pointFrequencies, rate / fftLength, numBins, rate / windowLength, options.smoothing);
+}
 
-  for (std::size_t i = 0; i < pointFrequencies.size(); ++i) {
-    const auto frequency = static_cast<double>(pointFrequencies[i]);
-    const auto low = frequency / halfBand / binHz;
-    const auto high = frequency * halfBand / binHz;
+void SpectrumAnalyzer::transformLatest(Transform &transform, const SampleHistory &history,
+                                       std::span<float> destination) {
+  const std::span samples{transform.buffer};
+  const auto windowLength = static_cast<std::size_t>(transform.windowLength);
+  const auto fftLength = static_cast<std::size_t>(transform.fft->getSize());
 
-    double power = 0.0;
+  history.readLatest(samples.first(windowLength));
+  std::ranges::fill(samples.subspan(windowLength), 0.0f);
+  for (std::size_t i = 0; i < windowLength; ++i)
+    samples[i] *= transform.window[i];
 
-    if (high - low >= 1.0) {
-      // Wide band: mean power over the covered bins.
-      const auto first = static_cast<std::size_t>(std::max(0.0, std::round(low)));
-      const auto last = static_cast<std::size_t>(std::min(lastBin, std::round(high)));
+  transform.fft->performFrequencyOnlyForwardTransform(transform.buffer.data(), true);
 
-      if (last >= first)
-        power = (powerPrefix[last + 1] - powerPrefix[first]) / static_cast<double>(last - first + 1);
-    } else {
-      // Narrower than a bin (low frequencies): interpolate between neighbouring bins.
-      const auto position = std::min(frequency / binHz, lastBin - 1e-6);
-      const auto bin = static_cast<std::size_t>(position);
-      const auto fraction = position - static_cast<double>(bin);
-      const auto lower = static_cast<double>(magnitudes[bin]) * magnitudes[bin];
-      const auto upper = static_cast<double>(magnitudes[bin + 1]) * magnitudes[bin + 1];
-      power = lower + (upper - lower) * fraction;
-    }
+  const auto power = samples.first(fftLength / 2 + 1);
+  std::ranges::transform(power, power.begin(),
+                         [scale = transform.powerScale](float magnitude) { return magnitude * magnitude * scale; });
 
-    levels[i] = std::max(static_cast<float>(10.0 * std::log10(power + 1e-20)), floorDb);
+  transform.smoother.reduce(power, destination);
+}
+
+void SpectrumAnalyzer::analyzeChannel(Channel &channel, double secondsSinceLast) {
+  transformLatest(mainTransform, channel.history, pointPower);
+
+  if (options.lowFft) {
+    transformLatest(lowTransform, channel.history, lowPointPower);
+    for (std::size_t i = 0; i < pointPower.size(); ++i)
+      pointPower[i] += (lowPointPower[i] - pointPower[i]) * lowWeights[i];
   }
+
+  // Exponential average of the power over the audio time between frames; starts afresh after a
+  // gap (stopped audio, the spectrum switched off) or new options.
+  constexpr double maxGapSeconds = 0.5;
+  const auto averaging = options.averagingMs > 0.0 && channel.averageValid && secondsSinceLast < maxGapSeconds;
+  const auto keep = averaging ? std::exp(-secondsSinceLast * 1000.0 / options.averagingMs) : 0.0;
+
+  for (std::size_t i = 0; i < pointPower.size(); ++i) {
+    auto &average = channel.averagePower[i];
+    average = keep * average + (1.0 - keep) * static_cast<double>(pointPower[i]);
+    channel.levels[i] = std::max(static_cast<float>(10.0 * std::log10(average + 1e-20)), floorDb);
+  }
+  channel.averageValid = true;
 }
 
 } // namespace even

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/analyzer/sample_history.h"
+#include "dsp/spectrum_smoother.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
@@ -9,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -17,6 +19,24 @@ namespace even {
 // Which spectra the analyzer computes: of the input (pre, before the EQ) and/or the output (post).
 enum class AnalyzerMode : std::uint8_t { prePost, post, pre, off };
 
+enum class AnalyzerWindow : std::uint8_t { blackmanHarris, hann };
+
+// How the spectra are computed and smoothed, switchable at run time. The defaults: light smoothing
+// (1/12 octave Hann kernel) on a 4096-sample Hann window, zero-padded twice, with a monotone cubic in
+// dB at the low end, no averaging over time.
+struct AnalyzerOptions {
+  AnalyzerWindow window = AnalyzerWindow::hann;
+  int windowLength = 4096; // samples of the main transform: 1024, 2048, 4096 or 8192
+  int zeroPadding = 2;     // FFT size per window length: 1, 2 or 4
+  dsp::SmoothingOptions smoothing{.kernel = dsp::SmoothingKernel::hann,
+                                  .width = dsp::SmoothingWidth::constant,
+                                  .octaves = 1.0 / 12.0,
+                                  .lowEnd = dsp::LowEnd::monotoneDb,
+                                  .minimumBins = 1.0};
+  double averagingMs = 0.0; // time constant of an exponential average of the power; 0: none
+  bool lowFft = false;      // a 4x longer window for the low end, crossfaded in over 120-240 Hz
+};
+
 // Computes the spectra of the most recent input and output on a background thread and reduces
 // them to log-spaced, fractional-octave smoothed display points.
 class SpectrumAnalyzer final : private juce::Thread {
@@ -24,6 +44,8 @@ public:
   struct Frame {
     std::uint32_t index = 0;
     double sampleRate = 0.0;
+    // Samples of the main transform's window (the FFT is longer with zero-padding).
+    std::uint32_t windowLength = 0;
     // Total number of samples at the end of the analysed window; acts as an audio timestamp.
     std::uint64_t samplePosition = 0;
     // Level in dB per display point (a full-scale sine reads 0 dB before smoothing); empty when
@@ -32,14 +54,17 @@ public:
     std::vector<float> postLevelsDb;
   };
 
+  // Longest window of the main transform (the FFT is longer with zero-padding).
   static constexpr int fftOrder = 13;
   static constexpr int fftSize = 1 << fftOrder;
-  static constexpr int numBins = fftSize / 2 + 1;
+  // Window length of the optional low-end transform.
+  static constexpr int lowFftSize = 4 * fftSize;
+  static constexpr float lowCrossoverStartHz = 120.0f;
+  static constexpr float lowCrossoverEndHz = 240.0f;
 
   static constexpr int pointCount = 512;
   static constexpr float minHz = 20.0f;
   static constexpr float maxHz = 20000.0f;
-  static constexpr double octaveFraction = 6.0; // 1/6 octave smoothing
   static constexpr float floorDb = -150.0f;
   static constexpr int analysisIntervalMs = 16; // ~60 frames per second
 
@@ -55,12 +80,14 @@ public:
 
   // Any thread.
   void setMode(AnalyzerMode newMode) noexcept { mode.store(newMode); }
+  void setOptions(const AnalyzerOptions &newOptions);
 
   // Starts the analysis thread (no-op if running); onFrameReady is called on that thread after each frame.
   void start(std::function<void()> onFrameReady);
   void stop();
 
-  // Binary layout (little-endian), 48-byte header: u32 version, u32 index, u32 fftSize, u32 pointCount,
+  // Binary layout (little-endian), 48-byte header: u32 version, u32 index, u32 fftSize (the window
+  // length, without zero-padding), u32 pointCount,
   // f32 minHz, f32 maxHz, f64 sampleRate, f64 samplePosition, u32 spectra (bit 0: pre, bit 1: post),
   // u32 reserved; then f32 levelsDb[pointCount] for pre, then for post (each only when present).
   [[nodiscard]] std::vector<std::byte> serializeLatestFrame() const;
@@ -68,14 +95,30 @@ public:
 private:
   struct Channel {
     // Generous headroom so the audio thread never laps an in-progress copy.
-    SampleHistory history{static_cast<std::size_t>(4 * fftSize)};
+    SampleHistory history{static_cast<std::size_t>(4 * lowFftSize)};
     std::vector<float> levels = std::vector<float>(static_cast<std::size_t>(pointCount));
+    std::vector<double> averagePower = std::vector<double>(static_cast<std::size_t>(pointCount));
+    bool averageValid = false;
+  };
+
+  // One windowed FFT of the latest samples, reduced to power at the display points.
+  struct Transform {
+    int windowLength = 0;
+    std::unique_ptr<juce::dsp::FFT> fft;
+    std::vector<float> window;
+    std::vector<float> buffer;
+    // Turns squared FFT magnitudes into power: a full-scale sine peaks at 1 (0 dB). Noise per bin
+    // depends on the window and its length, as in any FFT analyzer.
+    float powerScale = 1.0f;
+    dsp::SpectrumSmoother smoother;
   };
 
   void run() override;
   void analyze();
-  void analyzeChannel(Channel &channel, double rate);
-  void reduceToDisplayPoints(double rate, std::vector<float> &levels);
+  void applyOptions(double rate);
+  void prepareTransform(Transform &transform, int windowLength, int fftLength, double rate) const;
+  void transformLatest(Transform &transform, const SampleHistory &history, std::span<float> destination);
+  void analyzeChannel(Channel &channel, double secondsSinceLast);
 
   Channel input;
   Channel output;
@@ -85,12 +128,19 @@ private:
   AnalyzerMode lastAnalyzedMode = AnalyzerMode::off;
   std::function<void()> frameReadyCallback;
 
-  juce::dsp::FFT fft{fftOrder};
-  juce::dsp::WindowingFunction<float> window{static_cast<std::size_t>(fftSize),
-                                             juce::dsp::WindowingFunction<float>::blackmanHarris, true};
-  std::vector<float> fftBuffer = std::vector<float>(static_cast<std::size_t>(2 * fftSize));
-  std::vector<double> powerPrefix = std::vector<double>(static_cast<std::size_t>(numBins + 1));
+  std::mutex optionsMutex;
+  AnalyzerOptions pendingOptions;
+  std::atomic<bool> optionsChanged{true};
+
+  // Analysis thread only.
+  AnalyzerOptions options;
+  double preparedRate = 0.0;
+  Transform mainTransform;
+  Transform lowTransform;
   std::vector<float> pointFrequencies;
+  std::vector<float> lowWeights; // share of the low-end transform per display point
+  std::vector<float> pointPower;
+  std::vector<float> lowPointPower;
 
   mutable std::mutex frameMutex;
   Frame latestFrame;

@@ -31,6 +31,12 @@ std::vector<std::pair<const char *, Call>> nativeFunctions(PluginProcessor &proc
            processor.getAnalyzer().setMode(*mode);
          return juce::var{};
        }},
+      // (options): the analysis variant (development: comparing the smoothing variants).
+      {"setAnalyzerOptions",
+       [&processor](const Arguments &args) {
+         processor.getAnalyzer().setOptions(analyzerOptionsArgument(args, 0));
+         return juce::var{};
+       }},
       {"setAnalyzerActive",
        [actions](const Arguments &args) {
          actions.setAnalyzerActive(boolArgument(args, 0));

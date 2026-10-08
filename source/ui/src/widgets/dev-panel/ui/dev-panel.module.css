@@ -1,4 +1,26 @@
 /* Not part of the design: development aids. */
+/* Red (the danger state colour) marks it as not part of the plug-in's interface. */
+.toggle {
+  position: absolute;
+  right: var(--space-12);
+  bottom: calc((var(--size-bottombar) - var(--size-control)) / 2);
+  z-index: 60;
+  width: var(--size-control);
+  height: var(--size-control);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--state-danger) 45%, transparent);
+  background: color-mix(in srgb, var(--state-danger) 14%, var(--surface-raised));
+  color: var(--state-danger);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.toggle:hover,
+.toggle[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--state-danger) 26%, var(--surface-raised));
+}
+
 .panel {
   position: absolute;
   right: var(--space-12);
@@ -10,7 +32,7 @@
   padding: var(--space-8) var(--space-10);
   border-radius: var(--radius-md);
   background: var(--surface-raised);
-  border: 1px solid var(--border-strong);
+  border: 1px solid color-mix(in srgb, var(--state-danger) 45%, transparent);
   font-size: 11px;
 }
 
@@ -19,4 +41,31 @@
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-muted);
+}
+
+.tuning {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--space-6) var(--space-10);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-strong);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.preset {
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.preset:hover {
+  background: var(--surface-hover);
 }

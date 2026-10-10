@@ -14,14 +14,15 @@ export const graph = {
 export const minHz = 20;
 export const maxHz = 20000;
 
-/** The analyzer's level at the top of the plot, in dBFS. */
-export const analyzerTopDb = -6;
-
-/** y of an analyzer level in dBFS when the plot height spans rangeDb below analyzerTopDb. */
+/** y of an analyzer level in dB when the plot height spans rangeDb below 0 dB at the top. */
 export const analyzerYFor =
   (rangeDb: number) =>
-  (dbfs: number): number =>
-    graph.top + ((analyzerTopDb - dbfs) / rangeDb) * (graph.bottom - graph.top);
+  (db: number): number =>
+    graph.top + (-db / rangeDb) * (graph.bottom - graph.top);
+
+/** The analyzer level in dB at a height of the plot (the inverse of analyzerYFor). */
+export const analyzerDbAt = (rangeDb: number, y: number): number =>
+  (-(y - graph.top) / (graph.bottom - graph.top)) * rangeDb;
 
 /** Maps frequency and gain to graph coordinates for a display range of ±range dB and a visible span lo…hi Hz. */
 export type Mapper = {

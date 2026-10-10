@@ -1,0 +1,227 @@
+/* The chip: the spectra's legend in the graph's top right corner, clear of the analyzer scale. */
+.chip {
+  position: absolute;
+  right: 70px;
+  top: 8px;
+  z-index: 9;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 0 var(--space-8) 0 var(--space-10);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-overlay) 70%, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 12px;
+  opacity: 0.72;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.chip:hover,
+.chip:focus-visible,
+.chip[aria-expanded='true'] {
+  opacity: 1;
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.chip[aria-expanded='true'] {
+  background: var(--surface-selected);
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.legend i {
+  display: block;
+  width: 12px;
+  border-radius: 1px;
+}
+
+.pre {
+  height: 2px;
+  background: var(--graph-analyzer-pre);
+}
+
+.post {
+  height: 3px;
+  background: var(--graph-analyzer-post);
+}
+
+/* Catches the click outside the open panel, anywhere in the window. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+}
+
+.panel {
+  position: absolute;
+  left: auto;
+  right: 70px;
+  top: 40px;
+  margin: 0;
+  color: inherit;
+  z-index: 46;
+  width: 332px;
+  padding: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-dock);
+  transform-origin: top right;
+  animation: panel-in var(--dur-pop) var(--ease-out) both;
+  --size-control-sm: 24px;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Segments share the width. */
+.segments {
+  display: flex;
+  width: 100%;
+}
+
+.segments > * {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--space-4);
+}
+
+.separator {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--border-default);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.label b {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.label i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.off .label b,
+.off .label i {
+  color: var(--text-disabled);
+}
+
+.reset {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.reset:hover:enabled {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.reset:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+/* The scale: labels inside the plot at its right edge, each with a tick on the edge. */
+.mark {
+  position: absolute;
+  right: 22px;
+  translate: 0 -50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  color: color-mix(in srgb, var(--graph-label) 80%, transparent);
+  text-align: right;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tick {
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  width: 4px;
+  height: 1px;
+  background: var(--graph-label);
+  opacity: 0.5;
+}
+
+/* The range control over the scale: the rail faces the plot, the tag sits at the bottom. */
+.axis {
+  position: absolute;
+  right: 18px;
+  top: 26px;
+  width: 44px;
+  height: 602px;
+  z-index: var(--z-axis);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.axis :global(.eq-axis__rail) {
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+}
+
+.axis :global(.eq-axis__tag) {
+  right: var(--space-4);
+  bottom: -2px;
+  pointer-events: none;
+}

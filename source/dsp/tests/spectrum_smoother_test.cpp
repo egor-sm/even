@@ -1,7 +1,6 @@
 #include "dsp/spectrum_smoother.h"
 
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <algorithm>
@@ -9,12 +8,7 @@
 #include <cstddef>
 #include <vector>
 
-using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
-using even::dsp::LowEnd;
-using even::dsp::SmoothingKernel;
-using even::dsp::SmoothingOptions;
-using even::dsp::SmoothingWidth;
 using even::dsp::SpectrumSmoother;
 
 namespace {
@@ -23,6 +17,7 @@ constexpr double sampleRate = 48000.0;
 constexpr std::size_t fftSize = 8192;
 constexpr std::size_t numBins = fftSize / 2 + 1;
 constexpr double binHz = sampleRate / fftSize;
+constexpr double twelfth = 1.0 / 12.0;
 
 std::vector<float> logFrequencies(float minHz, float maxHz, std::size_t count) {
   std::vector<float> frequencies(count);
@@ -32,9 +27,9 @@ std::vector<float> logFrequencies(float minHz, float maxHz, std::size_t count) {
 }
 
 std::vector<float> reduce(const std::vector<float> &binPower, const std::vector<float> &frequencies,
-                          const SmoothingOptions &options) {
+                          double octaves = twelfth) {
   SpectrumSmoother smoother;
-  smoother.prepare(frequencies, binHz, binPower.size(), binHz, options);
+  smoother.prepare(frequencies, binHz, binPower.size(), octaves);
   std::vector<float> points(frequencies.size());
   smoother.reduce(binPower, points);
   return points;
@@ -51,60 +46,21 @@ double largestKinkDb(const std::vector<float> &points) {
 
 } // namespace
 
-TEST_CASE("Every kernel keeps a flat spectrum flat") {
-  const auto kernel = GENERATE(SmoothingKernel::roundedBox, SmoothingKernel::box, SmoothingKernel::triangle,
-                               SmoothingKernel::hann, SmoothingKernel::gaussian);
-  const auto lowEnd = GENERATE(LowEnd::linearPower, LowEnd::monotoneDb, LowEnd::minimumWidth);
-  const auto width = GENERATE(SmoothingWidth::constant, SmoothingWidth::psychoacoustic, SmoothingWidth::erb);
-
+TEST_CASE("Smoothing keeps a flat spectrum flat") {
   const std::vector<float> flat(numBins, 0.25f);
-  const auto points = reduce(flat, logFrequencies(20.0f, 20000.0f, 512),
-                             {.kernel = kernel, .width = width, .octaves = 1.0 / 6.0, .lowEnd = lowEnd});
-
-  for (const auto power : points)
+  for (const auto power : reduce(flat, logFrequencies(20.0f, 20000.0f, 512)))
     REQUIRE_THAT(power, WithinRel(0.25f, 1e-4f));
 }
 
-TEST_CASE("Weighted kernels change smoothly with the display frequency, the rounded box in steps") {
-  // A spectrum rising by 1 dB per bin: wherever a bin enters or leaves the band at once, the
-  // reduced level jumps.
+TEST_CASE("Smoothing changes continuously with the display frequency") {
+  // A spectrum rising by 1 dB per bin: a band edge rounded to whole bins would make the reduced
+  // level jump wherever a bin enters or leaves the band (by about 1 dB).
   std::vector<float> rising(numBins);
   for (std::size_t k = 0; k < numBins; ++k)
     rising[k] = static_cast<float>(std::pow(10.0, 0.1 * static_cast<double>(std::min<std::size_t>(k, 60))));
 
-  // 60-300 Hz: 1/6 octave spans 1-7 bins.
-  const auto frequencies = logFrequencies(60.0f, 300.0f, 120);
-  const auto kinks = [&](SmoothingKernel kernel) {
-    return largestKinkDb(reduce(rising, frequencies, {.kernel = kernel}));
-  };
-
-  // Measured: rounded box 1 dB, box 0.14 dB (kinks where an edge crosses a bin), smooth kernels 0.01 dB.
-  CHECK(kinks(SmoothingKernel::roundedBox) > 0.5);
-  CHECK(kinks(SmoothingKernel::box) < 0.2);
-  CHECK(kinks(SmoothingKernel::triangle) < 0.03);
-  CHECK(kinks(SmoothingKernel::hann) < 0.03);
-  CHECK(kinks(SmoothingKernel::gaussian) < 0.03);
-}
-
-TEST_CASE("A box with partial edge weights averages exactly its nominal band") {
-  // Power equal to the bin's index; each bin k covers [k - 1/2, k + 1/2] in bins and weighs the
-  // octaves of the band it covers.
-  std::vector<float> ramp(numBins);
-  for (std::size_t k = 0; k < numBins; ++k)
-    ramp[k] = static_cast<float>(k);
-
-  const auto frequency = GENERATE(100.0f, 1000.0f, 7000.0f);
-  const auto points = reduce(ramp, {frequency}, {.kernel = SmoothingKernel::box, .octaves = 1.0 / 6.0});
-
-  const auto low = static_cast<double>(frequency) * std::exp2(-1.0 / 12.0) / binHz;
-  const auto high = static_cast<double>(frequency) * std::exp2(1.0 / 12.0) / binHz;
-  double sum = 0.0;
-  for (auto bin = std::lround(low); bin <= std::lround(high); ++bin) {
-    const auto k = static_cast<double>(bin);
-    sum += k * std::log2(std::min(high, k + 0.5) / std::max(low, k - 0.5));
-  }
-
-  REQUIRE_THAT(points[0], WithinRel(sum / std::log2(high / low), 1e-5));
+  // 60-300 Hz: 1/6 octave spans 1-7 bins. Measured: 0.01 dB.
+  CHECK(largestKinkDb(reduce(rising, logFrequencies(60.0f, 300.0f, 120), 1.0 / 6.0)) < 0.03);
 }
 
 TEST_CASE("Monotone interpolation in dB never overshoots the bins") {
@@ -113,7 +69,7 @@ TEST_CASE("Monotone interpolation in dB never overshoots the bins") {
   peak[8] = 0.5f;
 
   const auto frequencies = logFrequencies(20.0f, 50.0f, 200);
-  const auto points = reduce(peak, frequencies, {.kernel = SmoothingKernel::hann, .lowEnd = LowEnd::monotoneDb});
+  const auto points = reduce(peak, frequencies);
 
   for (std::size_t i = 0; i < frequencies.size(); ++i) {
     const auto position = static_cast<double>(frequencies[i]) / binHz;
@@ -125,33 +81,11 @@ TEST_CASE("Monotone interpolation in dB never overshoots the bins") {
   }
 }
 
-TEST_CASE("Minimum width averages at least that many bins at the low end") {
-  std::vector<float> alternating(numBins);
+TEST_CASE("Monotone interpolation passes through the bins") {
+  std::vector<float> ramp(numBins);
   for (std::size_t k = 0; k < numBins; ++k)
-    alternating[k] = k % 2 == 0 ? 1.0f : 0.0f;
+    ramp[k] = static_cast<float>(k + 1);
 
-  // Interpolation follows the alternation; a kernel of four bins evens it out.
-  const auto frequencies = logFrequencies(20.0f, 60.0f, 100);
-  const auto interpolated = reduce(alternating, frequencies, {.kernel = SmoothingKernel::hann});
-  const auto widened = reduce(alternating, frequencies,
-                              {.kernel = SmoothingKernel::hann, .lowEnd = LowEnd::minimumWidth, .minimumBins = 4.0});
-
-  const auto [interpolatedMin, interpolatedMax] = std::ranges::minmax(interpolated);
-  const auto [widenedMin, widenedMax] = std::ranges::minmax(widened);
-  CHECK(interpolatedMax - interpolatedMin > 0.9f);
-  CHECK(widenedMax - widenedMin < 0.1f);
-}
-
-TEST_CASE("Smoothing widths") {
-  const SmoothingOptions sixth{.octaves = 1.0 / 6.0};
-  CHECK_THAT(SpectrumSmoother::octavesAt(50.0, sixth), WithinAbs(1.0 / 6.0, 1e-12));
-
-  const SmoothingOptions psychoacoustic{.width = SmoothingWidth::psychoacoustic, .octaves = 1.0 / 6.0};
-  CHECK_THAT(SpectrumSmoother::octavesAt(50.0, psychoacoustic), WithinAbs(1.0 / 3.0, 1e-12));
-  CHECK_THAT(SpectrumSmoother::octavesAt(5000.0, psychoacoustic), WithinAbs(1.0 / 6.0, 1e-12));
-
-  // ERB: about an octave at 50 Hz, about 1/6 octave at 5 kHz.
-  const SmoothingOptions erb{.width = SmoothingWidth::erb};
-  CHECK_THAT(SpectrumSmoother::octavesAt(50.0, erb), WithinAbs(0.855, 0.01));
-  CHECK_THAT(SpectrumSmoother::octavesAt(5000.0, erb), WithinAbs(0.163, 0.002));
+  const auto bin = static_cast<float>(5.0 * binHz);
+  CHECK_THAT(reduce(ramp, {bin})[0], WithinRel(6.0f, 1e-4f));
 }

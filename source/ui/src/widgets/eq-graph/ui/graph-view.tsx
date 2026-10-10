@@ -1,8 +1,10 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 
+import { startAnalyzerRangeAnimator } from '~/entities/analyzer';
 import { selectBand, useSelectionStore } from '~/entities/band';
 import { DbLabels, FrequencyLabels, graphRootAttribute, startAnimator, toGraphPoint } from '~/entities/viewport';
 import { QHandles } from '~/features/adjust-band-q';
+import { AnalyzerMenu, AnalyzerScale } from '~/features/analyzer-settings';
 import { TypeStrip } from '~/features/change-band-type';
 import { Crosshair, setCursor } from '~/features/cursor-readout';
 import { DbAxis } from '~/features/display-range';
@@ -40,8 +42,10 @@ export function GraphView({ overlay, onAnalyzerDraw }: GraphViewProps) {
 
     const scene = new GraphScene(layers, themeRoot, onAnalyzerDraw);
     const stopAnimator = startAnimator();
+    const stopRangeAnimator = startAnalyzerRangeAnimator();
     return () => {
       stopAnimator();
+      stopRangeAnimator();
       scene.dispose();
     };
   }, [onAnalyzerDraw]);
@@ -76,10 +80,12 @@ export function GraphView({ overlay, onAnalyzerDraw }: GraphViewProps) {
       <FrequencyAxis />
       <DbAxis />
       <DbLabels />
+      <AnalyzerScale />
       <QHandles />
       <BandNodes />
       <TypeStrip />
       {overlay}
+      <AnalyzerMenu />
     </div>
   );
 }

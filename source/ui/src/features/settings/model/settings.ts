@@ -10,7 +10,7 @@ export const useSettingsStore = create<{ theme: 'dark' | 'light'; scale: number 
 
 export const uiScales = [75, 100, 125, 150, 175, 200] as const;
 
-/** Takes {theme, scale} as C++ answers it. */
+/** Takes the theme and the scale from the settings as C++ answers them. */
 export const applySettings = (value: unknown): void => {
   if (typeof value !== 'object' || value === null) return;
   const theme = Reflect.get(value, 'theme');

@@ -11,7 +11,7 @@ export type SpectrumOptions = {
 export const defaultSpectrumOptions: SpectrumOptions = {
   slopeDbPerOctave: 4.5,
   attackSeconds: 0.01,
-  decayDbPerSecond: 120,
+  decayDbPerSecond: 30,
 };
 
 const floorDb = -150;

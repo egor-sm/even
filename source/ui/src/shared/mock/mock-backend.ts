@@ -55,8 +55,11 @@ initial.forEach((band, i) => (slots[i] = { ...band, used: true, serial: i + 1 })
 
 let history: Slot[][] = [structuredClone(slots)];
 let historyPosition = 0;
-let analyzerMode = 'prepost';
-let settings = { theme: 'dark', scale: 100 };
+let settings = {
+  theme: 'dark',
+  scale: 100,
+  analyzer: { mode: 'prepost', range: 120, fftSize: 4096, decay: 30, tilt: 4.5 },
+};
 let frameTimer: number | null = null;
 let noise = new Float64Array(pointCount);
 
@@ -140,12 +143,13 @@ const sendFrame = (index: number) => {
     (level, i) => level + designs.reduce((sum, d) => sum + magnitudeDb(d, frequencies[i], sampleRate), 0),
   );
 
-  const withPre = analyzerMode === 'prepost' || analyzerMode === 'pre';
-  const withPost = analyzerMode === 'prepost' || analyzerMode === 'post';
+  const { mode, fftSize } = settings.analyzer;
+  const withPre = mode === 'prepost' || mode === 'pre';
+  const withPost = mode === 'prepost' || mode === 'post';
   const view = new DataView(new ArrayBuffer(48 + (Number(withPre) + Number(withPost)) * pointCount * 4));
   view.setUint32(0, 3, true);
   view.setUint32(4, index, true);
-  view.setUint32(8, 8192, true);
+  view.setUint32(8, fftSize === 16384 && sampleRate < 88200 ? 8192 : fftSize, true);
   view.setUint32(12, pointCount, true);
   view.setFloat32(16, 20, true);
   view.setFloat32(20, 20000, true);
@@ -177,9 +181,6 @@ const mockNative: Record<string, (args: unknown[]) => unknown> = {
   setTestSignal: () => undefined,
   setSolo: () => undefined,
   setAnalyzerActive: ([active]) => setAnalyzerActive(active === true),
-  setAnalyzerMode: ([mode]) => {
-    analyzerMode = String(mode);
-  },
   requestResponse: () => sendResponse(),
   createBand: ([typeIndex, f, g]) => {
     const index = slots.findIndex((slot) => !slot.used);
@@ -232,7 +233,11 @@ const mockNative: Record<string, (args: unknown[]) => unknown> = {
   getHistoryState: () => historyState(),
   getSettings: () => settings,
   setSetting: ([key, value]) => {
-    settings = { ...settings, [String(key)]: value };
+    const [group, name] = String(key).split('.');
+    settings =
+      group === 'analyzer' && name !== undefined
+        ? { ...settings, analyzer: { ...settings.analyzer, [name]: value } }
+        : { ...settings, [String(key)]: value };
     return settings;
   },
 };

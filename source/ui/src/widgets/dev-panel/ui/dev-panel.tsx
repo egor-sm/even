@@ -5,7 +5,6 @@ import { native, setMute } from '~/shared/api';
 import { Checkbox, SelectMenu, UiIcon } from '~/shared/ui';
 
 import { analyzerStats } from '../model/analyzer-stats';
-import { AnalyzerTuning } from './analyzer-tuning';
 import styles from './dev-panel.module.css';
 
 const scaleOptions = uiScales.map((value) => ({ value: String(value), label: `${value}%` }));
@@ -29,7 +28,7 @@ const writeOpen = (open: boolean): void => {
 
 /**
  * Development aids behind a button in the bottom right corner, available in dev builds or with
- * Ctrl+Shift+D: test signal, mute, UI scale, analyzer variants and stats.
+ * Ctrl+Shift+D: test signal, mute, UI scale and analyzer stats.
  */
 export function DevPanel() {
   const [open, setOpen] = useState(readOpen);
@@ -92,7 +91,6 @@ function DevPanelContent() {
         options={scaleOptions}
         onValueChange={(value) => setScale(Number(value))}
       />
-      <AnalyzerTuning />
       <pre>{statsText}</pre>
     </div>
   );

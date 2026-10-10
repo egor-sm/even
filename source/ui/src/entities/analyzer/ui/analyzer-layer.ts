@@ -2,7 +2,6 @@ import { parseHexColor, type Rgba } from '~/shared/lib';
 
 import { monotoneCurve } from '../lib/monotone-curve';
 import type { Spectrum } from '../model/spectrum';
-import type { DisplayTuning } from '../model/tuning';
 
 /** Where the spectra go: the canvas size and the plot area in its units, and the mapping to them. */
 export type AnalyzerPlot = {
@@ -122,11 +121,11 @@ const curveSubdivisions = 4;
 const miterLimit = 4;
 
 export type AnalyzerColors = { fill: string; pre: string; post: string };
-export type AnalyzerStyle = Pick<DisplayTuning, 'curve' | 'line'>;
 
 /**
  * The analyzer spectra with WebGL2: a fill under the main spectrum (post, or pre when only pre is
- * shown) and 1 px lines for pre and post. Geometry is rebuilt on the CPU per frame, in graph units.
+ * shown) and 1 px antialiased lines for pre and post, along a monotone cubic through the points.
+ * Geometry is rebuilt on the CPU per frame, in graph units.
  */
 export class AnalyzerLayer {
   readonly canvas = document.createElement('canvas');
@@ -140,7 +139,6 @@ export class AnalyzerLayer {
     pre: [0, 0, 0, 0],
     post: [0, 0, 0, 0],
   };
-  private style: AnalyzerStyle = { curve: 'polyline', line: 'chord' };
   private points = new Float32Array(0);
   private curve = new Float32Array(0);
   private vertices = new Float32Array(0);
@@ -182,10 +180,6 @@ export class AnalyzerLayer {
     };
   }
 
-  setStyle(style: AnalyzerStyle): void {
-    this.style = style;
-  }
-
   draw(plot: AnalyzerPlot, pre: Spectrum, post: Spectrum): void {
     const { gl, pixelsPerUnit } = this;
     gl.disable(gl.SCISSOR_TEST);
@@ -217,7 +211,7 @@ export class AnalyzerLayer {
     gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 
-  /** The curve in graph units as (x, y) pairs: the points, or the monotone cubic through them. */
+  /** The curve in graph units as (x, y) pairs: the monotone cubic through the points. */
   private project(plot: AnalyzerPlot, spectrum: Spectrum): Float32Array {
     const count = spectrum.frequencies.length;
     if (this.points.length !== 2 * count) this.points = new Float32Array(2 * count);
@@ -226,8 +220,6 @@ export class AnalyzerLayer {
       this.points[2 * i] = plot.x(spectrum.frequencies[i]);
       this.points[2 * i + 1] = Math.min(plot.y(spectrum.display[i]), plot.height);
     }
-    if (this.style.curve === 'polyline') return this.points;
-
     this.curve = monotoneCurve(this.points, curveSubdivisions, this.curve);
     return this.curve;
   }
@@ -261,36 +253,9 @@ export class AnalyzerLayer {
     this.drawStrip(this.flat, this.colors.fill, 4 * count, 2 * count);
   }
 
-  private drawLine(points: Float32Array, color: Rgba): void {
-    if (this.style.line === 'chord') this.drawChordLine(points, color);
-    else this.drawMitredLine(points, color);
-  }
-
-  // A 1 px line: each point offset along the normal of its neighbours' chord.
-  private drawChordLine(points: Float32Array, color: Rgba): void {
-    const count = points.length / 2;
-    const vertices = this.ensureVertices(4 * count);
-    const halfWidth = 0.5;
-    for (let i = 0; i < count; i++) {
-      const previous = Math.max(i - 1, 0);
-      const next = Math.min(i + 1, count - 1);
-      const dx = points[2 * next] - points[2 * previous];
-      const dy = points[2 * next + 1] - points[2 * previous + 1];
-      const length = Math.hypot(dx, dy) || 1;
-      const nx = (-dy / length) * halfWidth;
-      const ny = (dx / length) * halfWidth;
-
-      vertices[4 * i] = points[2 * i] + nx;
-      vertices[4 * i + 1] = points[2 * i + 1] + ny;
-      vertices[4 * i + 2] = points[2 * i] - nx;
-      vertices[4 * i + 3] = points[2 * i + 1] - ny;
-    }
-    this.drawStrip(this.flat, color, 4 * count, 2 * count);
-  }
-
   // A 1 px line with mitred joins, so it keeps its width on steep zigzags, and an edge faded over a
   // pixel in the fragment shader instead of relying on multisampling.
-  private drawMitredLine(points: Float32Array, color: Rgba): void {
+  private drawLine(points: Float32Array, color: Rgba): void {
     const { gl, pixelsPerUnit } = this;
     const count = points.length / 2;
     const vertices = this.ensureVertices(6 * count);

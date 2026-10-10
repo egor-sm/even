@@ -7,7 +7,7 @@ export {
   setBackend,
 } from './backend';
 export { type AnalyzerFrame, decodeBase64Frame } from './frame';
-export { type AnalyzerMode, type AnalyzerOptions, defaultAnalyzerOptions, native } from './native';
+export { type AnalyzerMode, type AnalyzerSettings, native, type SettingKey } from './native';
 export { bandParameterRange, bandParameters, setMute } from './parameters';
 export { magnitudeDb, responseDb, withBandFrequencies } from './response-math';
 export { type BandResponse, decodeBase64Response, type EqResponse } from './response';

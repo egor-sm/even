@@ -2,8 +2,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <optional>
+
 using even::AnalyzerMode;
-using even::AnalyzerSettings;
 using even::UserSettings;
 
 namespace {
@@ -64,5 +65,5 @@ TEST_CASE("user settings: analyzer values snap to the allowed ones", "[app][sett
 TEST_CASE("user settings: analyzer modes by name", "[app][settings]") {
   for (const auto mode : {AnalyzerMode::prePost, AnalyzerMode::post, AnalyzerMode::pre, AnalyzerMode::off})
     CHECK(even::analyzerModeNamed(even::analyzerModeName(mode)) == mode);
-  CHECK_FALSE(even::analyzerModeNamed("both").has_value());
+  CHECK(even::analyzerModeNamed("both") == std::nullopt);
 }

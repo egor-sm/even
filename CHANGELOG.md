@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.2.0](https://github.com/egor-sm/even/compare/v0.1.0...v0.2.0) (2026-10-10)
+
+
+### Features
+
+* **analyzer:** analyzer settings in the graph, with a range scale ([2268b22](https://github.com/egor-sm/even/commit/2268b22a00c456ac09cb6d72a3cada3483bf21d3))
+* **analyzer:** analyzer settings in the graph, with a range scale ([d560958](https://github.com/egor-sm/even/commit/d560958587523029e9ebc6088360bd7c61f56ee3)), closes [#40](https://github.com/egor-sm/even/issues/40)
+* **analyzer:** smoother analyzer curve, with switchable analysis variants ([1bf2119](https://github.com/egor-sm/even/commit/1bf21193227dddaa48838522b5c681ccb10e0f3a))
+* **analyzer:** smoother analyzer curve, with switchable analysis variants ([8ac10dd](https://github.com/egor-sm/even/commit/8ac10dd8fd9b448ed5aeea12ea874aeb5c5dae4e))
+
+
+### Bug Fixes
+
+* **app:** raise the gain range to ±36 dB ([cd9925f](https://github.com/egor-sm/even/commit/cd9925faf0ca7e415d12ba062814df08858202dc))
+* let the gain reach the ±36 dB of the display range ([20848f4](https://github.com/egor-sm/even/commit/20848f428b93b536de43e6f0141a434231b5b23b))
+* **ui:** centre the icons of segmented controls ([0ca3ec5](https://github.com/egor-sm/even/commit/0ca3ec5dff0261a7d3f15304961bd10bb7c0ebd0))
+* **ui:** centre the icons of segmented controls ([a778cb1](https://github.com/egor-sm/even/commit/a778cb18adfed5bd3cda216b34a8f3162a023325))
+* **ui:** hide the closed select menu ([1d2a7ab](https://github.com/egor-sm/even/commit/1d2a7ab2cfd0347ad4313d050d1c7be56c470739))
+* **ui:** hide the closed select menu ([d53811b](https://github.com/egor-sm/even/commit/d53811be679c202dd935595866ad0f005b98d176))
+* **ui:** keep a click on a black key from snapping to a white one ([d39047c](https://github.com/egor-sm/even/commit/d39047cdc6c5cb43fb1285e3dc8c130e85145c40))
+* **ui:** keep gain edits within the parameter range ([db7fc46](https://github.com/egor-sm/even/commit/db7fc46655b690321af50d5a9ff02dba8697a7f5))
+* **ui:** move the band dock with translate instead of left ([b43546e](https://github.com/egor-sm/even/commit/b43546e02fd71ce82e66acb24b9150b7be5b8173))
+* **ui:** move the keyboard dot straight to a clicked key ([260962d](https://github.com/egor-sm/even/commit/260962d053ec98e93d7b338a545d3d2b108ae5e6))
+* **ui:** put the Q handles on the 0 dB line ([d477b23](https://github.com/egor-sm/even/commit/d477b23dca5d47631b342c7b156de1a07927778e))
+* **ui:** put the Q handles on the 0 dB line ([b0ecabb](https://github.com/egor-sm/even/commit/b0ecabb110d494362218a2107bae3a06f7503853))
+* **ui:** repaint the dock's note in WebKit and tidy up key clicks ([473e520](https://github.com/egor-sm/even/commit/473e5201ef84a663423bd230123ec9cb8d7ab36a))
+* **ui:** show the clicked note in the dock while the band glides to it ([3d1d43c](https://github.com/egor-sm/even/commit/3d1d43cec1d9d2a3a4b608f31ca7329fb20f9f04))
+
 ## 0.1.0 (2026-10-05)
 
 

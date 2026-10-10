@@ -1,6 +1,5 @@
-import { publishAnalyzerFrame, syncAnalyzerOptions } from '~/entities/analyzer';
+import { applyAnalyzerSettings, publishAnalyzerFrame } from '~/entities/analyzer';
 import { receiveResponse } from '~/entities/band';
-import { syncAnalyzerMode } from '~/features/analyzer-mode';
 import { applySettings } from '~/features/settings';
 import { syncSoloWithBackend } from '~/features/solo-band';
 import { applyHistory, useHistoryStore } from '~/features/undo-redo';
@@ -42,10 +41,11 @@ export const connectBackend = (): (() => void) => {
   document.addEventListener('visibilitychange', syncVisibility);
   syncVisibility();
 
-  void native.getSettings().then(applySettings);
+  void native.getSettings().then((settings) => {
+    applySettings(settings);
+    applyAnalyzerSettings(settings);
+  });
   void native.getHistoryState().then(applyHistory);
-  syncAnalyzerMode();
-  syncAnalyzerOptions();
 
   return () => {
     stopSoloSync();

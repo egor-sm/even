@@ -15,6 +15,35 @@ using Arguments = juce::Array<juce::var>;
 // Every native function here completes at once with its result (undefined for a void var).
 using Call = std::function<juce::var(const Arguments &)>;
 
+void setSetting(PluginProcessor &processor, UserSettings &settings, const EditorActions &actions,
+                const juce::String &key, const juce::var &value) {
+  if (key == "theme") {
+    settings.setTheme(value.toString());
+    return;
+  }
+  if (key == "scale") {
+    settings.setScalePercent(static_cast<int>(value));
+    actions.applyScale();
+    return;
+  }
+
+  auto analyzer = settings.analyzer();
+  if (key == "analyzer.mode")
+    analyzer.mode = analyzerModeNamed(value.toString()).value_or(analyzer.mode);
+  else if (key == "analyzer.range")
+    analyzer.rangeDb = static_cast<int>(value);
+  else if (key == "analyzer.fftSize")
+    analyzer.fftSize = static_cast<int>(value);
+  else if (key == "analyzer.decay")
+    analyzer.decayDbPerSecond = static_cast<int>(value);
+  else if (key == "analyzer.tilt")
+    analyzer.tiltDbPerOctave = static_cast<double>(value);
+  else
+    return;
+  settings.setAnalyzer(analyzer);
+  applyAnalyzerSettings(processor.getAnalyzer(), settings.analyzer());
+}
+
 std::vector<std::pair<const char *, Call>> nativeFunctions(PluginProcessor &processor, UserSettings &settings,
                                                            const EditorActions &actions) {
   return {
@@ -23,18 +52,6 @@ std::vector<std::pair<const char *, Call>> nativeFunctions(PluginProcessor &proc
       {"setTestSignal",
        [&processor](const Arguments &args) {
          processor.setTestSignalEnabled(boolArgument(args, 0));
-         return juce::var{};
-       }},
-      {"setAnalyzerMode",
-       [&processor](const Arguments &args) {
-         if (const auto mode = analyzerModeArgument(args, 0))
-           processor.getAnalyzer().setMode(*mode);
-         return juce::var{};
-       }},
-      // (options): the analysis variant (development: comparing the smoothing variants).
-      {"setAnalyzerOptions",
-       [&processor](const Arguments &args) {
-         processor.getAnalyzer().setOptions(analyzerOptionsArgument(args, 0));
          return juce::var{};
        }},
       {"setAnalyzerActive",
@@ -103,17 +120,15 @@ std::vector<std::pair<const char *, Call>> nativeFunctions(PluginProcessor &proc
          return historyState(processor.getBandHistory().state());
        }},
       {"getHistoryState", [&processor](const Arguments &) { return historyState(processor.getBandHistory().state()); }},
-      // Returns {theme, scale}.
+      // Returns the settings (web::settings).
       {"getSettings", [&settings](const Arguments &) { return web::settings(settings); }},
-      // (key, value) with key "theme" ("dark" | "light") or "scale" (percent); returns {theme, scale}.
+      // (key, value) with key "theme" ("dark" | "light"), "scale" (percent) or one of the analyzer's:
+      // "analyzer.mode", "analyzer.range", "analyzer.fftSize", "analyzer.decay", "analyzer.tilt".
+      // Returns the settings.
       {"setSetting",
-       [&settings, actions](const Arguments &args) {
-         if (args.size() >= 2 && args[0].toString() == "theme") {
-           settings.setTheme(args[1].toString());
-         } else if (args.size() >= 2 && args[0].toString() == "scale") {
-           settings.setScalePercent(static_cast<int>(args[1]));
-           actions.applyScale();
-         }
+       [&processor, &settings, actions](const Arguments &args) {
+         if (args.size() >= 2)
+           setSetting(processor, settings, actions, args[0].toString(), args[1]);
          return web::settings(settings);
        }},
   };

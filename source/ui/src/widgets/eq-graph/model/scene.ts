@@ -2,10 +2,10 @@ import { clsx } from 'clsx';
 
 import {
   AnalyzerLayer,
-  type DisplayTuning,
   onAnalyzerFrame,
   Spectrum,
-  useAnalyzerTuningStore,
+  useAnalyzerSettingsStore,
+  useAnalyzerViewStore,
 } from '~/entities/analyzer';
 import { type BandsState, useBandsStore, findBand, useSelectionStore } from '~/entities/band';
 import {
@@ -20,7 +20,7 @@ import {
 import { drawGhost, GhostPreview, ghostLayerClass } from '~/features/change-band-type';
 import { useSettingsStore } from '~/features/settings';
 import { drawSolo, soloLayerEnteringClass, soloRange } from '~/features/solo-band';
-import { responseDb, withBandFrequencies } from '~/shared/api';
+import { type AnalyzerSettings, responseDb, withBandFrequencies } from '~/shared/api';
 import { CanvasLayer } from '~/shared/lib';
 import { type GraphColors, readGraphColors } from '~/shared/ui';
 
@@ -29,6 +29,8 @@ import { drawResponse } from '../lib/draw-response';
 import styles from './scene.module.css';
 
 const maxAnalyzerFps = 60;
+/** How fast the spectrum rises to a new peak. */
+const attackSeconds = 0.01;
 
 type Dirty = { grid: boolean; solo: boolean; response: boolean; ghost: boolean; analyzer: boolean };
 
@@ -88,7 +90,7 @@ export class GraphScene {
     container.append(...this.canvases);
     this.colors = readGraphColors(themeRoot);
     this.analyzer.setColors(this.analyzerColors());
-    this.applyDisplayTuning(useAnalyzerTuningStore.getState().display);
+    this.applyAnalyzerSettings(useAnalyzerSettingsStore.getState());
     this.resize(useSettingsStore.getState().scale);
 
     let previousState = sceneState();
@@ -102,9 +104,10 @@ export class GraphScene {
       useSelectionStore.subscribe(onStateChange),
       useViewportStore.subscribe(onStateChange),
       useBandsStore.subscribe(() => this.invalidate({ solo: true, response: true, ghost: true })),
-      useAnalyzerTuningStore.subscribe((state, previous) => {
-        if (state.display !== previous.display) this.applyDisplayTuning(state.display);
+      useAnalyzerSettingsStore.subscribe((settings, previous) => {
+        if (settings.decay !== previous.decay || settings.tilt !== previous.tilt) this.applyAnalyzerSettings(settings);
       }),
+      useAnalyzerViewStore.subscribe(() => this.invalidate({ analyzer: true })),
       onAnalyzerFrame((frame) => {
         for (const [spectrum, levels] of [
           [this.pre, frame.preDb],
@@ -130,15 +133,10 @@ export class GraphScene {
     return { fill: this.colors.analyzerFill, pre: this.colors.analyzerPre, post: this.colors.analyzerPost };
   }
 
-  private applyDisplayTuning(display: DisplayTuning): void {
-    const options = {
-      slopeDbPerOctave: display.slopeDbPerOctave,
-      attackSeconds: display.attackMs / 1000,
-      decayDbPerSecond: display.decayDbPerSecond,
-    };
+  private applyAnalyzerSettings(settings: AnalyzerSettings): void {
+    const options = { slopeDbPerOctave: settings.tilt, attackSeconds, decayDbPerSecond: settings.decay };
     this.pre.setOptions(options);
     this.post.setOptions(options);
-    this.analyzer.setStyle({ curve: display.curve, line: display.line });
     this.invalidate({ analyzer: true });
   }
 
@@ -223,8 +221,8 @@ export class GraphScene {
 
       const preMoving = this.pre.tick(dt);
       const postMoving = this.post.tick(dt);
-      const { rangeDb } = useAnalyzerTuningStore.getState().display;
-      this.analyzer.draw({ ...graph, x: mapper.x, y: analyzerYFor(rangeDb) }, this.pre, this.post);
+      const { range } = useAnalyzerViewStore.getState();
+      this.analyzer.draw({ ...graph, x: mapper.x, y: analyzerYFor(range) }, this.pre, this.post);
       this.onAnalyzerDraw?.(now);
 
       this.dirty.analyzer = preMoving || postMoving;

@@ -33,6 +33,15 @@ juce::var settings(const UserSettings &settings) {
   auto object = std::make_unique<juce::DynamicObject>();
   object->setProperty("theme", settings.theme());
   object->setProperty("scale", settings.scalePercent());
+
+  const auto analyzer = settings.analyzer();
+  auto analyzerObject = std::make_unique<juce::DynamicObject>();
+  analyzerObject->setProperty("mode", analyzerModeName(analyzer.mode));
+  analyzerObject->setProperty("range", analyzer.rangeDb);
+  analyzerObject->setProperty("fftSize", analyzer.fftSize);
+  analyzerObject->setProperty("decay", analyzer.decayDbPerSecond);
+  analyzerObject->setProperty("tilt", analyzer.tiltDbPerOctave);
+  object->setProperty("analyzer", juce::var{analyzerObject.release()});
   return juce::var{object.release()};
 }
 

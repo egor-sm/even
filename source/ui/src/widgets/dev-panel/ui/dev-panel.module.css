@@ -42,30 +42,3 @@
   font-size: 10px;
   color: var(--text-muted);
 }
-
-.tuning {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: var(--space-6) var(--space-10);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--border-strong);
-}
-
-.column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-6);
-}
-
-.preset {
-  padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-strong);
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.preset:hover {
-  background: var(--surface-hover);
-}

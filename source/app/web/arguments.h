@@ -1,6 +1,5 @@
 #pragma once
 
-#include "app/analyzer/spectrum_analyzer.h"
 #include "dsp/filter_shape.h"
 
 #include <juce_core/juce_core.h>
@@ -16,11 +15,6 @@ namespace even::web {
 [[nodiscard]] std::optional<std::size_t> slotArgument(const juce::Array<juce::var> &args, int index);
 // A dsp::FilterShape value.
 [[nodiscard]] std::optional<dsp::FilterShape> shapeArgument(const juce::Array<juce::var> &args, int index);
-// "prepost", "post", "pre" or "off".
-[[nodiscard]] std::optional<AnalyzerMode> analyzerModeArgument(const juce::Array<juce::var> &args, int index);
-// An object of analyzer options: {window, windowLength, zeroPadding, kernel, width, octaves, lowEnd, minimumBins,
-// averagingMs, lowFft} with the enums by name; missing or invalid fields keep their defaults.
-[[nodiscard]] AnalyzerOptions analyzerOptionsArgument(const juce::Array<juce::var> &args, int index);
 // Missing reads as false.
 [[nodiscard]] bool boolArgument(const juce::Array<juce::var> &args, int index);
 

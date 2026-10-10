@@ -17,7 +17,7 @@ export {
   minRange,
 } from './lib/axis-math';
 export {
-  analyzerTopDb,
+  analyzerDbAt,
   analyzerYFor,
   clipToPlot,
   createMapper,

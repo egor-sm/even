@@ -1,12 +1,6 @@
-import { AnalyzerModeMenu } from '~/features/analyzer-mode';
-
 import styles from './bottom-bar.module.css';
 
-/** The analyzer mode, for now the only control of the bottom bar. */
+/** Empty for now: kept for the output gain and the level meters. */
 export function BottomBar() {
-  return (
-    <footer className={styles.bar}>
-      <AnalyzerModeMenu />
-    </footer>
-  );
+  return <footer className={styles.bar} />;
 }

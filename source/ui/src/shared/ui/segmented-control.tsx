@@ -1,4 +1,5 @@
 import { SegmentGroup } from '@ark-ui/react/segment-group';
+import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
 export type Segment<Value extends string> = { value: Value; content: ReactNode; label?: string };
@@ -10,6 +11,9 @@ type SegmentedControlProps<Value extends string> = {
   onValueChange: (value: Value) => void;
   /** `compact`: the small segments of an axis tag. */
   variant?: 'default' | 'compact';
+  /** Numbers in the mono font. */
+  mono?: boolean;
+  disabled?: boolean;
   className?: string;
 };
 
@@ -20,14 +24,17 @@ export function SegmentedControl<Value extends string>({
   segments,
   onValueChange,
   variant = 'default',
+  mono = false,
+  disabled = false,
   className,
 }: SegmentedControlProps<Value>) {
-  const item = variant === 'compact' ? 'eq-axis__seg' : 'eq-seg';
+  const item = clsx(variant === 'compact' ? 'eq-axis__seg' : 'eq-seg', mono && 'is-mono');
   return (
     <SegmentGroup.Root
       className={className ?? (variant === 'default' ? 'eq-segs' : undefined)}
       aria-label={label}
       orientation="horizontal"
+      disabled={disabled}
       value={value}
       onValueChange={(details) => {
         const segment = segments.find((candidate) => candidate.value === details.value);

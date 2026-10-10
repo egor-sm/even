@@ -62,6 +62,19 @@
   cursor: pointer;
 }
 
+/* The focus is on the segment's hidden radio input: the ring goes around the segment. */
+.eq-seg[data-focus-visible],
+.eq-axis__seg[data-focus-visible] {
+  outline: 2px solid var(--state-focus);
+  outline-offset: -1px;
+}
+
+.eq-seg[data-disabled],
+.eq-seg[data-disabled]:hover {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
 /* A segment's text or icon as one box, centred in the segment: inline, an icon sits on the text's baseline. */
 .kit-seg__content {
   display: grid;

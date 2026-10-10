@@ -34,6 +34,8 @@ PluginEditor::PluginEditor(PluginProcessor &processorToUse)
   setResizable(false, false);
   applyScale();
 
+  // Another instance may have changed the settings since this one's last editor.
+  applyAnalyzerSettings(pluginProcessor.getAnalyzer(), settings->analyzer());
   setAnalyzerActive(true);
   startTimerHz(60);
 }

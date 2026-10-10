@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { dbLines, dbStep, frequencyLabels, gridLines, gridMorph, keyAt } from '../axis-math';
-import { analyzerYFor, createMapper, graph } from '../geometry';
+import { analyzerDbAt, analyzerYFor, createMapper, graph } from '../geometry';
 
 const mapper = createMapper(18);
 
@@ -15,10 +15,11 @@ describe('mapper', () => {
     expect(mapper.dbAt(mapper.y(-7.5))).toBeCloseTo(-7.5, 9);
   });
 
-  it('spans the analyzer range below -6 dBFS over the plot height', () => {
+  it('spans the analyzer range below 0 dB over the plot height', () => {
     const analyzerY = analyzerYFor(90);
-    expect(analyzerY(-6)).toBe(graph.top);
-    expect(analyzerY(-96)).toBe(graph.bottom);
+    expect(analyzerY(0)).toBe(graph.top);
+    expect(analyzerY(-90)).toBe(graph.bottom);
+    expect(analyzerDbAt(90, analyzerY(-26))).toBeCloseTo(-26, 9);
   });
 });
 

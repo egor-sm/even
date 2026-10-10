@@ -1,8 +1,10 @@
 import { useShallow } from 'zustand/react/shallow';
 
-import { createMapper, graph, maxHz, minHz, useViewportStore } from '~/entities/viewport';
+import { useAnalyzerSettingsStore, useAnalyzerViewStore } from '~/entities/analyzer';
+import { analyzerDbAt, createMapper, graph, maxHz, minHz, useViewportStore } from '~/entities/viewport';
 import {
   clamp,
+  formatAxisDb,
   formatCursorDb,
   formatFrequency,
   formatNote,
@@ -13,9 +15,13 @@ import {
 
 import { useCursorStore } from '../model/cursor';
 
+/** Left of the analyzer scale's control: the spectrum level shows only over the plot. */
+const analyzerScaleLeft = graph.right - 44;
+
 /**
  * Cursor readout over the empty graph: dashed crosshair with the frequency (and note) on the
- * frequency axis and the dB on the dB axis. Over a key, or while snapping to notes, the note's line.
+ * frequency axis, the dB on the dB axis and the spectrum level on the analyzer scale. Over a key,
+ * or while snapping to notes, the note's line.
  */
 export function Crosshair() {
   const cursor = useCursorStore((state) => state.point);
@@ -23,6 +29,8 @@ export function Crosshair() {
   const { hotKey, axis, range } = useViewportStore(
     useShallow((state) => ({ hotKey: state.hotKey, axis: state.axis, range: state.view.range })),
   );
+  const analyzerOn = useAnalyzerSettingsStore((state) => state.mode !== 'off');
+  const analyzerRange = useAnalyzerViewStore((state) => state.range);
   const mapper = createMapper(range);
   const notes = axis === 'note';
   const tagTop = (notes ? 606 : 640) - 3;
@@ -82,6 +90,14 @@ export function Crosshair() {
           }}
         >
           {formatCursorDb(mapper.dbAt(y))}
+        </div>
+      )}
+      {y !== null && analyzerOn && x < analyzerScaleLeft && (
+        <div
+          className="eq-ctag"
+          style={{ position: 'absolute', zIndex: 7, right: 20, top: y, padding: '2px 4px', translate: '0 -50%' }}
+        >
+          {formatAxisDb(Math.round(analyzerDbAt(analyzerRange, y)))}
         </div>
       )}
     </>

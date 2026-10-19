@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@ark-ui/react": "^5.39.2",
+    "@ark-ui/react": "^5.39.3",
     "@fontsource/ibm-plex-sans": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@juce-framework/webview": "^1.0.0",
     "clsx": "^2.1.1",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -19,7 +19,7 @@
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-react": "^6.1.2",
     "happy-dom": "^20.14.5",
     "steiger": "^0.7.0",
     "typescript": "^7.0.2",
